@@ -710,7 +710,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 							if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
 								TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
 						}
-					}				
+					}			
 					g_iCurrentAdditionalTeleportIndex[client]++;
 				}
 			}

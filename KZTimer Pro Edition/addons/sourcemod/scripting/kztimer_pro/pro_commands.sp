@@ -1073,7 +1073,7 @@ public Action:Client_Start(client, args)
 	
 	new Float: e_time = GetEngineTime();
 	new Float: diff = e_time - g_fStartCommandUsed_LastTime[client];
-	if (diff < 0.5)
+	if (diff < 0.8)
 		return Plugin_Handled;	
 		
 	//spawn at Timer

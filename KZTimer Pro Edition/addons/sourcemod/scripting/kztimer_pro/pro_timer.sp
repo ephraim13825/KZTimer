@@ -521,19 +521,19 @@ public Action:MainTimer(Handle:timer)
 									else
 									{	
 										if (ObservedUser == g_iBot)
-											Format(g_szPlayerPanelText[client], 512, "[Replay Pro Edition]\nPlayer: %s\nRecord: %s\nTime: %s\nSpecs: %i", g_szReplayName,g_szReplayTime,szTime,count);
+											Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: %s\nTickrate: %s\nSpecs: %i", szTime,szTick,count);
 										else
-											Format(g_szPlayerPanelText[client], 512, "[Replay Pro Edition]\nPlayer: %s\nRecord: %s\nTime: %s\nTeleports: %i\nSpecs: %i", g_szReplayNameTp,g_szReplayTimeTp,szTime,g_ReplayRecordTps,count);	
+											Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: %s\nTeleports: %i\nTickrate: %s\nSpecs: %i",szTime,g_ReplayRecordTps,szTick,count);	
 									}
 								}
 								else
 								{
 									if (ObservedUser == g_iBot)
-										Format(g_szPlayerPanelText[client], 512, "[Replay Pro Edition]\nPlayer: %s\nRecord: %s\nTime: PAUSED\nSpecs: %i", g_szReplayName,g_szReplayTime,count);
+										Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i", szTick,count);
 									else
 									{
 										if (ObservedUser == g_iBot2)
-											Format(g_szPlayerPanelText[client], 512, "[Replay Pro Edition]\nPlayer: %s\nRecord: %s\nTime: PAUSED\nTeleports: %i\nSpecs: %i", g_szReplayNameTp,g_szReplayTimeTp,g_ReplayRecordTps,count);	
+											Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
 										else
 											Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \nPAUSED", count, sSpecs);
 									}

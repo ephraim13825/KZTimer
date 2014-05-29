@@ -14,7 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.31b Pro Edition"
+#define VERSION "1.31 Pro Edition"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -810,7 +810,7 @@ public OnPluginStart()
 	
 	g_hBanDuration   = CreateConVar("kz_anticheat_ban_duration", "72.0", "Ban duration (hours)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 1.0, true, 999999.0);
 	
-	g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "250.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 230.0, true, 999.0);
+	g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "240.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 230.0, true, 999.0);
 	g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "265.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 	g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "270.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);		
 	g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "230.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1223,8 +1223,6 @@ public OnMapEnd()
 	g_iBot = -1;
 	g_iBot2 = -1;
 	g_iBhopButtonCount = 0;
-	if (g_BGlobalDBConnected)
-		db_deleteInvalidGlobalEntries();
 }
 
 //https://forums.alliedmods.net/showthread.php?p=808724

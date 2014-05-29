@@ -696,7 +696,12 @@ public db_insertGlobalRecord(client)
 		Format(szQuery, 255, sqlglobal_insertPlayer128, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
 	if (g_tickrate==102)
 		Format(szQuery, 255, sqlglobal_insertPlayer102, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
-	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);
+	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
+}
+
+public SQL_GlobalCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	db_deleteInvalidGlobalEntries();
 }
 
 public db_updateGlobalRecord(client)
@@ -723,7 +728,7 @@ public db_updateGlobalRecord(client)
 		Format(szQuery, 255, sqlglobal_updatePlayer128, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
 	if (g_tickrate==102)
 		Format(szQuery, 255, sqlglobal_updatePlayer102, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
-	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);
+	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
 }
 
 public db_GlobalRecord(client)

@@ -15,7 +15,7 @@
 #include <sourcebans>
 
 
-#define VERSION "1.29b"
+#define VERSION "1.3 Casual Edition"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -51,6 +51,16 @@
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
 
+//changelog
+/*
+v1.30 casual / v1.31 pro
+- changed replay bot names: <TYPE> REPLAY BOT <NAME> (<TIME>)
+- adjusted the replay panel
+- removed db_deleteInvalidGlobalEntries from MapEnd method (*watchdog*)
+- fixed some minor issues for workshop maps
+- -> fixed: Exception list is not loaded.
+- -> fixed: Timer freezes, gets stuck and when you stop the time it sometimes takes 10 seconds to register.
+*/
 //botmimic2
 //https://forums.alliedmods.net/showthread.php?t=164148?t=164148
 #define MAX_RECORD_NAME_LENGTH 64
@@ -827,7 +837,7 @@ public OnPluginStart()
 	GetConVarString(g_hArmModel,g_sArmModel,256);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
 	
-	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "Welcome. This server is using KZ Timer","Welcome message", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "Welcome. This server is using KZ Timer Casual Edition","Welcome message", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
@@ -1277,7 +1287,6 @@ public OnMapEnd()
 	g_iBot = -1;
 	g_iBot2 = -1;
 	g_iBhopButtonCount = 0;
-	db_deleteInvalidGlobalEntries();
 }
 
 public OnConfigsExecuted()
