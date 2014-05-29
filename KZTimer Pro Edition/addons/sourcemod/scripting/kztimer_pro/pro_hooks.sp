@@ -139,7 +139,7 @@ public Action:Say_Hook(client, args)
 		//exceptions (streuqal doenst work because sText contains a colorcode (SOMEHOW???))
 		decl String:sPath[PLATFORM_MAX_PATH];
 		decl String:line[64]
-		Format(sPath, sizeof(sPath), "configs/kztimer/exception_list.txt");
+		Format(sPath, sizeof(sPath), "configs/kztimer_pro/exception_list.txt");
 		BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 		new Handle:fileHandle=OpenFile(sPath,"r");		
 		

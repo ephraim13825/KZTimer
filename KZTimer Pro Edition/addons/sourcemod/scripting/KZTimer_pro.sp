@@ -14,7 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.30 Pro Edition"
+#define VERSION "1.31 Pro Edition"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -888,10 +888,10 @@ public OnPluginStart()
 	RegConsoleCmd("sm_checkpoint", Client_Save,"[KZTimer Pro] save your current position");
 	RegConsoleCmd("sm_gocheck", Client_Tele,"[KZTimer Pro] go to latest checkpoint");
 	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[KZTimer Pro] hides spectators from menu/panel");
-	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer Pro] compares your challenge results");
+	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer Pro] compare your challenge results");
 	RegConsoleCmd("sm_menu", Client_Kzmenu, "[KZTimer Pro] opens kztimer climbers menu");
 	RegConsoleCmd("sm_measure",Command_Menu, "[KZTimer Pro] allows you to measure the distance between 2 points");
-	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer Pro] aborts your current challenge");
+	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer Pro] abort your current challenge");
 	RegConsoleCmd("sm_spec", Client_Spec, "[KZTimer Pro] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_watch", Client_Spec, "[KZTimer Pro] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_spectate", Client_Spec, "[KZTimer Pro] chooses a player who you want to spectate and switch you to spectators");
