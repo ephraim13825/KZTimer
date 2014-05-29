@@ -14,7 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.31 Pro Edition"
+#define VERSION "1.31b Pro Edition"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -1162,6 +1162,7 @@ public OnMapStart()
 public OnConfigsExecuted()
 {
 	new String:map[128];
+	new String:map2[128];
 	new mapListSerial = -1;
 	g_pr_mapcount=0;
 	if (ReadMapList(g_MapList, 
@@ -1180,11 +1181,11 @@ public OnConfigsExecuted()
 		GetArrayString(g_MapList, i, map, sizeof(map));
 		if (!StrEqual(map, "", false))
 		{
-			//fix workshop map name	
-			new String:mapPieces[6][64];
+			//fix workshop map name			
+			new String:mapPieces[6][128];
 			new lastPiece = ExplodeString(map, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
-			Format(map, sizeof(map), "%s", map[lastPiece-1]); 
-			SetArrayString(g_MapList, i, map);
+			Format(map2, sizeof(map2), "%s", mapPieces[lastPiece-1]); 
+			SetArrayString(g_MapList, i, map2);
 			g_pr_mapcount++;
 		}
 	}	

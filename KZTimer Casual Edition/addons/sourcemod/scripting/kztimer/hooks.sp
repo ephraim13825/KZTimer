@@ -1473,7 +1473,7 @@ public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));
 	new Float:time = GetGameTime();
 	g_fLastJump[client] = time;		
-	if (g_bJumpStats)
+	if (g_bJumpStats && !g_bTouchWall[client])
 		Prethink(client,JumpType_Unknown,Float:{0.0,0.0,0.0},0.0);
 }
 			
@@ -1542,19 +1542,10 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 			{	
 				new Float: fGroundDiff = g_fJump_Initial[client][2] - g_fJump_InitialLastHeight[client];
 				if(fGroundDiff != 0.0)
-					g_bDropJump[client] = true;
-				else
 				{
-					//blocks sometimes valid multi bhops because ontouch detects grounds as walls
-					if (g_bTouchWall[client])
-					{
-						g_bPlayerJumped[client]=false;
-						return;
-					}
-					g_bDropJump[client] = false;
-				}
-				if (g_bDropJump[client])
+					g_bDropJump[client] = true;
 					g_fDroppedUnits[client] = FloatAbs(fGroundDiff);
+				}
 			}		
 			//StandUpBhop?
 			new Float: x = GetEngineTime() - g_fLastTimeDucked[client];
@@ -2432,10 +2423,10 @@ public OnTouch(client, other)
 	if (IsClientInGame(client) && IsPlayerAlive(client))
 	{
 		if ((1 <= client <= MaxClients) && other == 0)
-		{
-			g_bTouchWall[client] = true;	
+		{	
+			g_bTouchWall[client] = true;		
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
-				g_bCheckSurf[client] = true;	               
+				g_bCheckSurf[client] = true;	
 		}
 	}
 }  

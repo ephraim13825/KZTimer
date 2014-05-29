@@ -2089,7 +2089,7 @@ public HelpPanel2(client)
 	DrawPanelText(panel, "!challenge - starts a challenge/race against someone");	
 	DrawPanelText(panel, "!spec [<name>] - selects a player you want to watch");	
 	DrawPanelText(panel, "!goto [<name>] - teleports you to a selected player");
-	DrawPanelText(panel, "!compare [<name>] - compares your challenge results");
+	DrawPanelText(panel, "!compare [<name>] - compare your challenge results");
 	DrawPanelText(panel, "!showsettings - shows plugin settings");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");

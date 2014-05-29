@@ -66,9 +66,9 @@ public Action:CheckRemainingTime(Handle:timer)
 		if (timeleft==1)
 			PrintToChatAll("[%cMAP%c] 1..",DARKRED,WHITE);
 		if (timeleft==-2)
-		{		
-			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
+		{	
 			g_bRoundEnd=true;
+			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);		
 			for (new client = 1; client <= MaxClients; client++)
 			{				
 				if(IsClientConnected(client) && IsClientInGame(client) && IsPlayerAlive(client))
@@ -295,8 +295,6 @@ public Action:CheckChallenge(Handle:timer, any:client)
 public Action:KickBotsTimer(Handle:timer)
 {
 	ServerCommand("bot_quota 0"); 
-	g_iBot=-1;
-	g_iBot2=-1;
 }
 
 public Action:LoadReplaysTimer(Handle:timer)
@@ -347,7 +345,7 @@ public Action:SetClanTag(Handle:timer, any:client)
 
 public Action:SettingsEnforcerTimer(Handle:timer)
 {
-	ServerCommand("sv_airaccelerate 100;sv_staminalandcost 0.0;sv_staminajumpcost 0.15;sv_stopspeed 75;sv_maxspeed 320; sv_gravity 800; sv_friction 4;sv_accelerate 5;sv_maxvelocity 2000;sv_cheats 0"); 	
+	ServerCommand("sv_airaccelerate 100;sv_staminalandcost 0.0;sv_staminajumpcost 0.0;sv_stopspeed 75;sv_maxspeed 320; sv_gravity 800; sv_friction 4;sv_accelerate 5;sv_maxvelocity 2000;sv_cheats 0"); 	
 	return Plugin_Continue;
 }
 

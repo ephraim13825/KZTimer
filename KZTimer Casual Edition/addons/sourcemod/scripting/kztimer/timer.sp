@@ -66,9 +66,9 @@ public Action:CheckRemainingTime(Handle:timer)
 		if (timeleft==1)
 			PrintToChatAll("[%cMAP%c] 1..",DARKRED,WHITE);
 		if (timeleft==-2)
-		{		
-			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
+		{	
 			g_bRoundEnd=true;
+			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
 			for (new client = 1; client <= MaxClients; client++)
 			{				
 				if(IsClientConnected(client) && IsClientInGame(client) && IsPlayerAlive(client))
@@ -288,10 +288,8 @@ public Action:CheckChallenge(Handle:timer, any:client)
 }
 
 public Action:KickBotsTimer(Handle:timer)
-{
+{	
 	ServerCommand("bot_quota 0"); 
-	g_iBot=-1;
-	g_iBot2=-1;
 }
 
 public Action:LoadReplaysTimer(Handle:timer)

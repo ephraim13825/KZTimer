@@ -1173,7 +1173,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		bLastOnGround[client] = GetEntityFlags(client) & FL_ONGROUND;  
 
 		//zipcore anti strafe hack
-		if(g_PlayerStates[client][nStrafes] >= MAX_STRAFES2)
+		new x = MAX_STRAFES2 - 1;
+		if(g_PlayerStates[client][nStrafes] >= x)
 		{
 			ComputeStrafes(client);
 			ResetStrafes(client);	

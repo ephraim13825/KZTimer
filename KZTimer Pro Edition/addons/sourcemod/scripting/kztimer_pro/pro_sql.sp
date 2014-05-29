@@ -4110,7 +4110,6 @@ public CalculatePlayerRank(client)
 		if (!g_bPointSystem || !IsClientInGame(client))
 			return;
 		GetClientAuthString(client, szSteamId, 32);
-		g_pr_Calculating[client] = true;
 	}	
 	Format(szQuery, 255, sql_selectRankedPlayer, szSteamId);    
 	SQL_TQuery(g_hDb, sql_selectRankedPlayerCallback, szQuery,client, DBPrio_Low);	
@@ -4130,7 +4129,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 			return;
 	}
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{	
+	{		
 		//add multiplier points	
 		g_pr_multiplier[client] = SQL_FetchInt(hndl, 5);
 		if (g_pr_multiplier[client]>0)
@@ -4139,6 +4138,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 		//challenge ratios 
 		if (client<=MAXPLAYERS && IsValidEntity(client) && IsClientConnected(client) && g_bchallengeConnected[client])
 		{
+			g_pr_Calculating[client] = true;
 			g_challenge_win_ratio[client] = SQL_FetchInt(hndl, 6);
 			g_challenge_points_ratio[client] = SQL_FetchInt(hndl, 7);
 			g_bchallengeConnected[client] = false;
@@ -4152,6 +4152,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 	{
 		if (client <= MaxClients)
 		{
+			g_pr_Calculating[client] = false;
 			g_pr_players++;			
 			//insert
 			decl String:szQuery[255];

@@ -14,13 +14,8 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-/*
-- added admin commands sm_resetplayertptime, sm_resetplayerprotime and sm_resetplayerjumpstats
-- additional strafe hack prevention
-- integrated connectmsg, mapchangeforcer and knifemenu
-*/
 
-#define VERSION "1.29"
+#define VERSION "1.29b"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -1016,10 +1011,10 @@ public OnPluginStart()
 	RegConsoleCmd("sm_checkpoint", Client_Save,"[KZTimer] save your current position");
 	RegConsoleCmd("sm_gocheck", Client_Tele,"[KZTimer] go to latest checkpoint");
 	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[KZTimer] hides spectators from menu/panel");
-	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer] compares your challenge results");
+	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer] compare your challenge results");
 	RegConsoleCmd("sm_menu", Client_Kzmenu, "[KZTimer] opens kztimer climbers menu");
 	RegConsoleCmd("sm_measure",Command_Menu, "[KZTimer] allows you to measure the distance between 2 points");
-	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer] aborts your current challenge");
+	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer] abort your current challenge");
 	RegConsoleCmd("sm_spec", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_watch", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_spectate", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
@@ -1247,7 +1242,7 @@ public OnMapStart()
 		//supported map tags 
 		if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bkz"))
 			dbCheckFileSize();
-	}	
+	}
 	//g_bglobalValidFilesize=true;
 	//db_GetMapRecord_Global();
 	
@@ -1288,6 +1283,7 @@ public OnMapEnd()
 public OnConfigsExecuted()
 {
 	new String:map[128];
+	new String:map2[128];
 	new mapListSerial = -1;
 	g_pr_mapcount=0;
 	if (ReadMapList(g_MapList, 
@@ -1306,15 +1302,15 @@ public OnConfigsExecuted()
 		GetArrayString(g_MapList, i, map, sizeof(map));
 		if (!StrEqual(map, "", false))
 		{
-			//fix workshop map name	
-			new String:mapPieces[6][64];
+			//fix workshop map name			
+			new String:mapPieces[6][128];
 			new lastPiece = ExplodeString(map, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
-			Format(map, sizeof(map), "%s", map[lastPiece-1]); 
-			SetArrayString(g_MapList, i, map);
+			Format(map2, sizeof(map2), "%s", mapPieces[lastPiece-1]); 
+			SetArrayString(g_MapList, i, map2);
 			g_pr_mapcount++;
 		}
 	}	
-		
+			
 	//Map Points	
 	g_pr_dyn_maxpoints = RoundToCeil((g_pr_mapcount*1.0)*300+(((g_pr_mapcount*1.0)*300)*0.3));
 	g_pr_rank_Novice = RoundToCeil(g_pr_dyn_maxpoints * 0.001);  
