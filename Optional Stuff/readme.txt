@@ -1,5 +1,5 @@
-nav files:
+.nav path:
 csgo/maps
 
-spawnpoints files:
+spawnpoints path:
 csgo/addons/sourcemod/configs/spawntools7
