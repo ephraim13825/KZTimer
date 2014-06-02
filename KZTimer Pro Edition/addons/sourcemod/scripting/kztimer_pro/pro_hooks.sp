@@ -494,6 +494,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		
 	static MoveType:LastMoveType[MAXPLAYERS + 1];
 	g_CurrentButton[client] = buttons;
+	
+	
 	if (client > 0 && IsClientInGame(client) && IsPlayerAlive(client) && !g_bSpectate[client])
 	{	
 		//https://forums.alliedmods.net/showthread.php?t=192163
@@ -734,30 +736,30 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}		
 			g_iBotMimicTick[client]++;		
 		}	
-		
-		//slowdown
-		/*if (!IsFakeClient(client))
-		{
-			if (!(GetEntityFlags(client) & FL_ONGROUND) && g_bOnGround[client])	
-			g_bOnGround[client]=false;
-			if ((GetEntityFlags(client) & FL_ONGROUND) && !g_bOnGround[client])	
-			{
-				g_bOnGround[client]=true;	
-				g_bSlowDownCheck[client]=true;
-				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", 0.69);
-				CreateTimer(2.0, ResetSlowdownTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-			}
-		}	*/
 					
-		///////////////////////////////////
-		///
-		//JUMPSTATS
-		///
 		new MoveType:movetype = GetEntityMoveType(client);  
 		
 		//Set GroundFrame
 		if (g_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
 			g_ground_frames[client]++;
+		
+		//slowdown
+		if (!IsFakeClient(client))
+		{
+			if (!(GetEntityFlags(client) & FL_ONGROUND) && g_bOnGround[client])	
+			g_bOnGround[client]=false;
+			if ((GetEntityFlags(client) & FL_ONGROUND) && !g_bOnGround[client])	
+			{
+				g_bOnGround[client]=true;		
+				if (!g_bGoodBhop[client])
+				{
+					g_bSlowDownCheck[client]=true;
+					CreateTimer(0.2, ResetSlowdownTimer, client, TIMER_FLAG_NO_MAPCHANGE);
+					SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", 0.74);
+					g_bGoodBhop[client]=false;
+				}
+			}
+		}	
 		
 		// prestrafe (forward)
 		//PRESTRAFE+USPSPEED 250.0 (TICKRATE 64 + 128 optimized)
@@ -765,7 +767,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		{
 			decl String:classname[64];
 			GetClientWeapon(client, classname, 64);
-			if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)))
+			new Float: speed = GetSpeed(client);
+			if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)) && speed > 249.0)
 			{          
 				new g_mouseAbs = mouse[0] - g_mouseDirOld[client];
 				if (g_mouseAbs < 0)
@@ -774,7 +777,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				if (g_tickrate == 64)
 					z = 20;
 				else
-					z = 40;
+					z = 25;
 				if ((buttons & IN_MOVERIGHT && mouse[0] > 0 && g_mouseAbs < z) || (buttons & IN_MOVELEFT && mouse[0] < 0 && g_mouseAbs < z))
 				{            
 					g_PrestrafeFrameCounter[client]++;
@@ -782,7 +785,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 					if (g_tickrate == 64)
 						x = 50;
 					else
-						x = 100;
+						x = 70;
 					if (g_PrestrafeFrameCounter[client] < x)
 					{
 						g_PrestrafeVelocity[client]+=0.00213;
@@ -795,7 +798,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 						else
 						{
 							if (g_PrestrafeVelocity[client] > 1.107)
-								g_PrestrafeVelocity[client]-=0.022;
+								g_PrestrafeVelocity[client]-=0.03;
 						}
 						SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);						
 					}
@@ -1010,6 +1013,31 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		
 		if (g_bPlayerJumped[client] == true)
 		{
+			//calc maxspeed
+			if (g_fOldSpeed[client] < fspeed)
+				g_fMaxSpeed[client] = fspeed;
+										
+			//sync
+			if( g_fOldSpeed[client] < (fspeed) )
+			{
+				g_good_sync[client]++;	
+				if( 0 < g_strafecount[client] <= MAX_STRAFES )
+				{
+					g_strafe_good_sync[client][g_strafecount[client] - 1]++;
+					g_strafe_gained[client][g_strafecount[client] - 1] += (fspeed - g_fOldSpeed[client]);
+					if (!IsFakeClient(client))
+						MidAirSlowDown(client, 0.35, 0.15, 0.5, 0.9);
+				}
+			}	
+			else 
+				if( g_fOldSpeed[client] > fspeed )
+				{			
+					if (!IsFakeClient(client))
+						MidAirSlowDown(client, 0.35, 0.15, 0.5, 0.9);
+					if( 0 < g_strafecount[client] <= MAX_STRAFES )
+						g_strafe_lost[client][g_strafecount[client] - 1] += (g_fOldSpeed[client] - fspeed);
+				}	
+				
 			//strafestats
 			if(turning_left || turning_right)
 			{
@@ -1030,35 +1058,18 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 					g_strafe_good_sync[client][g_strafecount[client]-1] = 0.0;
 					g_strafe_frames[client][g_strafecount[client]-1] = 0.0;		
 					g_strafe_max_speed[client][g_strafecount[client] - 1] = fspeed;		
-				}				
+				}	
+				
 			}
+
+	
 			
 			//ducked in air
 			if (g_last_ground_frames[client] > 11 && !(GetEntityFlags(client) & FL_ONGROUND))
 			{
 				if (GetClientButtons(client) == IN_DUCK)
 					g_bDuckInAir[client]=true;
-			}			
-			//calc maxspeed
-			if (g_fOldSpeed[client] < fspeed)
-				g_fMaxSpeed[client] = fspeed;
-										
-			//sync
-			if( g_fOldSpeed[client] < fspeed )
-			{
-				g_good_sync[client]++;		
-				if( 0 < g_strafecount[client] <= MAX_STRAFES )
-				{
-					g_strafe_good_sync[client][g_strafecount[client] - 1]++;
-					g_strafe_gained[client][g_strafecount[client] - 1] += (fspeed - g_fOldSpeed[client]);
-				}
-			}	
-			else 
-				if( g_fOldSpeed[client] > fspeed )
-				{
-					if( 0 < g_strafecount[client] <= MAX_STRAFES )
-						g_strafe_lost[client][g_strafecount[client] - 1] += (g_fOldSpeed[client] - fspeed);
-				}
+			}					
 
 			//strafe frames
 			if( 0 < g_strafecount[client] <= MAX_STRAFES )
@@ -1486,7 +1497,6 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 	new weapon = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
 	if (!g_bSpectate[client] && IsPlayerAlive(client) && weapon != -1 && IsClientInGame(client))
 	{
-		
 		//water level?
 		if (GetEntProp(client, Prop_Data, "m_nWaterLevel") > 0)
 			return;
@@ -1513,6 +1523,7 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 		g_fJumpOffTime[client] = GetEngineTime();
 		g_fMaxSpeed[client] = 0.0;
 		g_strafecount[client] = 0;
+		g_bDropJump[client] = false;
 		g_bDuckInAir[client] = false;
 		g_bPlayerJumped[client] = true;
 		g_bCheckSurf[client] = false;
@@ -1533,19 +1544,17 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 			{	
 				new Float: fGroundDiff = g_fJump_Initial[client][2] - g_fJump_InitialLastHeight[client];
 				if(fGroundDiff != 0.0)
-					g_bDropJump[client] = true;
-				else
-				{
-					//blocks sometimes valid multi bhops because ontouch detects grounds as walls
-					if (g_bTouchWall[client])
+				{				
+					if(FloatAbs(fGroundDiff) < 1.5)
 					{
-						g_bPlayerJumped[client]=false;
+						g_fJump_InitialLastHeight[client] = g_fJump_Initial[client][2];
+						g_bPlayerJumped[client] = false;
+						g_bDropJump[client] = false;
 						return;
 					}
-					g_bDropJump[client] = false;
-				}
-				if (g_bDropJump[client])
+					g_bDropJump[client] = true;
 					g_fDroppedUnits[client] = FloatAbs(fGroundDiff);
+				}
 			}		
 			//StandUpBhop?
 			new Float: x = GetEngineTime() - g_fLastTimeDucked[client];
@@ -1603,6 +1612,7 @@ public Postthink(client)
 		fJump_Height =  FloatAbs(g_fMaxHeight[client]) - FloatAbs(g_fJump_Initial[client][2]);
 	
 	g_flastHeight[client] = fJump_Height;
+	
 	
 	//sync/strafes
 	new sync = RoundToNearest(g_good_sync[client] / g_sync_frames[client] * 100.0);
@@ -1672,7 +1682,8 @@ public Postthink(client)
 	}
 	else
 		Format(szStrafeStats,1024, "");
-	
+		
+		
 	//t00-b4d
 	if(g_fJump_Distance[client] < 100.0 && !g_bLadderJump[client])
 	{
@@ -2391,12 +2402,14 @@ public Entity_BoostTouch(bhop,client)
 public OnTouch(client, other)
 {
 	if (IsClientInGame(client) && IsPlayerAlive(client))
-	{
-		if ((1 <= client <= MaxClients) && other == 0)
+	{		
+		if ((1 <= client <= MaxClients))
 		{
-			g_bTouchWall[client] = true;	
+			g_bTouchWall[client] = true;				
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
-				g_bCheckSurf[client] = true;	               
+			{
+				g_bCheckSurf[client] = true;	 	
+			}
 		}
 	}
 }  

@@ -364,6 +364,7 @@ public Float:GetSpeed(client)
 	return speed;
 }
 
+
 public Float:GetVelocity(client)
 {
 	decl Float:fVelocity[3];

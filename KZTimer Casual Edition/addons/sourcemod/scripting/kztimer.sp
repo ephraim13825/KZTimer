@@ -14,8 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-
-#define VERSION "1.3 Casual Edition"
+#define VERSION "1.31"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -51,16 +50,6 @@
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
 
-//changelog
-/*
-v1.30 casual / v1.31 pro
-- changed replay bot names: <TYPE> REPLAY BOT <NAME> (<TIME>)
-- adjusted the replay panel
-- removed db_deleteInvalidGlobalEntries from MapEnd method (*watchdog*)
-- fixed some minor issues for workshop maps
-- -> fixed: Exception list is not loaded.
-- -> fixed: Timer freezes, gets stuck and when you stop the time it sometimes takes 10 seconds to register.
-*/
 //botmimic2
 //https://forums.alliedmods.net/showthread.php?t=164148?t=164148
 #define MAX_RECORD_NAME_LENGTH 64

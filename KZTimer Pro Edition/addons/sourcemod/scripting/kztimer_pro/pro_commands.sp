@@ -1668,6 +1668,7 @@ public TeleClient(client,pos)
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
 				EmitSoundToClient(client,"buttons/blip1.wav",client);
+			g_bSlowDownCheck[client] = false;
 		}
 	}		
 }

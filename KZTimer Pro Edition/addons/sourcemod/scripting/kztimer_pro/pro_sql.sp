@@ -4140,13 +4140,16 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 		if (g_pr_multiplier[client]>0)
 			g_pr_points[client]+=  g_pr_points_finished*g_pr_multiplier[client];		
 
-		//challenge ratios 
-		if (client<=MAXPLAYERS && IsValidEntity(client) && IsClientConnected(client) && g_bchallengeConnected[client])
+		if (client<=MAXPLAYERS && IsValidEntity(client) && IsClientConnected(client))
 		{
 			g_pr_Calculating[client] = true;
-			g_challenge_win_ratio[client] = SQL_FetchInt(hndl, 6);
-			g_challenge_points_ratio[client] = SQL_FetchInt(hndl, 7);
-			g_bchallengeConnected[client] = false;
+			//challenge ratios 
+			if (g_bchallengeConnected[client])
+			{
+				g_challenge_win_ratio[client] = SQL_FetchInt(hndl, 6);
+				g_challenge_points_ratio[client] = SQL_FetchInt(hndl, 7);
+				g_bchallengeConnected[client] = false;
+			}
 		}
 		//CountFinishedMapsTP
 		decl String:szQuery[512];       

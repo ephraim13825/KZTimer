@@ -12,6 +12,52 @@ public SetServerTags()
 		CloseHandle(CvarHandle);
 }
 
+public MidAirSlowDown(client,Float:maxdeltalj,Float:maxdeltabhop,Float:neglj,Float:negbhop)
+{
+	if (client > 0 && IsClientInGame(client) && IsPlayerAlive(client))
+	{
+		new Float: neg;
+		new Float: maxdelta;
+		if (g_ground_frames[client] < 11)
+		{
+			maxdelta = maxdeltabhop;
+			neg = negbhop;
+		}
+		else
+		{
+			maxdelta = maxdeltalj;
+			neg = neglj;
+		}
+		if(!(GetEntityFlags(client) & FL_ONGROUND))
+		{
+			new Float:fVelDelta;
+			fVelDelta = GetSpeed(client) - GetVSpeed(vLastVelocity[client]);		
+
+			/* Filter low speed */
+			if(GetSpeed(client) >= GetEntPropFloat(client, Prop_Send, "m_flMaxspeed"))
+			{				
+				/* Filter low acceleration */
+				if(fVelDelta > maxdelta)
+				{					
+					new Float:fVelocity[3];
+					GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
+					if(fVelocity[0] == 0.0)
+						fVelocity[0] = 0.1;
+					if(fVelocity[1] == 0.0)
+						fVelocity[1] = 0.1;
+					if(fVelocity[2] == 0.0)
+						fVelocity[2] = 0.1;
+					new Float:currentspeed = SquareRoot(Pow(fVelocity[0],2.0)+Pow(fVelocity[1],2.0));
+					new Float:Multpl = currentspeed / (currentspeed - neg);	
+					fVelocity[0] /= Multpl;
+					fVelocity[1] /= Multpl;
+					TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
+				}
+			}			
+		}
+	}
+}
+
 public PrintConsoleInfo(client)
 {
 	new timeleft;

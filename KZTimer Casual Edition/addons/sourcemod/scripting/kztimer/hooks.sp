@@ -517,7 +517,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 {
 	if (g_bRoundEnd)
 		return Plugin_Continue;
-		
+
+			
 	static MoveType:LastMoveType[MAXPLAYERS + 1];
 	g_CurrentButton[client] = buttons;
 	if (client > 0 && IsClientInGame(client) && IsPlayerAlive(client) && !g_bSpectate[client])
@@ -778,7 +779,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		{
 			decl String:classname[64];
 			GetClientWeapon(client, classname, 64);
-			if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)))
+			new Float: speed = GetSpeed(client);
+			if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)) && speed > 249.0)
 			{          
 				new g_mouseAbs = mouse[0] - g_mouseDirOld[client];
 				if (g_mouseAbs < 0)
@@ -1495,7 +1497,6 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 	new weapon = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
 	if (!g_bSpectate[client] && IsPlayerAlive(client) && weapon != -1 && IsClientInGame(client))
 	{
-		
 		//water level?
 		if (GetEntProp(client, Prop_Data, "m_nWaterLevel") > 0)
 			return;
@@ -1522,6 +1523,7 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 		g_fJumpOffTime[client] = GetEngineTime();
 		g_fMaxSpeed[client] = 0.0;
 		g_strafecount[client] = 0;
+		g_bDropJump[client] = false;
 		g_bDuckInAir[client] = false;
 		g_bPlayerJumped[client] = true;
 		g_bCheckSurf[client] = false;
@@ -1542,7 +1544,14 @@ public Prethink (client, JumpType:type, Float:pos[3], Float:vel)
 			{	
 				new Float: fGroundDiff = g_fJump_Initial[client][2] - g_fJump_InitialLastHeight[client];
 				if(fGroundDiff != 0.0)
-				{
+				{				
+					if(FloatAbs(fGroundDiff) < 1.5)
+					{
+						g_fJump_InitialLastHeight[client] = g_fJump_Initial[client][2];
+						g_bPlayerJumped[client] = false;
+						g_bDropJump[client] = false;
+						return;
+					}
 					g_bDropJump[client] = true;
 					g_fDroppedUnits[client] = FloatAbs(fGroundDiff);
 				}
@@ -2422,7 +2431,7 @@ public OnTouch(client, other)
 {
 	if (IsClientInGame(client) && IsPlayerAlive(client))
 	{
-		if ((1 <= client <= MaxClients) && other == 0)
+		if ((1 <= client <= MaxClients))
 		{	
 			g_bTouchWall[client] = true;		
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
