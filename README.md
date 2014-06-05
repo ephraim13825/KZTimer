@@ -7,7 +7,7 @@ Changelog
 
 v1.32 standard/pro
 - fixed a tp glitch (thx 2 x3ro)
-- optimized wall touch method to prevent fail detection (jumpstats)
+- optimized wall touch method to prevent fail detections (jumpstats)
 - added a chat message for players if they missed their personal best 
 - minor optimizations
 
