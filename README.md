@@ -16,9 +16,6 @@ v1.31 casual
 - fixed wrong rank promotion after earning points
 - fixed a minor jumpstats glitch
 - changed global database password
-- pro version changes:
-- added jump penalty
-- reduced air acceleration (coding)
 
 v1.30 standard / v1.31 pro
 - changed replay bot names: -TYPE- REPLAY BOT -NAME- (-TIME-)
