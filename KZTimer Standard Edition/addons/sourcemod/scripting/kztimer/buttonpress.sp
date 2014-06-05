@@ -1,5 +1,4 @@
 // buttonpress.sp
-
 public ButtonPress(const String:name[], caller, activator, Float:delay)
 {
 	if(!IsValidEntity(caller) || !IsValidEntity(activator))
@@ -51,7 +50,10 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 
 // - Climb Button OnStartPress -
 public CL_OnStartTimerPress(client)
-{
+{	
+	if (g_bNewReplay[client] || !(GetEntityFlags(client) & FL_ONGROUND))
+		return;	
+
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -61,12 +63,7 @@ public CL_OnStartTimerPress(client)
 		if (diff > 0.1)
 			ClientCommand(client, buffer); 
 	}
-	
-	if (g_bNewReplay[client])
-	{
-		return;
-	}	
-	
+
 	new Float:time;
 	time = GetEngineTime() - g_fLastTimeNoClipUsed[client];
 
@@ -124,9 +121,13 @@ public CL_OnStartTimerPress(client)
 		g_fStartTime[client] = GetEngineTime();
 		g_bMenuOpen[client] = false;		
 		g_bTopMenuOpen[client] = false;	
-		g_bTimeractivated[client] = true;	
 		g_bPositionRestored[client] = false;
 		g_bAutoBhopWasActive[client] = false;
+		g_bMissedTpBest[client] = false;
+		g_bMissedProBest[client] = false;		
+		g_bMissedTpBest[client] = true;
+		g_bMissedProBest[client] = true;
+		g_bTimeractivated[client] = true;	
 		
 		if(g_PlayerStates[client][bOn])
 		{
@@ -149,9 +150,12 @@ public CL_OnStartTimerPress(client)
 			decl String:szTpTime[32];
 			decl String:szProTime[32];
 			if (g_fPersonalRecord[client]<=0.0)
-					Format(szTpTime, 32, "NONE");
+			{
+				Format(szTpTime, 32, "NONE");
+			}
 			else
 			{
+				g_bMissedTpBest[client] = false;
 				FormatTimeFloat(client, g_fPersonalRecord[client], 3);
 				Format(szTpTime, 32, "%s (#%i/%i)", g_szTime[client],g_maprank_tp[client],g_maptimes_tp);
 			}
@@ -159,6 +163,7 @@ public CL_OnStartTimerPress(client)
 					Format(szProTime, 32, "NONE");
 			else
 			{
+				g_bMissedProBest[client] = false;
 				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
 				Format(szProTime, 32, "%s (#%i/%i)", g_szTime[client],g_maprank_pro[client],g_maptimes_pro);
 			}
@@ -205,10 +210,10 @@ public CL_OnEndTimerPress(client)
 					if (Target == client)
 					{
 						if (Target == g_iBot2)
-							PrintToChat(i, "%t", "ReplayFinishingMsg", MOSSGREEN,GRAY,LIMEGREEN,g_szReplayNameTp,GRAY,LIMEGREEN,g_szReplayTimeTp,GRAY);
+							PrintToChat(i, "%t", "ReplayFinishingMsg", MOSSGREEN,WHITE,LIMEGREEN,g_szReplayNameTp,GRAY,LIMEGREEN,g_szReplayTimeTp,GRAY);
 						else
 						if (Target == g_iBot)
-							PrintToChat(i, "%t", "ReplayFinishingMsg", MOSSGREEN,GRAY,LIMEGREEN,g_szReplayName,GRAY,LIMEGREEN,g_szReplayTime,GRAY);
+							PrintToChat(i, "%t", "ReplayFinishingMsg", MOSSGREEN,WHITE,LIMEGREEN,g_szReplayName,GRAY,LIMEGREEN,g_szReplayTime,GRAY);
 						decl String:szsound[255];
 						Format(szsound, sizeof(szsound), "play %s", RELATIVE_BUTTON_PATH); 
 						ClientCommand(i,szsound);

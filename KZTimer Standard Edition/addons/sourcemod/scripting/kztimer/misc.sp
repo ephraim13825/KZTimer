@@ -1809,3 +1809,32 @@ Float:GetVSpeed(Float:v[3])
 	
 	return GetVectorLength(vVelocity);
 }
+
+public bool:WallCheck(client)
+{
+	decl Float:pos[3];
+	decl Float:endpos[3];
+	decl Float:angs[3];
+	decl Float:vecs[3];                    
+	GetClientEyePosition(client, pos);
+	GetClientEyeAngles(client, angs);
+	GetAngleVectors(angs, vecs, NULL_VECTOR, NULL_VECTOR);
+	angs[1] = -180.0;
+	while (angs[1] != 180.0)
+	{
+		new Handle:trace = TR_TraceRayFilterEx(pos, angs, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+		if(TR_DidHit(trace))
+		{
+				TR_GetEndPosition(endpos, trace);
+				new Float: fdist = GetVectorDistance(endpos, pos, false);
+				if (fdist < 25.0)
+				{				
+					CloseHandle(trace); 
+					return true;
+				}
+		}
+		CloseHandle(trace); 
+		angs[1]+=15.0;
+	}
+	return false;
+}

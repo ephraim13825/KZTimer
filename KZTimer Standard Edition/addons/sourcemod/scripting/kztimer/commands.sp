@@ -479,16 +479,7 @@ public Action:Client_Undo(client, args)
 	{
 		if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
 			return Plugin_Handled;
-		/*new Float:fVelocity[3];
-		GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
-		if (fVelocity[0] != 0.0 || fVelocity[1] != 0.0 || fVelocity[2] != 0.0)
-		{
-			if (g_bClimbersMenuSounds[client])
-				EmitSoundToClient(client,"buttons/button10.wav",client);
-			PrintToChat(client, "%t", "Undo2", MOSSGREEN,WHITE,RED);
-			return Plugin_Handled;
-		}
-		else*/
+		g_bValidTeleport[client]=true;
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 	}
 	return Plugin_Handled;
@@ -1078,7 +1069,10 @@ public Action:Client_Start(client, args)
 		
 	//spawn at Timer
 	if (g_bRestartCords[client]==true)
+	{
+		g_bValidTeleport[client]=true;
 		TeleportEntity(client, g_fPlayerCordsRestart[client],g_fPlayerAnglesRestart[client], Float:{0.0,0.0,-100.0});		
+	}
 	else //else spawn at spawnpoint
 		CS_RespawnPlayer(client);	
 		
@@ -1647,6 +1641,7 @@ public TeleClient(client,pos)
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			//GetGroundOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
+			g_bValidTeleport[client]=true;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)

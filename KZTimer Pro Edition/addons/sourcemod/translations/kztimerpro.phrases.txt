@@ -1,5 +1,15 @@
 ﻿"Phrases"
 {
+	"MissedTpBest"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:s},{6:c}"
+		"en"       "[{1}KZ{2}] {3}You have missed your tp best time of ({4}{5}{6})"
+	}
+	"MissedProBest"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:s},{6:c}"
+		"en"       "[{1}KZ{2}] {3}You have missed your pro best time of ({4}{5}{6})"
+	}
 	"KickMsg"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i}"

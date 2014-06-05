@@ -6,7 +6,6 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 	{	
 		if (!g_bRoundEnd)
 		{	
-			g_bTouchWall[client] = false;
 			g_fStartCommandUsed_LastTime[client] = GetEngineTime();
 			g_bPlayerJumped[client] = false;
 			g_SpecTarget[client] = -1;	
@@ -869,6 +868,23 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 						g_bClimbersMenuwasOpen[client]=false;
 						ClimbersMenu(client);	
 					}		
+				
+				//Check Time
+				if (g_fRunTime[client] > g_fPersonalRecordPro[client] && !g_bMissedProBest[client] && g_OverallTp[client] == 0)
+				{
+					g_bMissedProBest[client]=true;
+					FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
+					PrintToChat(client, "%t", "MissedProBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+					EmitSoundToClient(client,"buttons/button18.wav",client);
+				}
+				else
+					if (g_fRunTime[client] > g_fPersonalRecord[client] && !g_bMissedTpBest[client])
+					{
+						g_bMissedTpBest[client]=true;
+						FormatTimeFloat(client, g_fPersonalRecord[client], 3);
+						PrintToChat(client, "%t", "MissedTpBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+						EmitSoundToClient(client,"buttons/button18.wav",client);
+					}
 			}
 		}
 		//Standup bunnyhop?
@@ -893,27 +909,54 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_bCheckSurf[client] = false;
 		}
 		
-		//Block Teleports
 		new Float:pos[3];
-		GetClientAbsOrigin(client, pos);
-		new Float:sum = FloatAbs(pos[0]) - FloatAbs(g_fPosOld[client][0]);
-		if (sum > 10 || sum < -10)
+		GetClientAbsOrigin(client, pos);	
+		//TELEPORT CHECK JUMPSTATS
+		if (!IsFakeClient(client))
 		{
-				if (g_bPlayerJumped[client])	
-				{
-					g_LeetJumpDominating[client]=0;
-					g_bPlayerJumped[client] = false;
-				}	
-		}
-		sum = FloatAbs(pos[1]) - FloatAbs(g_fPosOld[client][1]);
-		if (sum > 10 || sum < -10)
-		{
-			if (g_bPlayerJumped[client])
+			new Float:sum = FloatAbs(pos[0]) - FloatAbs(g_fPosOld[client][0]);
+			if (sum > 10 || sum < -10)
 			{
-				g_bPlayerJumped[client] = false;
-				g_LeetJumpDominating[client]=0;
+					if (g_bPlayerJumped[client])	
+					{
+						g_LeetJumpDominating[client]=0;
+						g_bPlayerJumped[client] = false;
+					}	
 			}
-				
+			else
+			{
+				sum = FloatAbs(pos[1]) - FloatAbs(g_fPosOld[client][1]);
+				if (sum > 10 || sum < -10)
+				{
+					if (g_bPlayerJumped[client])
+					{
+						g_bPlayerJumped[client] = false;
+						g_LeetJumpDominating[client]=0;
+					}			
+				}
+			}		
+			
+			//TELEPORT CHECK TIMER
+			if (sum > 35 || sum < -35)
+			{
+				if (!g_bValidTeleport[client])
+				{
+					g_bTimeractivated[client]=false;				
+				}
+				g_bValidTeleport[client]=false;
+			}
+			else
+			{
+				sum = FloatAbs(pos[1]) - FloatAbs(g_fPosOld[client][1]);
+				if (sum > 35 || sum < -35)
+				{
+					if (!g_bValidTeleport[client])
+					{
+						g_bTimeractivated[client]=false;					
+					}
+					g_bValidTeleport[client]=false;
+				}
+			}	
 		}
 		GetClientAbsOrigin(client, g_fPosOld[client]);
 		
@@ -1475,7 +1518,8 @@ public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));
 	new Float:time = GetGameTime();
 	g_fLastJump[client] = time;		
-	if (g_bJumpStats)
+	new bool:touchwall = WallCheck(client);
+	if (g_bJumpStats && !touchwall)
 		Prethink(client,JumpType_Unknown,Float:{0.0,0.0,0.0},0.0);
 }
 			
@@ -1712,7 +1756,7 @@ public Postthink(client)
 		
 	//Chat Output
 	//LongJump
-	if (!g_bLadderJump[client] && ground_frames > 11 && fGroundDiff == 0.0 && 200.0 < g_fPreStrafe[client] < 278.0 && fJump_Height <= 66.0) 
+	if (!g_bLadderJump[client] && ground_frames > 11 && fGroundDiff == 0.0 && 200.0 < g_fPreStrafe[client] < 278.0 && fJump_Height <= 66.0 && g_fJump_Distance[client] < 300.0) 
 	{	
 		//strafe hack block
 		if (g_bPreStrafe)
@@ -2328,7 +2372,6 @@ public OnEntityCreated(iEntity, const String:classname[])
 		if(StrEqual(classname, "player"))   
 		{
 			SDKHook(iEntity, SDKHook_StartTouch, OnTouch);
-			SDKHook(iEntity, SDKHook_EndTouch, OnEndTouch);
 		}
 	}
 }
@@ -2404,8 +2447,7 @@ public OnTouch(client, other)
 	if (IsClientInGame(client) && IsPlayerAlive(client))
 	{		
 		if ((1 <= client <= MaxClients))
-		{
-			g_bTouchWall[client] = true;				
+		{			
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
 			{
 				g_bCheckSurf[client] = true;	 	
@@ -2414,11 +2456,7 @@ public OnTouch(client, other)
 	}
 }  
 
-public OnEndTouch(client, other)
+public Teleport_OnStartTouch(const String:output[], caller, activator, Float:delay)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client))
-	{
-		if ((1 <= client <= MaxClients))
-			g_bTouchWall[client] = false;
-	}
+	g_bValidTeleport[activator]=true;
 }  

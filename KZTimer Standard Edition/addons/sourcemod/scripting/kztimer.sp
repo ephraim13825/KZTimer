@@ -14,7 +14,16 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.31"
+//
+/*
+v1.32
+- fixed a tp glitch (thx 2 x3ro)
+- optimized wall touch method to prevent fail detection (jumpstats)
+- added a chat message for players if they missed their personal best 
+- minor optimizations
+*/
+
+#define VERSION "1.32"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define WHITE 0x01
 #define DARKRED 0x02
@@ -410,6 +419,7 @@ new bool:g_bTpReplay;
 new bool:g_bUpdate;
 new bool:g_pr_refreshingDB;
 new bool:g_bAntiCheat;
+new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bCCheckpoints[MAXPLAYERS+1];
 new bool:g_bHyperscrollWarning[MAXPLAYERS+1];
@@ -430,6 +440,8 @@ new bool:g_bSpectate[MAXPLAYERS+1];
 new bool:g_bTimeractivated[MAXPLAYERS+1];
 new bool:g_bFirstSpawn[MAXPLAYERS+1];
 new bool:g_bFirstSpawn2[MAXPLAYERS+1];
+new bool:g_bMissedTpBest[MAXPLAYERS+1];
+new bool:g_bMissedProBest[MAXPLAYERS+1];
 new bool:g_bRestoreC[MAXPLAYERS+1]; 
 new bool:g_bRestoreCMsg[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuOpen[MAXPLAYERS+1]; 
@@ -452,10 +464,10 @@ new bool:g_strafing_aw[MAXPLAYERS+1];
 new bool:g_strafing_sd[MAXPLAYERS+1];
 new bool:g_pr_showmsg[MAXPLAYERS+1];
 new bool:g_CMOpen[MAXPLAYERS+1];
-new bool:g_bTouchWall[MAXPLAYERS+1];
 new bool:g_brc_PlayerRank[MAXPLAYERS+1];
 new bool:g_bAutoBhopWasActive[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1]; 
+
 new bool:g_bOnLadder[MAXPLAYERS+1]; 
 new bool:g_bColorChat[MAXPLAYERS+1]=true;
 new bool:g_bNewReplay[MAXPLAYERS+1];
@@ -1095,6 +1107,7 @@ public OnPluginStart()
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
 	HookEvent("player_team", Event_OnPlayerTeamPre, EventHookMode_Pre);
 	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
+	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("func_button", "OnPressed", ButtonPress);
 
 	//mapcycle array
@@ -1423,6 +1436,7 @@ public OnClientPostAdminCheck(client)
 		g_strafe_good_sync[client][i] = 0.0;
 		g_strafe_frames[client][i] = 0.0;
 	}
+	g_bValidTeleport[client]=false;
 	g_bNewReplay[client] = false;
 	g_pr_Calculating[client] = false;
 	g_bHyperscrollWarning[client] = false;

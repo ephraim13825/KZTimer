@@ -489,6 +489,7 @@ public Action:Client_Undo(client, args)
 			return Plugin_Handled;
 		}
 		else*/
+		g_bValidTeleport[client]=true;
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 	}
 	return Plugin_Handled;
@@ -1078,7 +1079,10 @@ public Action:Client_Start(client, args)
 		
 	//spawn at Timer
 	if (g_bRestartCords[client]==true)
+	{
+		g_bValidTeleport[client]=true;
 		TeleportEntity(client, g_fPlayerCordsRestart[client],g_fPlayerAnglesRestart[client], Float:{0.0,0.0,-100.0});		
+	}
 	else //else spawn at spawnpoint
 		CS_RespawnPlayer(client);	
 		
@@ -1664,6 +1668,7 @@ public TeleClient(client,pos)
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			//GetGroundOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
+			g_bValidTeleport[client]=true;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)

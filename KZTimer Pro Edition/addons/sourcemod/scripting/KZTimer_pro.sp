@@ -50,12 +50,6 @@
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
 
-//
-/*
-v1.32 pro version
-- recuded air acceleration
-- global db password change
-*/
 //botmimic2
 //https://forums.alliedmods.net/showthread.php?t=164148?t=164148
 #define MAX_RECORD_NAME_LENGTH 64
@@ -409,8 +403,11 @@ new bool:g_bMenuOpen[MAXPLAYERS+1];
 new bool:g_bRestartCords[MAXPLAYERS+1];
 new bool:g_bPause[MAXPLAYERS+1];
 new bool:g_bOverlay[MAXPLAYERS+1];
+new bool:g_bMissedTpBest[MAXPLAYERS+1];
+new bool:g_bMissedProBest[MAXPLAYERS+1];
 new bool:g_bchallengeConnected[MAXPLAYERS+1]=false;
 new bool:g_bDuckInAir[MAXPLAYERS+1];
+new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_bLastButtonJump[MAXPLAYERS+1];
 new bool:g_bPlayerJumped[MAXPLAYERS+1];
 new bool:g_bOnGround[MAXPLAYERS+1];
@@ -441,7 +438,6 @@ new bool:g_strafing_sd[MAXPLAYERS+1];
 new bool:g_pr_showmsg[MAXPLAYERS+1];
 new bool:g_bSlowDownCheck[MAXPLAYERS+1];
 new bool:g_CMOpen[MAXPLAYERS+1];
-new bool:g_bTouchWall[MAXPLAYERS+1];
 new bool:g_brc_PlayerRank[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1]; 
 new bool:g_bOnLadder[MAXPLAYERS+1]; 
@@ -1327,6 +1323,7 @@ public OnClientPostAdminCheck(client)
 	g_fPlayerCordsUndoTp[client][1] =0.0;
 	g_fPlayerCordsUndoTp[client][2] =0.0;
 	g_bchallengeConnected[client] = true;
+	g_bValidTeleport[client] = false;
 	g_bSlowDownCheck[client] = false;
 	g_challenge_win_ratio[client] = 0;
 	g_challenge_points_ratio[client] = 0;
