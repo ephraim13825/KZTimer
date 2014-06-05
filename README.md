@@ -2,7 +2,7 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 
 Info: KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
 
-Very popular kztimer server: 176.57.141.133:27032 [UG] KREEDZ EUROPE [ TIMER | RANKING | JUMPSTATS ] by Unscrup-Gamers
+Very popular kztimer server: 176.57.141.133:27032 [UG] KREEDZ EUROPE [ TIMER | RANKING | JUMPSTATS ]
 
 Changelog
 =======
