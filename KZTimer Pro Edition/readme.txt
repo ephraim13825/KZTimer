@@ -2,7 +2,7 @@
 [ONLY TICKRATE 102.4 SUPPORTED -> srcds parameter -tickrate 102.4]
 
 I have the feeling that kz maps are a bit too easy in csgo but i don't want to change the settings of kztimer because all players are accustomed to them. 
-Therefore, i created a pro edition of kztimer which makes climing in csgo a lot harder and consistent. The movement feels very similiar to 1.6 now!
+Therefore, i have created a pro edition of kztimer which makes climing in csgo a lot harder and consistent. The movement feels very similiar to 1.6 now!
 
 Differences to standard edition:
 - only tickrate 102.4 supported (Why? Tickrate 64 makes bunnyhops a bit random and Tickrate 128 gives u too much speed while you are in mid-air.)
