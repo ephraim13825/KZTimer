@@ -2,19 +2,25 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 
 Info: KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
 
+do you wanna test kztimer before?
+176.57.141.133:27032 [UG] KREEDZ EUROPE
+
 Changelog
 =======
 
-v1.31 casual / v1.32 pro
+v1.32 standard/pro
+- fixed a tp glitch (thx 2 x3ro)
+- optimized wall touch method to prevent fail detections (jumpstats)
+- added a chat message for players if they missed their personal best 
+- minor optimizations
+
+v1.31 casual
 - fixed dropbhop glitch
 - fixed wrong rank promotion after earning points
 - fixed a minor jumpstats glitch
 - changed global database password
-- pro version changes:
-- added jump penalty
-- reduced air acceleration (coding)
 
-v1.30 casual / v1.31 pro
+v1.30 standard / v1.31 pro
 - changed replay bot names: -TYPE- REPLAY BOT -NAME- (-TIME-)
 - adjusted the replay panel
 - removed db_deleteInvalidGlobalEntries from MapEnd method (*watchdog*)
