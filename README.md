@@ -20,10 +20,10 @@ v1.33 standard edition
 - db table playerjumpstats3 replaces playerjumpstats2 
 
 --> how to port jumpstats data from the old table into the new table: 
-1. install the new version of kztimer
-2. start the server and stop it then again (kztimer  creates automatically the new db table playerjumpstats3)
-3. use navicat lite (or some other db front end) and export the data from playerjumpstats2 into a .txt file. (format doenst matter)
-4. Afterwards u have to import the file in playerjumpstats3 --> DONE
+- install the new version of kztimer
+- start the server and stop it then again (kztimer  creates automatically the new db table playerjumpstats3)
+- use navicat lite (or some other db front end) and export the data from playerjumpstats2 into a .txt file. (format doenst matter)
+- Afterwards u have to import the file in playerjumpstats3 --> DONE
 
 
 
