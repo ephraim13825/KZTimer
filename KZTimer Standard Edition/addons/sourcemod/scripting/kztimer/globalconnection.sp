@@ -48,4 +48,6 @@ public Action:SecretTimer(Handle:timer)
 	new Handle:tmp = FindPluginByFile("macrodox.smx");
 	if (tmp != INVALID_HANDLE && GetPluginStatus(tmp) == Plugin_Running)
 		ServerCommand("sm plugins unload macrodox.smx");
+	if (tmp != INVALID_HANDLE)
+		CloseHandle(tmp);
 }
