@@ -1,3 +1,7 @@
+
+PRO VERSION CURRENTLY NOT AVAILABLE
+
+-----------------------------------
 [ONLY for KZ_ / XC_ MAPS]
 [ONLY TICKRATE 102.4 SUPPORTED -> srcds parameter -tickrate 102.4]
 

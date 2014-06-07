@@ -546,8 +546,8 @@
 	}
 	"Jumpstats_LjAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"en"        "[{1}KZ{2}] {3}{4}{5} jumped {6}{7} units{8} with a {9}LongJump"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"en"        "[{1}KZ{2}] {3}{4}{5} jumped {6}{7} units{8} with a {9}LongJump{10}"
 	}
 	"Jumpstats_BhopAll"
  	{
@@ -584,6 +584,11 @@
 		"#format"   "{1:c},{2:c},{3:c},{4:.3f}"
 		"en"        "[{1}KZ{2}] {3}You beat your personal best for LongJump with a {4} jump!"
 	}
+	"Jumpstats_BeatLjBlockBest"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c}{4:i},{5:.3f}"
+		"en"        "[{1}KZ{2}] {3}You beat your personal best for Block LongJump with a {4} block and {5} jump!"
+	}
 	"Jumpstats_BeatWjBest"
  	{
 		"#format"   "{1:c},{2:c},{3:c},{4:.3f}"
@@ -608,6 +613,11 @@
  	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:i},{6:.3f}"
 		"en"        "[{1}KZ{2}] {3}{4} is now #{5} in the LongJump Top 20! [{6} units]"
+	}
+	"Jumpstats_LjBlockTop"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:i},{6:i},{7:.3f}"
+		"en"        "[{1}KZ{2}] {3}{4} is now #{5} in the Block LongJump Top 20! [{6} units block/{7} units jump]"
 	}
 	"Jumpstats_WjTop"
  	{
