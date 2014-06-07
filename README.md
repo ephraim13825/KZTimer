@@ -1,12 +1,35 @@
 Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223274
 
-Info: KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
+Info: 
+- KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
+- PRO VERSION CURRENTLY NOT AVAILABLE
+
 
 do you wanna test kztimer before?
 176.57.141.133:27032 [UG] KREEDZ EUROPE
 
+
+
 Changelog
 =======
+
+v1.33 standard edition
+- code optimization (contains a lot smaller bug fixes)
+- added client commands !ljblock and !flashlight
+- added longjump block stats
+- db table playerjumpstats3 replaces playerjumpstats2 
+
+--> how to port jumpstats data from the old table into the new table: 
+1. install the new version of kztimer
+2. start the server and stop it then again (kztimer  creates automatically the new db table playerjumpstats3)
+3. use navicat lite (or some other db front end) and export the data from playerjumpstats2 into a .txt file. (format doenst matter)
+Afterwards u have to import the file in playerjumpstats3 --> DONE
+
+
+
+
+
+
 
 v1.32 standard/pro
 - fixed a tp glitch (thx 2 x3ro)
