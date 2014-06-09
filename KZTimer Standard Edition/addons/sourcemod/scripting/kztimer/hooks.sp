@@ -611,10 +611,11 @@ public OnEntityCreated(iEntity, const String:classname[])
 
 public OnTouch(client, other)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client))
-		if ((1 <= client <= MaxClients) && other != 0)
-			if (g_bPlayerJumped[client])
-				ResetJump(client);
+	if (1 <= client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
+	{
+		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
+			ResetJump(client);				
+	}
 }  
 
 public Teleport_OnStartTouch(const String:output[], caller, activator, Float:delay)

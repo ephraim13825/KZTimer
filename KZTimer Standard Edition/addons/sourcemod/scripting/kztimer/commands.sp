@@ -1,3 +1,12 @@
+public Action:Client_Usp(client, args)
+{
+	if (g_UspDrops[client] < 3)
+		GiveUsp(client);
+	else
+		PrintToChat(client, "%t", "Usp3", MOSSGREEN,WHITE);
+	return Plugin_Handled;
+}
+
 public Action:Client_Ljblock(client, args)
 {
 	if (IsClientInGame(client) && IsPlayerAlive(client))
@@ -40,25 +49,6 @@ public Action:Client_Flashlight(client, args)
 	return Plugin_Handled;
 }
 
-public Action:Client_Usp(client, args)
-{
-
-	for (new i; i < GetEntityCount(); i++)
-    {
-        if (IsValidEdict(i))
-		{
-			decl String:targetname[64];
-			GetEntPropString(i, Prop_Data, "m_iName", targetname, sizeof(targetname));
-			PrintToConsole(client, "%s", targetname);
-		}	
-	}
-	
-	if (g_UspDrops[client] < 3)
-		GiveUsp(client);
-	else
-		PrintToChat(client, "%t", "Usp3", MOSSGREEN,WHITE);
-	return Plugin_Handled;
-}
 
 //MACRODOX BHOP PROTECTION
 //https://forums.alliedmods.net/showthread.php?p=1678026

@@ -51,9 +51,12 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 // - Climb Button OnStartPress -
 public CL_OnStartTimerPress(client)
 {	
-	if (g_bNewReplay[client] || !(GetEntityFlags(client) & FL_ONGROUND))
-		return;	
-
+	if (!IsFakeClient(client))
+	{
+		if (g_bNewReplay[client] || !(GetEntityFlags(client) & FL_ONGROUND))
+			return;
+	}
+		
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -127,8 +130,7 @@ public CL_OnStartTimerPress(client)
 		g_bMissedProBest[client] = false;		
 		g_bMissedTpBest[client] = true;
 		g_bMissedProBest[client] = true;
-		g_bTimeractivated[client] = true;	
-		
+		g_bTimeractivated[client] = true;		
 		if(g_PlayerStates[client][bOn])
 		{
 			g_PlayerStates[client][bOn] = false;
@@ -181,6 +183,7 @@ public CL_OnStartTimerPress(client)
 // - Climb Button OnEndPress -
 public CL_OnEndTimerPress(client)
 {
+	
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -190,14 +193,9 @@ public CL_OnEndTimerPress(client)
 		if (diff > 0.1)
 			ClientCommand(client, buffer); 
 	}	
-	
-	if (!g_bTimeractivated[client]) 
-		return;	
-	g_newTp[client] = g_OverallTp[client];
-	
-	g_bTimeractivated[client] = false;	
+
 	//Format Final Time
-	if (IsFakeClient(client))
+	if (IsFakeClient(client) && g_bTimeractivated[client])
 	{
 		for(new i = 1; i <= MaxClients; i++) 
 		{
@@ -221,8 +219,15 @@ public CL_OnEndTimerPress(client)
 				}					
 			}		
 		}	
+		g_bTimeractivated[client] = false;	
 		return;
 	}
+
+	if (!g_bTimeractivated[client]) 
+		return;	
+	g_newTp[client] = g_OverallTp[client];	
+	g_bTimeractivated[client] = false;	
+	
 	
 	//decl
 	decl String:szName[MAX_NAME_LENGTH];	

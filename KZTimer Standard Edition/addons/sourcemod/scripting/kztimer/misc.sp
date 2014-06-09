@@ -1302,48 +1302,51 @@ public WjJumpPreCheck(client, &buttons)
 
 public TeleportCheck(client, Float: origin[3])
 {
-	new Float:sum = FloatAbs(origin[0]) - FloatAbs(g_fLastPosition[client][0]);
-	if (sum > 10 || sum < -10)
+	if (!IsFakeClient(client))
 	{
-			if (g_bPlayerJumped[client])	
-			{
-				g_LeetJumpDominating[client]=0;
-				g_bPlayerJumped[client] = false;
-			}	
-	}
-	else
-	{
-		sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+		new Float:sum = FloatAbs(origin[0]) - FloatAbs(g_fLastPosition[client][0]);
 		if (sum > 10 || sum < -10)
 		{
-			if (g_bPlayerJumped[client])
-			{
-				g_bPlayerJumped[client] = false;
-				g_LeetJumpDominating[client]=0;
-			}			
+				if (g_bPlayerJumped[client])	
+				{
+					g_LeetJumpDominating[client]=0;
+					g_bPlayerJumped[client] = false;
+				}	
 		}
-	}		
-
-	if (sum > 35 || sum < -35)
-	{
-		if (!g_bValidTeleport[client])
+		else
 		{
-			g_bTimeractivated[client]=false;				
-		}
-		g_bValidTeleport[client]=false;
-	}
-	else
-	{
-		sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+			if (sum > 10 || sum < -10)
+			{
+				if (g_bPlayerJumped[client])
+				{
+					g_bPlayerJumped[client] = false;
+					g_LeetJumpDominating[client]=0;
+				}			
+			}
+		}		
+
 		if (sum > 35 || sum < -35)
 		{
 			if (!g_bValidTeleport[client])
 			{
-				g_bTimeractivated[client]=false;					
+				g_bTimeractivated[client]=false;				
 			}
 			g_bValidTeleport[client]=false;
 		}
-	}			
+		else
+		{
+			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+			if (sum > 35 || sum < -35)
+			{
+				if (!g_bValidTeleport[client])
+				{
+					g_bTimeractivated[client]=false;					
+				}
+				g_bValidTeleport[client]=false;
+			}
+		}	
+	}
 }
 
 public NoClipCheck(client)
@@ -1791,18 +1794,16 @@ public DeadMainTimer(client)
 				decl String:szName[MAX_NAME_LENGTH];
 				GetClientName(ObservedUser, szName, MAX_NAME_LENGTH);
 				if (g_bTimeractivated[ObservedUser] == true)
-				{
+				{			
 					decl String:szTime[32];
 					decl String:szTPBest[32];
 					decl String:szProBest[32];
-					new Float:Time = GetEngineTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];
+					new Float:Time = GetEngineTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];				
 					if (ObservedUser != g_iBot && ObservedUser != g_iBot2)
 						FormatTimeFloat(client, Time, 1);
 					else
 						FormatTimeFloat(client, Time, 4);
-					Format(szTime, 32, "%s", g_szTime[client]);	
-					
-					
+					Format(szTime, 32, "%s", g_szTime[client]);						
 					if (!g_bPause[ObservedUser])
 					{
 						
@@ -1830,19 +1831,19 @@ public DeadMainTimer(client)
 						else
 						{	
 							if (ObservedUser == g_iBot)
-								Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: %s\nTickrate: %s\nSpecs: %i", szTime,szTick,count);
+								Format(g_szPlayerPanelText[client], 512, "[Pro Replay]\nTime: %s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
 							else
-								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: %s\nTeleports: %i\nTickrate: %s\nSpecs: %i",szTime,g_ReplayRecordTps,szTick,count);	
+								Format(g_szPlayerPanelText[client], 512, "[Tp Replay]\nTime: %s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
 						}
 					}
 					else
 					{
 						if (ObservedUser == g_iBot)
-							Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i", szTick,count);
+							Format(g_szPlayerPanelText[client], 512, "[Pro Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);
 						else
 						{
 							if (ObservedUser == g_iBot2)
-								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
+								Format(g_szPlayerPanelText[client], 512, "[Tp Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
 							else
 								Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \nPAUSED", count, sSpecs);
 						}
@@ -2067,7 +2068,7 @@ public AliveMainTimer(client)
 	new count=0;
 	for(new i = 1; i <= MaxClients; i++) 
 	{
-		if (IsClientInGame(i) && !IsPlayerAlive(i) && !g_bFirstSpawn[i])
+		if (IsClientInGame(i) && !IsPlayerAlive(i) && !g_bFirstSpawn[i] && g_bSpectate[i])
 		{			
 			SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 			if (SpecMode == 4 || SpecMode == 5)

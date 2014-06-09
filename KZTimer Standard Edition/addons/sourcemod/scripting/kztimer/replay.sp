@@ -156,7 +156,20 @@ public LoadReplays()
 {
 	if (!g_bReplayBot)
 		return;
-		
+	
+	//TEAM JOIN OVERLAY BUG
+	new bool:player_joined=false;
+	for(new client = 1; client <= MaxClients; client++) 
+	{					
+		if (IsClientInGame(client) && !IsFakeClient(client) && (IsPlayerAlive(client) || g_bSpectate[client]))
+			player_joined=true;		
+	}	
+	if (!player_joined)
+	{
+		CreateTimer(3.0,LoadReplaysTimer,_,TIMER_FLAG_NO_MAPCHANGE);
+		return;
+	}
+	
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
 	decl String:sPath1[256]; 

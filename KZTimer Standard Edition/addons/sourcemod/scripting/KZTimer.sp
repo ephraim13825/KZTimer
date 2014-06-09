@@ -14,8 +14,9 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.33"
+#define VERSION "1.34"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
+
 #define WHITE 0x01
 #define DARKRED 0x02
 #define PURPLE 0x03
@@ -829,7 +830,7 @@ public OnPluginStart()
 	GetConVarString(g_hArmModel,g_sArmModel,256);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
 	
-	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "Welcome. This server is using KZ Timer Casual Edition","Welcome message", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "Welcome. This server is using KZ Timer","Welcome message", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
