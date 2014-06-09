@@ -14,6 +14,11 @@ do you wanna test kztimer before?
 Changelog
 =======
 
+v1.34 standard edition
+- fixed surf glitch
+- fixed replay bot panel
+
+
 v1.33 standard edition
 - code optimization (contains a lot smaller bug fixes)
 - added client commands !ljblock and !flashlight
