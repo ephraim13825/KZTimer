@@ -14,7 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.34"
+#define VERSION "1.34b"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
