@@ -1172,7 +1172,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 		if (g_tickrate == 64)
 			z = 20;
 		else
-			z = 40;
+			z = 30;
 		if ((buttons & IN_MOVERIGHT && mouse_ang > 0 && g_mouseAbs < z) || (buttons & IN_MOVELEFT && mouse_ang < 0 && g_mouseAbs < z))
 		{            
 			g_PrestrafeFrameCounter[client]++;
@@ -1180,7 +1180,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 			if (g_tickrate == 64)
 				x = 50;
 			else
-				x = 100;
+				x = 90;
 			if (g_PrestrafeFrameCounter[client] < x)
 			{
 				g_PrestrafeVelocity[client]+=0.00213;
@@ -1193,7 +1193,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 				else
 				{
 					if (g_PrestrafeVelocity[client] > 1.107)
-						g_PrestrafeVelocity[client]-=0.022;
+						g_PrestrafeVelocity[client]-=0.032;
 				}
 				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);						
 			}
