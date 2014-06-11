@@ -15,8 +15,7 @@ Changelog
 =======
 
 v1.35
-- renamed skill groups
-- colored admin/vig clantag in chat
+- renamed default skill groups
 - minor optimizations
 
 v1.34 
