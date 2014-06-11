@@ -14,12 +14,16 @@ do you wanna test kztimer before?
 Changelog
 =======
 
-v1.34 standard edition
+v1.35
+- renamed skill groups
+- colored admin/vig clantag in chat
+- minor optimizations
+
+v1.34 
 - fixed surf glitch
 - fixed replay bot panel
 
-
-v1.33 standard edition
+v1.33 
 - code optimization (contains a lot smaller bug fixes)
 - added client commands !ljblock and !flashlight
 - added longjump block stats
@@ -32,24 +36,19 @@ v1.33 standard edition
 - Afterwards u have to import the file in playerjumpstats3 --> DONE
 
 
-
-
-
-
-
-v1.32 standard/pro
+v1.32 
 - fixed a tp glitch (thx 2 x3ro)
 - optimized wall touch method to prevent fail detections (jumpstats)
 - added a chat message for players if they missed their personal best 
 - minor optimizations
 
-v1.31 casual
+v1.31 
 - fixed dropbhop glitch
 - fixed wrong rank promotion after earning points
 - fixed a minor jumpstats glitch
 - changed global database password
 
-v1.30 standard / v1.31 pro
+v1.30 
 - changed replay bot names: -TYPE- REPLAY BOT -NAME- (-TIME-)
 - adjusted the replay panel
 - removed db_deleteInvalidGlobalEntries from MapEnd method (*watchdog*)
