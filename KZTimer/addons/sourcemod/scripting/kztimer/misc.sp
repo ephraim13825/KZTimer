@@ -853,11 +853,18 @@ stock Action:PrintSpecMessageAll(client)
 	if (StrEqual(szTextToAll,"") || StrEqual(szTextToAll," ") || StrEqual(szTextToAll,"  "))
 		return Plugin_Handled;
 		
+	//COLOR
+	decl String:rank[64];
+	if (((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
+		Format(rank, 64, "%c%s%c",LIMEGREEN,g_pr_rankname[client],GRAY);
+	else
+		Format(rank, 64, "%s",g_pr_rankname[client]);
+				
 	if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
-		CPrintToChatAll("%c%s%c [%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,g_pr_rankname[client],WHITE,GRAY,szName,WHITE, szTextToAll);
+		CPrintToChatAll("%c%s%c [%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,GRAY,szName,WHITE, szTextToAll);
 	else
 		if (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
-			CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GRAY,g_pr_rankname[client],WHITE,GRAY,szName,WHITE, szTextToAll);
+			CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GRAY,rank,WHITE,GRAY,szName,WHITE, szTextToAll);
 		else
 			if (g_bCountry)
 				CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,szName,WHITE, szTextToAll);
@@ -1274,7 +1281,8 @@ public MenuRefresh(client)
 			{
 				g_bMissedProBest[client]=true;
 				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
-				PrintToChat(client, "%t", "MissedProBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+				if (g_fPersonalRecordPro[client] > 0.0)
+					PrintToChat(client, "%t", "MissedProBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
 				EmitSoundToClient(client,"buttons/button18.wav",client);
 			}
 			else
@@ -1282,7 +1290,8 @@ public MenuRefresh(client)
 				{
 					g_bMissedTpBest[client]=true;
 					FormatTimeFloat(client, g_fPersonalRecord[client], 3);
-					PrintToChat(client, "%t", "MissedTpBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+					if (g_fPersonalRecord[client] > 0.0)
+						PrintToChat(client, "%t", "MissedTpBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
 					EmitSoundToClient(client,"buttons/button18.wav",client);
 				}
 		}
@@ -1742,7 +1751,9 @@ public WaterCheck(client)
 public SurfCheck(client)
 {
 	if (g_bPlayerJumped[client] && WallCheck(client))
+	{
 		ResetJump(client);
+	}
 }
 
 public ResetJump(client)
@@ -1831,19 +1842,19 @@ public DeadMainTimer(client)
 						else
 						{	
 							if (ObservedUser == g_iBot)
-								Format(g_szPlayerPanelText[client], 512, "[Pro Replay]\nTime: %s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
+								Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: %s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
 							else
-								Format(g_szPlayerPanelText[client], 512, "[Tp Replay]\nTime: %s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
+								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: %s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
 						}
 					}
 					else
 					{
 						if (ObservedUser == g_iBot)
-							Format(g_szPlayerPanelText[client], 512, "[Pro Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);
+							Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);
 						else
 						{
 							if (ObservedUser == g_iBot2)
-								Format(g_szPlayerPanelText[client], 512, "[Tp Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
+								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
 							else
 								Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \nPAUSED", count, sSpecs);
 						}

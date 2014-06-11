@@ -1,10 +1,10 @@
 // Here you are able to define the names of all 9 skill groups. But you can't add more!
-NEWBIE
-NOVICE
+NEW
 SCRUB
-ROOKIE
+TRAINEE
+CASUAL
+REGULAR
 SKILLED
 EXPERT
+SEMI-PRO
 PRO
-ELITE
-MASTER

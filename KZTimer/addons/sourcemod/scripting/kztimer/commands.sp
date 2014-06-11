@@ -524,7 +524,7 @@ public Action:NoClip(client, args)
 	{
 		if (!g_bMapFinished[client])
 		{
-			if (!StrEqual(g_pr_rankname[client],"MASTER") && IsClientInGame(client))
+			if (!StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) && IsClientInGame(client))
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
 			else
 				if (!g_bNoClip[client])
@@ -2087,7 +2087,7 @@ public HelpPanel2(client)
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ")	
 	DrawPanelText(panel, "!start - go back to start");
-	DrawPanelText(panel, "!stop - stops your map timer");
+	DrawPanelText(panel, "!stop - stops your timer");
 	DrawPanelText(panel, "!pause - on/off client pause");	
 	DrawPanelText(panel, "!usp - spawns a usp");
 	DrawPanelText(panel, "!challenge - starts a challenge/race against someone");	
@@ -2134,9 +2134,9 @@ public HelpPanel3(client)
 	DrawPanelText(panel, " ");
 	Format(szTmp, 64, "Skill groups: %s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2],g_pr_rank_Scrub,g_szSkillGroups[3],g_pr_rank_Rookie);
 	DrawPanelText(panel, szTmp);
-	Format(szTmp, 64, "%s (%ip), %s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[4],g_pr_rank_Skilled,g_szSkillGroups[5],g_pr_rank_Expert,g_szSkillGroups[6],g_pr_rank_Pro,g_szSkillGroups[7],g_pr_rank_Elite);
+	Format(szTmp, 64, "%s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[4],g_pr_rank_Skilled,g_szSkillGroups[5],g_pr_rank_Expert,g_szSkillGroups[6],g_pr_rank_Pro);
 	DrawPanelText(panel, szTmp);
-	Format(szTmp, 64, "%s (%ip, noclip unlocked)", g_szSkillGroups[8],g_pr_rank_Master);
+	Format(szTmp, 64, "%s (%ip), %s (%ip, noclip unlocked)", g_szSkillGroups[7],g_pr_rank_Elite, g_szSkillGroups[8],g_pr_rank_Master);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
@@ -2300,9 +2300,9 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Spectator list  -  Disabled", "Spectator list  -  Disabled");	
 	//9
 	if (g_bInfoPanel[client])
-		AddMenuItem(optionmenu, "Speed/Keys panel  -  Enabled", "Speed/Keys Panel  -  Enabled");
+		AddMenuItem(optionmenu, "Speed/Keys panel  -  Enabled", "Speed/Keys panel  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys Panel  -  Disabled");	
+		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");	
 	//10
 	if (g_bShowNames[client])
 		AddMenuItem(optionmenu, "Target Name Panel  -  Enabled", "Target name panel  -  Enabled");

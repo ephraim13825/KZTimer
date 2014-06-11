@@ -137,7 +137,7 @@ public Action:Say_Hook(client, args)
 			return Plugin_Handled;		
 		}
 		decl String:sPath[PLATFORM_MAX_PATH];
-		decl String:line[64]
+		decl String:line[64];
 		BuildPath(Path_SM, sPath, sizeof(sPath), "%s", EXCEPTION_LIST_PATH);
 		new Handle:fileHandle=OpenFile(sPath,"r");		
 		
@@ -192,6 +192,13 @@ public Action:Say_Hook(client, args)
 		}
 		else
 		{
+			//COLOR
+			decl String:rank[64];
+			if (((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
+				Format(rank, 64, "%c%s%c",LIMEGREEN,g_pr_rankname[client],GRAY);
+			else
+				Format(rank, 64, "%s",g_pr_rankname[client]);
+			
 			if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
 			{						
 				if (StrEqual(sText,""))
@@ -205,22 +212,22 @@ public Action:Say_Hook(client, args)
 				{
 					if (team==CS_TEAM_T)
 					{
-						CPrintToChatAll("%c%s%c [%c%s%c] {orange}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+						CPrintToChatAll("%c%s%c [%c%s%c] {orange}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,szName,WHITE,sText);
 						PrintToConsole(client," %s [%s] %s: %s",g_szCountryCode[client],g_pr_rankname[client],szName,sText);
 					}
 					else
-						CPrintToChatAll("%c%s%c [%c%s%c] {blue}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+						CPrintToChatAll("%c%s%c [%c%s%c] {blue}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,szName,WHITE,sText);
 				
 				}
 				else
 				{
 					if (team==CS_TEAM_T)
 					{
-						CPrintToChatAll("%c%s%c [%c%s%c] {orange}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+						CPrintToChatAll("%c%s%c [%c%s%c] {orange}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,szName,WHITE,sText);
 						PrintToConsole(client," %s [%s] *DEAD* %s: %s",g_szCountryCode[client],g_pr_rankname[client],szName,sText);
 					}
 					else
-						CPrintToChatAll("%c%s%c [%c%s%c] {blue}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);		
+						CPrintToChatAll("%c%s%c [%c%s%c] {blue}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,szName,WHITE,sText);		
 											
 				}
 				g_bSayHook[client]=false;				
@@ -241,21 +248,21 @@ public Action:Say_Hook(client, args)
 					{
 						if (team==CS_TEAM_T)
 						{
-							CPrintToChatAll("[%c%s%c] {orange}%s%c: %s",GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+							CPrintToChatAll("[%c%s%c] {orange}%s%c: %s",GRAY,rank,WHITE,szName,WHITE,sText);
 							PrintToConsole(client,"^[%s] %s: %s",g_pr_rankname[client],szName,sText);
 						}
 						else
-							CPrintToChatAll("[%c%s%c] {blue}%s%c: %s",GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+							CPrintToChatAll("[%c%s%c] {blue}%s%c: %s",GRAY,rank,WHITE,szName,WHITE,sText);
 					}
 					else
 					{
 						if (team==CS_TEAM_T)
 						{
-							CPrintToChatAll("[%c%s%c] {orange}*DEAD* %s%c: %s",GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);
+							CPrintToChatAll("[%c%s%c] {orange}*DEAD* %s%c: %s",GRAY,rank,WHITE,szName,WHITE,sText);
 							PrintToConsole(client," [%s] *DEAD* %s: %s",g_pr_rankname[client],szName,sText);
 						}
 						else
-							CPrintToChatAll("[%c%s%c] {blue}*DEAD* %s%c: %s",GRAY,g_pr_rankname[client],WHITE,szName,WHITE,sText);			
+							CPrintToChatAll("[%c%s%c] {blue}*DEAD* %s%c: %s",GRAY,rank,WHITE,szName,WHITE,sText);			
 					}			
 					return Plugin_Handled;							
 				}
@@ -614,7 +621,9 @@ public OnTouch(client, other)
 	if (1 <= client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
 	{
 		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
-			ResetJump(client);				
+		{
+			ResetJump(client);	
+		}
 	}
 }  
 

@@ -1,5 +1,40 @@
 ﻿"Phrases"
 {
+	"LJblock1"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Invalid destination (height offset > 0.0)"
+	}
+	"LJblock2"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Invalid destination (failed to detect edges)"
+	}	
+	"LJblock3"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Invalid destination (selected destination is too large)"
+	}
+	"LJblock4"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Invalid destination (location dispatched)"
+	}
+	"LJblock5"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:d},{6:c}"
+		"en"        "[{1}KZ{2}] {3}Longjump Block ({4}{5} units{6}) registered!"
+	}
+	"LJblock6"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
+		"en"        "[{1}KZ{2}] {3}You can only register blocks down to 225 units! (current gap: {4}{5} units{6})"
+	}
+	"LJblock7"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
+		"en"        "[{1}KZ{2}] {3}You can only register blocks up to 300 units! (current gap: {4}{5} units{6})"
+	}	
 	"MissedTpBest"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:s},{6:c}"

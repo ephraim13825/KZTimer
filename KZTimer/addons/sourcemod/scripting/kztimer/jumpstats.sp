@@ -14,7 +14,7 @@ public Function_BlockJump(client)
 	else
 	{
 		g_bLJBlock[client] = false;
-		PrintToChat(client, "[%cKZ%c]%c Invalid destination (height offset > 0.0)",MOSSGREEN,WHITE,RED);
+		PrintToChat(client, "%t", "LJblock1",MOSSGREEN,WHITE,RED);	
 	}
 }
 
@@ -241,7 +241,7 @@ CalculateBlockGap(client, Float:origin[3], Float:target[3])
 	else
 	{
 		g_bLJBlock[client] = false;
-		PrintToChat(client, "[%cKZ%c]%c Invalid destination (failed to detect edges)", MOSSGREEN,WHITE, RED);
+		PrintToChat(client, "%t", "LJblock2",MOSSGREEN,WHITE,RED);	
 		return;
 	}
 
@@ -263,7 +263,7 @@ CalculateBlockGap(client, Float:origin[3], Float:target[3])
 	surface *= surface;
 	if (surface > 1000000)
 	{
-		PrintToChat(client, "[%cKZ%c]%c Invalid destination (selected destination is too large)", MOSSGREEN,WHITE, RED);
+		PrintToChat(client, "%t", "LJblock3",MOSSGREEN,WHITE,RED);	
 		return;
 	}	
 	
@@ -271,7 +271,7 @@ CalculateBlockGap(client, Float:origin[3], Float:target[3])
 	if(!IsCoordInBlockPoint(Edge[1],g_DestBlock[client],true))	
 	{	
 		g_bLJBlock[client] = false;
-		PrintToChat(client, "[%cKZ%c]%c Invalid destination (location dispatched)", MOSSGREEN,WHITE, RED);
+		PrintToChat(client, "%t", "LJblock4",MOSSGREEN,WHITE,RED);	
 		return;		
 	}
 	TE_SetupBeamPoints(Edge[0], Edge[1], g_Beam[0], 0, 0, 0, 1.0, 1.0, 1.0, 10, 0.0, {0,255,255,155}, 0);
@@ -279,16 +279,16 @@ CalculateBlockGap(client, Float:origin[3], Float:target[3])
 	
 	if(g_BlockDist[client] >= 225 && g_BlockDist[client] <= 300)
 	{
-		PrintToChat(client, "[%cKZ%c]%c Longjump Block (%c%d units%c) registered!", MOSSGREEN,WHITE, LIMEGREEN,GREEN, g_BlockDist[client],LIMEGREEN);
+		PrintToChat(client, "%t", "LJblock5", MOSSGREEN,WHITE, LIMEGREEN,GREEN, g_BlockDist[client],LIMEGREEN);
 		g_bLJBlock[client] = true;
 	}
 	else
 	{
 		if (g_BlockDist[client] < 225)
-			PrintToChat(client, "[%cKZ%c]%c You can only register blocks down to 225 units! (current gap: %c%i units%c)", MOSSGREEN,WHITE, RED,DARKRED,g_BlockDist[client],RED);
+			PrintToChat(client, "%t", "LJblock6", MOSSGREEN,WHITE, RED,DARKRED,g_BlockDist[client],RED);
 		else
 			if (g_BlockDist[client] > 300)
-				PrintToChat(client, "[%cKZ%c]%c You can only register blocks up to 300 units! (current gap: %c%i units%c)", MOSSGREEN,WHITE, RED,DARKRED,g_BlockDist[client],RED);
+				PrintToChat(client, "%t", "LJblock7", MOSSGREEN,WHITE, RED,DARKRED,g_BlockDist[client],RED);
 	}
 }
 
@@ -368,7 +368,6 @@ public Prethink (client, Float:pos[3], Float:vel)
 		g_bNoClipUsed[client] = false;
 		return;
 	}
-	
 	//booster or moving plattform?
 	new Float:flVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecBaseVelocity", flVelocity);
@@ -408,8 +407,10 @@ public Prethink (client, Float:pos[3], Float:vel)
 	if (g_fJump_InitialLastHeight[client] != -1.012345)
 	{	
 		new Float: fGroundDiff = g_fJump_Initial[client][2] - g_fJump_InitialLastHeight[client];
+		if (fGroundDiff > -0.1 && fGroundDiff < 0.1)
+			fGroundDiff = 0.0;		
 		if(fGroundDiff != 0.0)
-		{				
+		{		
 			if(FloatAbs(fGroundDiff) < 1.5)
 			{
 				g_fJump_InitialLastHeight[client] = g_fJump_Initial[client][2];
@@ -420,8 +421,7 @@ public Prethink (client, Float:pos[3], Float:vel)
 			g_bDropJump[client] = true;
 			g_fDroppedUnits[client] = FloatAbs(fGroundDiff);
 		}
-	}			
-	
+	}	
 	//last InitialLastHeight
 	g_fJump_InitialLastHeight[client] = g_fJump_Initial[client][2];
 }
@@ -451,7 +451,7 @@ public Postthink(client)
 	//ground diff
 	new Float: fGroundDiff = g_fJump_Final[client][2] - g_fJump_Initial[client][2];
 	new Float: fJump_Height;
-	if (fGroundDiff > -0.01 && fGroundDiff < 0.01)
+	if (fGroundDiff > -0.1 && fGroundDiff < 0.1)
 		fGroundDiff = 0.0;
 	
 	//GetHeight
@@ -534,7 +534,7 @@ public Postthink(client)
 	if(g_fJump_Distance[client] < 200.0)
 	{
 		//multibhop count proforma
-		if (g_last_ground_frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 66.0 && !g_bDropJump[client])
+		if (g_last_ground_frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 67.0 && !g_bDropJump[client])
 			g_multi_bhop_count[client]++;
 		else
 			g_multi_bhop_count[client]=1;
@@ -551,10 +551,10 @@ public Postthink(client)
 		Format(szName,sizeof(szName), "%s (Pro Replay)", g_szReplayName);		
 	if (client == g_iBot2)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
-		
+	
 	//Chat Output
 	//LongJump
-	if (ground_frames > 11 && fGroundDiff == 0.0 && 200.0 < g_fPreStrafe[client] < 278.0 && fJump_Height <= 66.0 && g_fJump_Distance[client] < 300.0 && g_fMaxSpeed2[client] > 200.0) 
+	if (ground_frames > 11 && fGroundDiff == 0.0 && 200.0 < g_fPreStrafe[client] < 278.0 && fJump_Height <= 67.0 && g_fJump_Distance[client] < 300.0 && g_fMaxSpeed2[client] > 200.0) 
 	{	
 		//strafe hack block
 		if (g_bPreStrafe)
@@ -735,7 +735,7 @@ public Postthink(client)
 		}
 	}
 	//Multi Bhop
-	if (g_last_ground_frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 66.0 && !g_bDropJump[client])
+	if (g_last_ground_frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 67.0 && !g_bDropJump[client])
 	{		
 	
 		g_multi_bhop_count[client]++;	
@@ -856,7 +856,7 @@ public Postthink(client)
 		g_multi_bhop_count[client] = 1;	
 
 	//dropbhop
-	if (ground_frames < 11 && g_last_ground_frames[client] > 11 && g_bLastButtonJump[client] && fGroundDiff == 0.0 && fJump_Height <= 66.0 && g_bDropJump[client])
+	if (ground_frames < 11 && g_last_ground_frames[client] > 11 && g_bLastButtonJump[client] && fGroundDiff == 0.0 && fJump_Height <= 67.0 && g_bDropJump[client])
 	{		
 		if (g_fDroppedUnits[client] > 132.0)
 		{
@@ -968,7 +968,7 @@ public Postthink(client)
 		}
 	}
 	// WeirdJump
-	if (ground_frames < 11 && !g_bLastButtonJump[client] && fGroundDiff == 0.0 && fJump_Height <= 66.0 && g_bDropJump[client])
+	if (ground_frames < 11 && !g_bLastButtonJump[client] && fGroundDiff == 0.0 && fJump_Height <= 67.0 && g_bDropJump[client])
 	{						
 			if (g_fDroppedUnits[client] > 132.0)
 			{
@@ -1083,7 +1083,7 @@ public Postthink(client)
 			}
 	}
 	//BunnyHop
-	if (ground_frames < 11 && g_last_ground_frames[client] > 10 && fGroundDiff == 0.0 && fJump_Height <= 66.0 && !g_bDropJump[client] && g_fPreStrafe[client] > 200.0)
+	if (ground_frames < 11 && g_last_ground_frames[client] > 10 && fGroundDiff == 0.0 && fJump_Height <= 67.0 && !g_bDropJump[client] && g_fPreStrafe[client] > 200.0)
 	{
 			//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 			if (((IsFakeClient(client) && g_fJump_Distance[client] > (g_dist_leet_bhop * 1.05)) || g_fJump_Distance[client] > 400.0) || strafes > 20)

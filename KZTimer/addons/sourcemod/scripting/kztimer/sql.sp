@@ -52,7 +52,7 @@ new String:sql_selectPersonalRecords[] 			= "SELECT db2.mapname, db2.steamid, db
 new String:sql_selectPersonalAllRecords[] 		= "SELECT db1.name, db2.steamid, db2.mapname, db2.runtime as overall, db2.teleports AS tp, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0  UNION SELECT db1.name, db2.steamid, db2.mapname, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtimepro > -1.0 ORDER BY mapname ASC;";
 new String:sql_selectTPClimbers[] 				= "SELECT db1.name, db2.runtime, db2.teleports, db2.steamid, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0 ORDER BY db2.runtime ASC LIMIT 20";
 new String:sql_selectProClimbers[] 				= "SELECT db1.name, db2.runtimepro, db2.steamid, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY db2.runtimepro ASC LIMIT 20";
-new String:sql_selectTopClimbers[] 				= "SELECT db2.steamid, db1.name, db2.runtime as overall, db2.teleports AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtime > -1.0 AND db2.teleports >= 0 UNION SELECT db2.steamid, db1.name, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
+new String:sql_selectTopClimbers[] 				= "SELECT db2.steamid, db1.name, db2.runtime as overall, db2.teleports AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0 UNION SELECT db2.steamid, db1.name, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
 new String:sql_selectPlayerCount[] 				= "SELECT name FROM playertimes WHERE mapname = '%s' AND runtime  > -1.0;";
 new String:sql_selectPlayerProCount[] 			= "SELECT name FROM playertimes WHERE mapname = '%s' AND runtimepro  > -1.0;";
 new String:sql_selectPlayerRankTime[] 			= "SELECT name,teleports,mapname FROM playertimes WHERE runtime <= (SELECT runtime FROM playertimes WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0) AND mapname = '%s' AND runtime  > -1.0 ORDER BY runtime;";
@@ -456,7 +456,7 @@ public db_GetMapRecord_Global()
 			SQL_TQuery(g_hDbGlobal, sql_selectMapRecordGlobal128Callback, szQuery);
 		}
 		else
-		{
+		{		
 			Format(szQuery, 255, sqlglobal_selectGlobalRecord102, g_szMapName);
 			SQL_TQuery(g_hDbGlobal, sqlglobal_selectGlobalRecord102Callback, szQuery);	
 		}
@@ -1208,6 +1208,7 @@ public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewLjRecordCallback2, szQuery, client,DBPrio_Low);
+				PrintToConsole(client,"%s", szQuery);
 			}
 			else
 			{
@@ -1216,6 +1217,7 @@ public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
 					SQL_TQuery(g_hDb, SQL_viewLjRecordCallback2, szQuery, client,DBPrio_Low);
+					PrintToConsole(client,"%s", szQuery);
 				}
 			}
 
@@ -3151,7 +3153,7 @@ public db_selectTPClimbers(client)
 public db_selectTopClimbers(client, String:mapname[128])
 {
 	decl String:szQuery[1024];       
-	Format(szQuery, 1024, sql_selectTopClimbers, PERCENT,mapname,PERCENT,PERCENT, mapname,PERCENT);  
+	Format(szQuery, 1024, sql_selectTopClimbers, mapname, mapname);  
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, g_szMapName);
