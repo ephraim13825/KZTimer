@@ -14,6 +14,11 @@ do you wanna test kztimer before?
 Changelog
 =======
 
+v1.36
+- added server cvar kz_colored_ranks (on/off - colored chat ranks)
+- added client command !ranks (prints available player ranks into cha)
+- minor optimizations
+
 v1.35
 - renamed default skill groups
 - minor optimizations
