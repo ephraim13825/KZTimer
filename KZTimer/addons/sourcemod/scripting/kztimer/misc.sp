@@ -36,7 +36,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !usp, !challenge, !surrender, !goto, !spec,");
-	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock");
+	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
 	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !shownames, !sync, !bhop, !flashlight)");
 	PrintToConsole(client, " ");
@@ -804,31 +804,58 @@ public SetPlayerRank(client)
 	if (g_bPointSystem)
 	{
 		if (g_pr_points[client] < g_pr_rank_Novice)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[0]);
-		else					
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[0],WHITE);
+		}
+		else
 		if (g_pr_rank_Novice <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Scrub)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[1]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[1],WHITE);
+		}
 		else
 		if (g_pr_rank_Scrub <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Rookie)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[2]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",GRAY,g_szSkillGroups[2],WHITE);		
+		}
 		else
 		if (g_pr_rank_Rookie <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Skilled)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[3]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTBLUE,g_szSkillGroups[3],WHITE);		
+		}
 		else
 		if (g_pr_rank_Skilled <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Expert)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[4]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",BLUE,g_szSkillGroups[4],WHITE);
+		}
 		else
 		if (g_pr_rank_Expert <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Pro)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[5]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKBLUE,g_szSkillGroups[5],WHITE);
+		}
 		else
 		if (g_pr_rank_Pro <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Elite)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[6]);
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",PINK,g_szSkillGroups[6],WHITE);
+		}
 		else
 		if (g_pr_rank_Elite <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Master)
-			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[7]);		
+		{
+			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[7]);	
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTRED,g_szSkillGroups[7],WHITE);
+		}
 		else
 		if (g_pr_points[client] >= g_pr_rank_Master)
+		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[8]);	
+			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKRED,g_szSkillGroups[8],WHITE);
+		}
 	}	
 	else
 		Format(g_pr_rankname[client], 32, "");	
@@ -836,11 +863,17 @@ public SetPlayerRank(client)
 	// VIP & ADMIN Clantag
 	if (g_bVipClantag)			
 		if ((GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC))
+		{
 			Format(g_pr_rankname[client], 32, "VIP");	
+			Format(g_pr_chat_coloredrank[client], 32, "%cVIP%c",LIMEGREEN,WHITE);
+		}
 			
 	if (g_bAdminClantag)
 		if (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) 
-			Format(g_pr_rankname[client], 32, "ADMIN");			
+		{
+			Format(g_pr_rankname[client], 32, "ADMIN");	
+			Format(g_pr_chat_coloredrank[client], 32, "%cADMIN%c",LIMEGREEN,WHITE);
+		}
 }
 
 stock Action:PrintSpecMessageAll(client)
@@ -852,19 +885,18 @@ stock Action:PrintSpecMessageAll(client)
 	StripQuotes(szTextToAll);
 	if (StrEqual(szTextToAll,"") || StrEqual(szTextToAll," ") || StrEqual(szTextToAll,"  "))
 		return Plugin_Handled;
-		
-	//COLOR
-	decl String:rank[64];
-	if (((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
-		Format(rank, 64, "%c%s%c",LIMEGREEN,g_pr_rankname[client],GRAY);
+
+	decl String:szChatRank[64];
+	if (g_bColoredChatRanks)
+		Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);
 	else
-		Format(rank, 64, "%s",g_pr_rankname[client]);
+		Format(szChatRank, 64, "%s",g_pr_rankname[client]);
 				
 	if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
-		CPrintToChatAll("%c%s%c [%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,rank,WHITE,GRAY,szName,WHITE, szTextToAll);
+		CPrintToChatAll("%c%s%c [%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,szChatRank,WHITE,GRAY,szName,WHITE, szTextToAll);
 	else
 		if (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
-			CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GRAY,rank,WHITE,GRAY,szName,WHITE, szTextToAll);
+			CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GRAY,szChatRank,WHITE,GRAY,szName,WHITE, szTextToAll);
 		else
 			if (g_bCountry)
 				CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,szName,WHITE, szTextToAll);
@@ -1277,7 +1309,7 @@ public MenuRefresh(client)
 					ClimbersMenu(client);	
 				}
 			//Check Time
-			if (g_fRunTime[client] > g_fPersonalRecordPro[client] && !g_bMissedProBest[client] && g_OverallTp[client] == 0)
+			if (g_fRunTime[client] > g_fPersonalRecordPro[client] && !g_bMissedProBest[client] && g_OverallTp[client] == 0 && !g_bPause[client])
 			{
 				g_bMissedProBest[client]=true;
 				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
@@ -1286,7 +1318,7 @@ public MenuRefresh(client)
 				EmitSoundToClient(client,"buttons/button18.wav",client);
 			}
 			else
-				if (g_fRunTime[client] > g_fPersonalRecord[client] && !g_bMissedTpBest[client])
+				if (g_fRunTime[client] > g_fPersonalRecord[client] && !g_bMissedTpBest[client] && !g_bPause[client])
 				{
 					g_bMissedTpBest[client]=true;
 					FormatTimeFloat(client, g_fPersonalRecord[client], 3);
@@ -1314,7 +1346,7 @@ public TeleportCheck(client, Float: origin[3])
 	if (!IsFakeClient(client))
 	{
 		new Float:sum = FloatAbs(origin[0]) - FloatAbs(g_fLastPosition[client][0]);
-		if (sum > 10 || sum < -10)
+		if (sum > 15.0 || sum < -15.0)
 		{
 				if (g_bPlayerJumped[client])	
 				{
@@ -1325,7 +1357,7 @@ public TeleportCheck(client, Float: origin[3])
 		else
 		{
 			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
-			if (sum > 10 || sum < -10)
+			if (sum > 15.0 || sum < -15.0)
 			{
 				if (g_bPlayerJumped[client])
 				{
@@ -1335,22 +1367,22 @@ public TeleportCheck(client, Float: origin[3])
 			}
 		}		
 
-		if (sum > 35 || sum < -35)
+		if (sum > 40.0 || sum < -40.0)
 		{
 			if (!g_bValidTeleport[client])
 			{
-				g_bTimeractivated[client]=false;				
+				g_bTimeractivated[client]=false;		
 			}
 			g_bValidTeleport[client]=false;
 		}
 		else
 		{
 			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
-			if (sum > 35 || sum < -35)
+			if (sum > 40.0 || sum < -40.0)
 			{
 				if (!g_bValidTeleport[client])
 				{
-					g_bTimeractivated[client]=false;					
+					g_bTimeractivated[client]=false;	
 				}
 				g_bValidTeleport[client]=false;
 			}

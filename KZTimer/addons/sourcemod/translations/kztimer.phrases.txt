@@ -28,7 +28,7 @@
 	"LJblock6"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
-		"en"        "[{1}KZ{2}] {3}You can only register blocks down to 225 units! (current gap: {4}{5} units{6})"
+		"en"        "[{1}KZ{2}] {3}You can only register blocks down to 226 units! (current gap: {4}{5} units{6})"
 	}
 	"LJblock7"
 	{

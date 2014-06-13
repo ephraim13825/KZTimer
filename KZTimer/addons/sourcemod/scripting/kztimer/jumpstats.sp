@@ -277,7 +277,7 @@ CalculateBlockGap(client, Float:origin[3], Float:target[3])
 	TE_SetupBeamPoints(Edge[0], Edge[1], g_Beam[0], 0, 0, 0, 1.0, 1.0, 1.0, 10, 0.0, {0,255,255,155}, 0);
 	TE_SendToClient(client);	
 	
-	if(g_BlockDist[client] >= 225 && g_BlockDist[client] <= 300)
+	if(g_BlockDist[client] > 225 && g_BlockDist[client] <= 300)
 	{
 		PrintToChat(client, "%t", "LJblock5", MOSSGREEN,WHITE, LIMEGREEN,GREEN, g_BlockDist[client],LIMEGREEN);
 		g_bLJBlock[client] = true;

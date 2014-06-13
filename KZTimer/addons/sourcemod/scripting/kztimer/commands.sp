@@ -1077,6 +1077,13 @@ public Action:Client_Help(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_Ranks(client, args)
+{
+	if (IsClientInGame(client))
+		PrintToChat(client, "[%cKZ%c] %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s",MOSSGREEN,WHITE, WHITE, g_szSkillGroups[0],WHITE, g_szSkillGroups[1],GRAY, g_szSkillGroups[2],LIGHTBLUE, g_szSkillGroups[3],BLUE, g_szSkillGroups[4],DARKBLUE, g_szSkillGroups[5],PINK, g_szSkillGroups[6],LIGHTRED, g_szSkillGroups[7],DARKRED,g_szSkillGroups[8]);
+	return Plugin_Handled;
+}
+
 public Action:Client_Profile(client, args)
 {
 	ProfileMenu(client,args);
@@ -1164,7 +1171,8 @@ public PauseMethod(client)
 			g_fPauseTime[client] = GetEngineTime() - g_fStartPauseTime[client];
 		}
 		g_bPause[client]=false;
-		SetEntityMoveType(client, MOVETYPE_WALK);
+		if (!g_bRoundEnd)
+			SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityRenderMode(client, RENDER_NORMAL);
 		if (g_bNoBlock)
 			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
@@ -2130,6 +2138,7 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!bhopcheck <name> - checks bhop stats for a given player");
 	DrawPanelText(panel, "!ljblock - registers a longjump block");
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
+	DrawPanelText(panel, "!ranks - prints available player ranks into chat");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
 	DrawPanelText(panel, " ");
 	Format(szTmp, 64, "Skill groups: %s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2],g_pr_rank_Scrub,g_szSkillGroups[3],g_pr_rank_Rookie);
@@ -2172,6 +2181,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
+	PrintToConsole(client, "kz_colored_chatranks %b", g_bColoredChatRanks);
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);
 	PrintToConsole(client, "kz_country_tag %b", g_bCountry);
 	PrintToConsole(client, "kz_custom_models %b", g_bPlayerSkinChange);	

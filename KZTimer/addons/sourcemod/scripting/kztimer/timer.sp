@@ -22,6 +22,12 @@ public Action:HyperscrollWarningTimer(Handle:timer, any:client)
 	g_bHyperscrollWarning[client] = true;
 }
 
+public Action:MoveTypeNoneTimer(Handle:timer, any:client)
+{
+	SetEntityMoveType(client, MOVETYPE_NONE);
+}
+
+
 public Action:RespawnTimer(Handle:timer)
 {
 	//Player Respawn
@@ -59,23 +65,17 @@ public Action:CheckRemainingTime(Handle:timer)
 		if (timeleft==3)
 			PrintToChatAll("[%cMAP%c] 3..",DARKRED,WHITE);
 		if (timeleft==2)
-		{		
+		{
 			ServerCommand("mp_ignore_round_win_conditions 0");
 			PrintToChatAll("[%cMAP%c] 2..",DARKRED,WHITE);
 		}
 		if (timeleft==1)
-			PrintToChatAll("[%cMAP%c] 1..",DARKRED,WHITE);
-		if (timeleft==-2)
-		{	
+		{
 			g_bRoundEnd=true;
-			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
-			for (new client = 1; client <= MaxClients; client++)
-			{				
-				if(IsClientConnected(client) && IsClientInGame(client) && IsPlayerAlive(client))
-				{
-					SlapPlayer(client,9999,false);
-				}
-			}
+			PrintToChatAll("[%cMAP%c] 1..",DARKRED,WHITE);
+			for (new client = 1; client <= MaxClients; client++)				
+				if(IsClientInGame(client) && IsPlayerAlive(client))
+					SlapPlayer(client,100);
 		}
 	}
 }
@@ -324,7 +324,12 @@ public Action:SetClanTag(Handle:timer, any:client)
 	//new rank
 	if (oldrank && g_bPointSystem)
 		if (!StrEqual(g_pr_rankname[client], old_pr_rankname, false) && IsClientInGame(client))
-			PrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,RED, g_pr_rankname[client]);
+		{
+			if (g_bColoredChatRanks)
+				CPrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,GRAY, g_pr_chat_coloredrank[client]);
+			else
+				PrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,RED, g_pr_rankname[client]);
+		}
 }
 
 public Action:SettingsEnforcerTimer(Handle:timer)

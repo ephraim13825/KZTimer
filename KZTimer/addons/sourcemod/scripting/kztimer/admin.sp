@@ -195,6 +195,11 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[33.] Connect message -  Enabled"); 	
 	else
 		Format(szTmp, sizeof(szTmp), "[33.] Connect message  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bColoredChatRanks)
+		Format(szTmp, sizeof(szTmp), "[34.] Colored chat ranks -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[34.] Colored chat ranks  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);		
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -446,7 +451,14 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				ServerCommand("kz_connect_msg 1");
 			else
 				ServerCommand("kz_connect_msg 0");
-		}			
+		}	
+		if(param2 == 33)
+		{
+			if (!g_bColoredChatRanks)
+				ServerCommand("kz_colored_chatranks 1");
+			else
+				ServerCommand("kz_colored_chatranks 0");
+		}		
 		g_AdminMenuLastPage[param1]=param2;
 		if (menu != INVALID_HANDLE)
 			CloseHandle(menu);

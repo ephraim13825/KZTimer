@@ -17,7 +17,7 @@
 /*
 - minor optimizations
 */
-#define VERSION "1.35"
+#define VERSION "1.36"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -29,6 +29,13 @@
 #define RED 0x07
 #define GRAY 0x08
 #define YELLOW 0x09
+#define DARKGREY 0x0A
+#define BLUE 0x0B
+#define DARKBLUE 0x0C
+#define LIGHTBLUE 0x0D
+#define PINK 0x0E
+#define LIGHTRED 0x0F
+
 #define QUOTE 0x22
 #define PERCENT 0x25
 #define CPLIMIT 30 
@@ -278,6 +285,8 @@ new Handle:g_hNoClipS = INVALID_HANDLE;
 new bool:g_bNoClipS;
 new Handle:g_hReplayBot = INVALID_HANDLE;
 new bool:g_bReplayBot;
+new Handle:g_hColoredChatRanks = INVALID_HANDLE;
+new bool:g_bColoredChatRanks;
 new Handle:g_hAutoBan = INVALID_HANDLE;
 new bool:g_bAutoBan;
 new Handle:g_hPauseServerside = INVALID_HANDLE;
@@ -580,6 +589,7 @@ new String:g_szPlayerPanelText[MAXPLAYERS+1][512];
 new String:g_szProfileSteamId[MAXPLAYERS+1][32];
 new String:g_szCountry[MAXPLAYERS+1][100];
 new String:g_szCountryCode[MAXPLAYERS+1][16]; 
+new String:g_pr_chat_coloredrank[MAXPLAYERS+1][32];
 new String:g_pr_rankname[MAXPLAYERS+1][32];  
 new String:g_szSteamID[MAXPLAYERS+1][32];  
 new String:g_pr_szrank[MAXPLAYERS+1][512];  
@@ -609,8 +619,8 @@ new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "follo
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
 
 
-new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock", "/ljblock", "!flashlight", "/flashlight",
-	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","/help","/helpmenu","/menu","/menu ","/checkpoint",
+new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock", "/ljblock", "!flashlight", "/flashlight", "!radio", "/radio",
+	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","/help","/helpmenu","/menu","/menu ","/checkpoint", "!radiooff", "/radiooff",
 	"/gocheck","/unstuck","/stuck","/r","/prev","/undo","/next","/usp","/start","/stop","/pause",
 	"!knife","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", "!disablegoto", "!shownames", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure",
 	"/knife","/adv", "/info", "/colorchat", "/cpmessage", "/sound", "/menusound", "/hide", "/hidespecs", "/showtime", "/disablegoto", "/shownames", "/sync", "/bhop", "/speed", "/showkeys", "/goto", "/measure"};
@@ -708,10 +718,14 @@ public OnPluginStart()
 	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - shows a connect message with country", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
+
+	g_hColoredChatRanks = CreateConVar("kz_colored_chatranks", "1", "on/off - colored chat ranks (based on cs:go weapon colors http://counterstrike.wikia.com/wiki/Skins#Weapon_Quality)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bColoredChatRanks     = GetConVarBool(g_hColoredChatRanks);
+	HookConVarChange(g_hColoredChatRanks, OnSettingChanged);	
 	
 	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - maps wont change after the time has run out if disabled. mp_ignore_round_win_conditions is set to 1 and prevents round endings (and also map endings)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMapEnd     = GetConVarBool(g_hMapEnd);
-	HookConVarChange(g_hMapEnd, OnSettingChanged);	
+	HookConVarChange(g_hMapEnd, OnSettingChanged);
 	
 	g_hMultiplayerBhop = CreateConVar("kz_multiplayer_bhop", "1", "on/off - allows players to jump across sections of bhops without the blocks being triggered.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMultiplayerBhop     = GetConVarBool(g_hMultiplayerBhop);
@@ -912,8 +926,8 @@ public OnPluginStart()
 			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "315.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "320.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "240.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "245.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "340.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
+			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "345.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
 		}
 	}	
 		
@@ -1014,6 +1028,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
+	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks into chat");
 	RegConsoleCmd("sm_speed", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_pause", Client_Pause,"[KZTimer] on/off client pause (sets your timer on hold and freezes your current position)");
 	RegConsoleCmd("sm_colorchat", Client_Colorchat, "[KZTimer] on/off jumpstats messages of others in chat");
@@ -1752,6 +1767,13 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 			g_bConnectMsg = false;
 	}
+	if(convar == g_hColoredChatRanks)
+	{
+		if(newValue[0] == '1')
+			g_bColoredChatRanks = true;			
+		else
+			g_bColoredChatRanks = false;
+	}	
 	if(convar == g_hMultiplayerBhop)
 	{
 		if(newValue[0] == '1')
