@@ -719,7 +719,7 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hColoredChatRanks = CreateConVar("kz_colored_chatranks", "1", "on/off - colored chat ranks (based on cs:go weapon colors http://counterstrike.wikia.com/wiki/Skins#Weapon_Quality)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hColoredChatRanks = CreateConVar("kz_colored_chatranks", "1", "on/off - colored chat ranks", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bColoredChatRanks     = GetConVarBool(g_hColoredChatRanks);
 	HookConVarChange(g_hColoredChatRanks, OnSettingChanged);	
 	
@@ -869,7 +869,6 @@ public OnPluginStart()
 	
 	g_hBanDuration   = CreateConVar("kz_anticheat_ban_duration", "72.0", "Ban duration (hours)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 1.0, true, 999999.0);
 	
-	//jump physics depend on tickrate.. therefore different defaults
 	if (g_tickrate == 64)
 	{
 		g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "325.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
