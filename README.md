@@ -14,6 +14,11 @@ do you wanna test kztimer before?
 Changelog
 =======
 
+v1.37
+- removed ljtop sql message in console
+- fixed a noclip glitch (thx 2 umbrella)
+- kzadmin menu optimized
+
 v1.36
 - added server cvar kz_colored_ranks (on/off - colored chat ranks)
 - added client command !ranks (prints available player ranks into cha)
