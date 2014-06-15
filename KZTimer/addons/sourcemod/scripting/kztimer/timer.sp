@@ -27,6 +27,11 @@ public Action:MoveTypeNoneTimer(Handle:timer, any:client)
 	SetEntityMoveType(client, MOVETYPE_NONE);
 }
 
+public Action:BhopCheck(Handle:timer, any:client)
+{
+	if (!g_bBhop[client])
+		g_LeetJumpDominating[client] = 0;
+}
 
 public Action:RespawnTimer(Handle:timer)
 {

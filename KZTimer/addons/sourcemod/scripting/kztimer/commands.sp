@@ -517,18 +517,17 @@ public Action:Client_Undo(client, args)
 	return Plugin_Handled;
 }
 
-
 public Action:NoClip(client, args)
 {
-	if (g_bNoClipS)
+	if (IsClientInGame(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC))
 	{
 		if (!g_bMapFinished[client])
 		{
-			if (!StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) && IsClientInGame(client))
-				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
+			//BEST RANK || ADMIN || VIP
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+				Action_NoClip(client);
 			else
-				if (!g_bNoClip[client])
-					Action_NoClip(client);
+				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
 		}
 		else
 			if (!g_bNoClip[client])
@@ -1707,6 +1706,7 @@ public Action_NoClip(client)
 					g_fRunTime[client] = -1.0;
 				}				
 				g_fLastTimeNoClipUsed[client] = GetEngineTime();
+				ResetJump(client);
 				SetEntityMoveType(client, MOVETYPE_NOCLIP);
 				SetEntityRenderMode(client , RENDER_NONE); 
 				SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
@@ -2059,13 +2059,13 @@ public HelpPanel(client)
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!helpmenu - opens this menu");
 	DrawPanelText(panel, "!menu - opens climbers menu");
-	DrawPanelText(panel, "!options - player options");	
+	DrawPanelText(panel, "!options - opens options menu");	
 	DrawPanelText(panel, "!top - top players/records");
 	DrawPanelText(panel, "!latest - latest local records");
 	DrawPanelText(panel, "!profile [<name>] - player profile");
-	DrawPanelText(panel, "!checkpoint / !gocheck - save / teleport");
+	DrawPanelText(panel, "!checkpoint / !gocheck - checkpoint / gocheck");
 	DrawPanelText(panel, "!prev / !next - previous or next checkpoint");
-	DrawPanelText(panel, "!undo - undoes your last teleport");
+	DrawPanelText(panel, "!undo - undoes your last gocheck");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "next page");
 	DrawPanelItem(panel, "exit");
@@ -2094,14 +2094,14 @@ public HelpPanel2(client)
 	Format(szTmp, 64, "KZ Timer Help (2/3) - v%s",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ")	
-	DrawPanelText(panel, "!start - go back to start");
+	DrawPanelText(panel, "!start/!r - go back to start");
 	DrawPanelText(panel, "!stop - stops your timer");
 	DrawPanelText(panel, "!pause - on/off client pause");	
 	DrawPanelText(panel, "!usp - spawns a usp");
 	DrawPanelText(panel, "!challenge - starts a challenge/race against someone");	
 	DrawPanelText(panel, "!spec [<name>] - selects a player you want to watch");	
-	DrawPanelText(panel, "!goto [<name>] - teleports you to a selected player");
-	DrawPanelText(panel, "!compare [<name>] - compare your challenge results");
+	DrawPanelText(panel, "!goto [<name>] - teleports you to a given player");
+	DrawPanelText(panel, "!compare [<name>] - compares your challenge results with a given player");
 	DrawPanelText(panel, "!showsettings - shows plugin settings");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
@@ -2134,19 +2134,14 @@ public HelpPanel3(client)
 	Format(szTmp, 64, "KZ Timer Help (3/3) - v%s",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ");	
-	DrawPanelText(panel, "!maptop <mapname> - displays local map top for a given map");
+	DrawPanelText(panel, "!maptop <mapname> - displays map top for a given map");
 	DrawPanelText(panel, "!bhopcheck <name> - checks bhop stats for a given player");
 	DrawPanelText(panel, "!ljblock - registers a longjump block");
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
-	DrawPanelText(panel, "!ranks - prints available player ranks into chat");
+	DrawPanelText(panel, "!ranks - prints available ranks into chat");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
 	DrawPanelText(panel, " ");
-	Format(szTmp, 64, "Skill groups: %s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2],g_pr_rank_Scrub,g_szSkillGroups[3],g_pr_rank_Rookie);
-	DrawPanelText(panel, szTmp);
-	Format(szTmp, 64, "%s (%ip), %s (%ip), %s (%ip),", g_szSkillGroups[4],g_pr_rank_Skilled,g_szSkillGroups[5],g_pr_rank_Expert,g_szSkillGroups[6],g_pr_rank_Pro);
-	DrawPanelText(panel, szTmp);
-	Format(szTmp, 64, "%s (%ip), %s (%ip, noclip unlocked)", g_szSkillGroups[7],g_pr_rank_Elite, g_szSkillGroups[8],g_pr_rank_Master);
-	DrawPanelText(panel, szTmp);
+	DrawPanelText(panel, "noclip bind: bind KEY +noclip");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "exit");

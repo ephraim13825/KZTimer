@@ -211,29 +211,9 @@ public Action:Say_Hook(client, args)
 				decl String:szName[32];
 				GetClientName(client,szName,32);
 				if (IsPlayerAlive(client))
-				{
-					if (team==CS_TEAM_T)
-					{
-						CPrintToChatAll("%c%s%c [%c%s%c] {orange}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,szChatRank,WHITE,szName,WHITE,sText);
-						PrintToConsole(client," %s [%s] %s: %s",g_szCountryCode[client],g_pr_rankname[client],szName,sText);
-					}
-					else
-					{
-						CPrintToChatAll("%c%s%c [%s%c] {blue}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,g_pr_chat_coloredrank[client],WHITE,szName,WHITE,sText);
-					}
-				
-				}
+					CPrintToChatAllEx(client,"{green}%s{default} [{grey}%s{default}] {teamcolor}%s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);			
 				else
-				{
-					if (team==CS_TEAM_T)
-					{
-						CPrintToChatAll("%c%s%c [%c%s%c] {orange}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,szChatRank,WHITE,szName,WHITE,sText);
-						PrintToConsole(client," %s [%s] *DEAD* %s: %s",g_szCountryCode[client],g_pr_rankname[client],szName,sText);
-					}
-					else
-						CPrintToChatAll("%c%s%c [%c%s%c] {blue}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,GRAY,szChatRank,WHITE,szName,WHITE,sText);		
-											
-				}
+					CPrintToChatAllEx(client,"{green}%s{default} [{grey}%s{default}] {teamcolor}*DEAD* %s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);
 				g_bSayHook[client]=false;				
 				return Plugin_Handled;
 			}
@@ -249,25 +229,9 @@ public Action:Say_Hook(client, args)
 					decl String:szName[32];
 					GetClientName(client,szName,32);
 					if (IsPlayerAlive(client))
-					{
-						if (team==CS_TEAM_T)
-						{
-							CPrintToChatAll("[%c%s%c] {orange}%s%c: %s",GRAY,szChatRank,WHITE,szName,WHITE,sText);
-							PrintToConsole(client,"^[%s] %s: %s",g_pr_rankname[client],szName,sText);
-						}
-						else
-							CPrintToChatAll("[%c%s%c] {blue}%s%c: %s",GRAY,szChatRank,WHITE,szName,WHITE,sText);
-					}
+						CPrintToChatAllEx(client,"[{grey}%s{default}] {teamcolor}%s{default}: %s",szChatRank,szName,sText);	
 					else
-					{
-						if (team==CS_TEAM_T)
-						{
-							CPrintToChatAll("[%c%s%c] {orange}*DEAD* %s%c: %s",GRAY,szChatRank,WHITE,szName,WHITE,sText);
-							PrintToConsole(client," [%s] *DEAD* %s: %s",g_pr_rankname[client],szName,sText);
-						}
-						else
-							CPrintToChatAll("[%c%s%c] {blue}*DEAD* %s%c: %s",GRAY,szChatRank,WHITE,szName,WHITE,sText);			
-					}			
+						CPrintToChatAllEx(client,"[{grey}%s{default}] {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);			
 					return Plugin_Handled;							
 				}
 				else
@@ -281,29 +245,12 @@ public Action:Say_Hook(client, args)
 						decl String:szName[32];
 						GetClientName(client,szName,32);
 						if (IsPlayerAlive(client))
-						{
-							if (team==CS_TEAM_T)
-							{
-								CPrintToChatAll("[%c%s%c] {orange}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,szName,WHITE,sText);
-								PrintToConsole(client," [%s] %s: %s",g_szCountryCode[client],szName,sText);
-							}
-							else
-								CPrintToChatAll("[%c%s%c] {blue}%s%c: %s",GREEN,g_szCountryCode[client],WHITE,szName,WHITE,sText);
-						}
+							CPrintToChatAllEx(client,"[{green}%s{default}] {teamcolor}%s{default}: %s",g_szCountryCode[client],szName,sText);	
 						else
-						{
-							if (team==CS_TEAM_T)
-							{
-								CPrintToChatAll("[%c%s%c] {orange}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,szName,WHITE,sText);
-								PrintToConsole(client," [%s] *DEAD* %s: %s",g_szCountryCode[client],szName,sText);
-							}
-							else
-								CPrintToChatAll("[%c%s%c] {blue}*DEAD* %s%c: %s",GREEN,g_szCountryCode[client],WHITE,szName,WHITE,sText);			
-						}			
+							CPrintToChatAllEx(client,"[{green}%s{default}] {teamcolor}*DEAD* %s{default}: %s",g_szCountryCode[client],szName,sText);		
 						g_bSayHook[client]=false;
 						return Plugin_Handled;							
-					}			
-			
+					}								
 			}
 		}	
 	}
@@ -599,7 +546,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	g_LastButton[client] = buttons;
 	return Plugin_Continue;
 }
-
 
 public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 {

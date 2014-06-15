@@ -53,7 +53,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Moreover, you can earn points by winning challenges and top 20 lj's, wj's, bhop jumps,");
 	PrintToConsole(client, "dropbhop jumps and multi-bhop jumps.");	
 	PrintToConsole(client, " ");
-	PrintToConsole(client, "Skill groups:");
+	PrintToConsole(client, "Ranks:");
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2], g_pr_rank_Scrub,g_szSkillGroups[3], g_pr_rank_Rookie,g_szSkillGroups[4], g_pr_rank_Skilled);
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Expert, g_szSkillGroups[6],g_pr_rank_Pro, g_szSkillGroups[7], g_pr_rank_Elite, g_szSkillGroups[8], g_pr_rank_Master);
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");	
@@ -664,7 +664,7 @@ public MapFinishedMsgs(client, type)
 		PlayRecordSound(g_sound_type[client]);			
 	
 		//noclip MsgMsg
-		if (IsClientInGame(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],"MASTER") && g_bNoClipS)
+		if (IsClientInGame(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],"MASTER") && !(GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC) && g_bNoClipS)
 			PrintToChat(client, "%t", "NoClipUnlocked",MOSSGREEN,WHITE,YELLOW);
 		g_bMapFinished[client] = true;
 		CreateTimer(2.0, DBUpdateTimer, client,TIMER_FLAG_NO_MAPCHANGE);
@@ -892,16 +892,16 @@ stock Action:PrintSpecMessageAll(client)
 	else
 		Format(szChatRank, 64, "%s",g_pr_rankname[client]);
 				
-	if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
-		CPrintToChatAll("%c%s%c [%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,szChatRank,WHITE,GRAY,szName,WHITE, szTextToAll);
+	if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))		
+		CPrintToChatAll("{green}%s{default} [{grey}%s{default}] *SPEC* {grey}%s{default}: %s",g_szCountryCode[client], szChatRank, szName,szTextToAll);
 	else
 		if (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
-			CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GRAY,szChatRank,WHITE,GRAY,szName,WHITE, szTextToAll);
+			CPrintToChatAll("[{grey}%s{default}] *SPEC* {grey}%s{default}: %s", szChatRank,szName,szTextToAll);
 		else
 			if (g_bCountry)
-				CPrintToChatAll("[%c%s%c] *SPEC* %c%s%c: %s", GREEN,g_szCountryCode[client],WHITE,GRAY,szName,WHITE, szTextToAll);
+				CPrintToChatAll("[{green}%s{default}] *SPEC* {grey}%s{default}: %s", g_szCountryCode[client],szName, szTextToAll);
 			else		
-				CPrintToChatAll("*SPEC* %c%s%c: %s", GRAY,szName,WHITE, szTextToAll);
+				CPrintToChatAll("*SPEC* {grey}%s{default}: %s", szName, szTextToAll);
 	for (new i = 1; i <= MaxClients; i++)
 		if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))	
 		{
@@ -1350,7 +1350,6 @@ public TeleportCheck(client, Float: origin[3])
 		{
 				if (g_bPlayerJumped[client])	
 				{
-					g_LeetJumpDominating[client]=0;
 					g_bPlayerJumped[client] = false;
 				}	
 		}
@@ -1362,7 +1361,6 @@ public TeleportCheck(client, Float: origin[3])
 				if (g_bPlayerJumped[client])
 				{
 					g_bPlayerJumped[client] = false;
-					g_LeetJumpDominating[client]=0;
 				}			
 			}
 		}		
@@ -1406,7 +1404,6 @@ public NoClipCheck(client)
 	if(mt == MOVETYPE_NOCLIP && (g_bPlayerJumped[client] || g_bTimeractivated[client]))
 	{
 		g_bPlayerJumped[client] = false;
-		g_LeetJumpDominating[client]=0;
 		g_bTimeractivated[client] = false;
 	}
 }
@@ -1791,7 +1788,6 @@ public SurfCheck(client)
 public ResetJump(client)
 {
 	g_ground_frames[client] = 0;
-	g_LeetJumpDominating[client]=0;
 	g_bPlayerJumped[client] = false;		
 }
 

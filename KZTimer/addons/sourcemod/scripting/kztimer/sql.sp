@@ -1208,7 +1208,6 @@ public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewLjRecordCallback2, szQuery, client,DBPrio_Low);
-				PrintToConsole(client,"%s", szQuery);
 			}
 			else
 			{
@@ -1217,7 +1216,6 @@ public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
 					SQL_TQuery(g_hDb, SQL_viewLjRecordCallback2, szQuery, client,DBPrio_Low);
-					PrintToConsole(client,"%s", szQuery);
 				}
 			}
 

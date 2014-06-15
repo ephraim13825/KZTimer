@@ -422,6 +422,13 @@ public Prethink (client, Float:pos[3], Float:vel)
 			g_fDroppedUnits[client] = FloatAbs(fGroundDiff);
 		}
 	}	
+	
+	if (g_ground_frames[client]<11)
+		g_bBhop[client] = true;
+	else
+		g_bBhop[client] = false;
+	
+	
 	//last InitialLastHeight
 	g_fJump_InitialLastHeight[client] = g_fJump_Initial[client][2];
 }
@@ -544,13 +551,12 @@ public Postthink(client)
 		return;
 	}
 	
-
-
 	//change BotName (szName) for jumpstats output
 	if (client == g_iBot)
 		Format(szName,sizeof(szName), "%s (Pro Replay)", g_szReplayName);		
 	if (client == g_iBot2)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
+	
 	
 	//Chat Output
 	//LongJump
@@ -631,7 +637,7 @@ public Postthink(client)
 		//good?
 		if (g_fJump_Distance[client] >= g_dist_good_lj && g_fJump_Distance[client] < g_dist_pro_lj)	
 		{
-			g_LeetJumpDominating[client]=0;		
+			CreateTimer(0.1, BhopCheck, client,TIMER_FLAG_NO_MAPCHANGE);
 			PrintToChat(client, "[%cKZ%c] %cLJ: %.2f units [%c%i%c Strafes | %c%.0f%c %s | %c%3.f%c Max | %c%.0f%c Height | %c%i%c%c Sync]%s",MOSSGREEN,WHITE,GRAY, g_fJump_Distance[client],LIMEGREEN,strafes,GRAY, LIMEGREEN, g_fPreStrafe[client], GRAY,szVr,LIMEGREEN,g_fMaxSpeed2[client],GRAY,LIMEGREEN, fJump_Height,GRAY,LIMEGREEN, sync,PERCENT,GRAY,sBlockDist);			
 			PrintToConsole(client, "        ");
 			PrintToConsole(client, "[KZ] %s jumped %0.4f units with a LongJump [%i Strafes | %.3f %s | %.3f Max | Height %.1f | %i%c Sync]%s",szName, g_fJump_Distance[client],strafes, g_fPreStrafe[client], szVr,g_fMaxSpeed2[client],fJump_Height,sync,PERCENT,sBlockDistCon);
@@ -641,7 +647,7 @@ public Postthink(client)
 			//pro?
 			if (g_fJump_Distance[client] >= g_dist_pro_lj && g_fJump_Distance[client] < g_dist_leet_lj)	
 			{
-				g_LeetJumpDominating[client]=0;
+				CreateTimer(0.1, BhopCheck, client,TIMER_FLAG_NO_MAPCHANGE);
 				//chat & sound client		
 				PrintToConsole(client, "        ");
 				PrintToConsole(client, "[KZ] %s jumped %0.4f units with a LongJump [%i Strafes | %.3f %s | %.3f Max | Height %.1f | %i%c Sync]%s",szName, g_fJump_Distance[client],strafes, g_fPreStrafe[client],szVr, g_fMaxSpeed2[client],fJump_Height,sync,PERCENT,sBlockDistCon);
@@ -705,7 +711,8 @@ public Postthink(client)
 					}
 				}
 				else
-					g_LeetJumpDominating[client] = 0;
+					CreateTimer(0.1, BhopCheck, client,TIMER_FLAG_NO_MAPCHANGE);
+					
 			}
 	
 		//strafe sync chat
@@ -1064,8 +1071,8 @@ public Postthink(client)
 									PlayQuakeSound_Spec(client,buffer);
 								}								
 							}		
-								else
-									g_LeetJumpDominating[client]=0;		
+							else
+								g_LeetJumpDominating[client]=0;		
 					
 					//strafesync chat
 					if (g_bStrafeSync[client]  && g_fJump_Distance[client] >= g_dist_good_weird)
@@ -1172,7 +1179,9 @@ public Postthink(client)
 							}						
 						}		
 						else
+						{
 							g_LeetJumpDominating[client]=0;
+						}
 							
 				//strafe sync chat
 				if (g_bStrafeSync[client] && g_fJump_Distance[client] >= g_dist_good_bhop)

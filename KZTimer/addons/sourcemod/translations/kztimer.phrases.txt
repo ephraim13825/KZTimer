@@ -437,7 +437,7 @@
 	"NoclipNotAvailable2"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] You must finish the map or be ranked as {3:s} to use noclip."
+		"en"        "[{1}KZ{2}] You must finish the map or be ranked as {3:s}, VIP or ADMIN to use +noclip"
 	}
 	"NoclipNotAvailable3"
 	{
@@ -857,7 +857,7 @@
 	"Usp3"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] Nope. You already received 3 USPs.."
+		"en"        "[{1}KZ{2}] Nope. You already received 3 USP's.."
 	}
 	"HelpMsg"
 	{
