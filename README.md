@@ -20,7 +20,6 @@ v1.38
 - added color support for kz_welcome_msg
 - added "start" to adv climbers menu
 - added kz_checkpoints_on_bhop_plattforms (on/off checkpoints on bhop plattforms)
-- new global db password
 - minor code optimizations
 
 v1.37
