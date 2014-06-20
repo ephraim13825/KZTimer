@@ -14,6 +14,15 @@ do you wanna test kztimer before?
 Changelog
 =======
 
+v1.38
+- fixed random map end crashes (major fix)
+- fixed a jumpstats glitch (thx 2 x3ro)
+- added color support for kz_welcome_msg
+- added "start" to adv climbers menu
+- added kz_checkpoints_on_bhop_plattforms (on/off checkpoints on bhop plattforms)
+- new global db password
+- minor code optimizations
+
 v1.37
 - removed ljtop sql message in console
 - fixed a noclip glitch (thx 2 umbrella)
