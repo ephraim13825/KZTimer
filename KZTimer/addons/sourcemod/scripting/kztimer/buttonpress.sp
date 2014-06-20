@@ -183,7 +183,6 @@ public CL_OnStartTimerPress(client)
 // - Climb Button OnEndPress -
 public CL_OnEndTimerPress(client)
 {
-	
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -222,7 +221,6 @@ public CL_OnEndTimerPress(client)
 		g_bTimeractivated[client] = false;	
 		return;
 	}
-
 	if (!g_bTimeractivated[client]) 
 		return;	
 	g_newTp[client] = g_OverallTp[client];	

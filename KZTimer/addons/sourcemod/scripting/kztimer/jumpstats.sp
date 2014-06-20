@@ -473,7 +473,6 @@ public Postthink(client)
 	g_Strafes[client] = strafes;
 	g_sync[client] = sync;
 	
-	
 	//Calc & format strafe sync for chat output
 	new String:szStrafeSync[255];
 	new String:szStrafeSync2[255];
@@ -556,7 +555,6 @@ public Postthink(client)
 		Format(szName,sizeof(szName), "%s (Pro Replay)", g_szReplayName);		
 	if (client == g_iBot2)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
-	
 	
 	//Chat Output
 	//LongJump
@@ -807,6 +805,11 @@ public Postthink(client)
 			else
 			if (g_fJump_Distance[client] >= g_dist_leet_multibhop)	
 			{
+				if (g_fPreStrafe[client] < 270.0)
+				{
+					PostThinkPost(client, ground_frames);
+					return;
+				}
 				g_LeetJumpDominating[client]++;
 				//Client
 				PrintToConsole(client, "        ");
@@ -919,7 +922,12 @@ public Postthink(client)
 					}
 					else
 						if (g_fJump_Distance[client] >= g_dist_leet_dropbhop)	
-						{						
+						{				
+							if (g_fPreStrafe[client] < 270.0)
+							{
+								PostThinkPost(client, ground_frames);
+								return;
+							}						
 							g_LeetJumpDominating[client]++;
 							//Client
 							PrintToConsole(client, "        ");
@@ -1035,6 +1043,11 @@ public Postthink(client)
 						else
 							if (g_fJump_Distance[client] >= g_dist_leet_weird)	
 							{
+								if (g_fPreStrafe[client] < 255.0)
+								{
+									PostThinkPost(client, ground_frames);
+									return;
+								}
 								g_LeetJumpDominating[client]++;
 								//Client
 								PrintToConsole(client, "        ");
@@ -1142,6 +1155,11 @@ public Postthink(client)
 						//leet?
 						if (g_fJump_Distance[client] >= g_dist_leet_bhop)	
 						{
+							if (g_fPreStrafe[client] < 270.0)
+							{
+								PostThinkPost(client, ground_frames);
+								return;
+							}
 							g_LeetJumpDominating[client]++;
 							//Client
 							PrintToConsole(client, "        ");

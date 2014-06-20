@@ -14,12 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-/*
-- removed ljtop sql message in console
-- fixed noclip glitch
-- minor code optimizations
-*/
-#define VERSION "1.37"
+#define VERSION "1.38"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -305,6 +300,8 @@ new Handle:g_hRadioCommands = INVALID_HANDLE;
 new bool:g_bRadioCommands;
 new Handle:g_hGoToServer = INVALID_HANDLE;
 new bool:g_bGoToServer;
+new Handle:g_hAllowCpOnBhopPlattforms = INVALID_HANDLE;
+new bool:g_bAllowCpOnBhopPlattforms;
 new Handle:g_hPlayerSkinChange = INVALID_HANDLE;
 new bool:g_bPlayerSkinChange;
 new Handle:g_hJumpStats = INVALID_HANDLE;
@@ -413,6 +410,7 @@ new Float:g_sync_frames[MAXPLAYERS+1];
 new Float:g_fLastPosition[MAXPLAYERS + 1][3];
 new Float:g_fLastAngles[MAXPLAYERS + 1][3];
 new Float:g_fSpeed[MAXPLAYERS+1];
+new Float:g_fLastHeight[MAXPLAYERS+1];
 new Float:g_pr_finishedmaps_tp_perc[MAX_PR_PLAYERS]; 
 new Float:g_pr_finishedmaps_pro_perc[MAX_PR_PLAYERS]; 
 new bool:g_bMapButtons;
@@ -449,6 +447,7 @@ new bool:g_bRestoreCMsg[MAXPLAYERS+1];
 new bool:g_bClimbersMenuOpen[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuOpen2[MAXPLAYERS+1]; 
 new bool:g_bNoClip[MAXPLAYERS+1]; 
+new bool:g_bOnBhopPlattform[MAXPLAYERS+1]; 
 new bool:g_bMapFinished[MAXPLAYERS+1]; 
 new bool:g_bRespawnPosition[MAXPLAYERS+1]; 
 new bool:g_bKickStatus[MAXPLAYERS+1]; 
@@ -579,6 +578,7 @@ new String:g_szCOpponentID[MAXPLAYERS+1][32];
 new String:g_szTimeDifference[MAXPLAYERS+1][32]; 
 new String:g_szNewTime[MAXPLAYERS+1][32];
 new String:g_szMapName[MAX_MAP_LENGTH];
+new String:g_szMapTopName[MAXPLAYERS+1][MAX_MAP_LENGTH];
 new String:g_szMenuTitleRun[MAXPLAYERS+1][255];
 new String:g_szTime[MAXPLAYERS+1][32];
 new String:g_szRecordGlobalPlayer[MAX_NAME_LENGTH];
@@ -712,6 +712,10 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
+	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "1", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bAllowCpOnBhopPlattforms     = GetConVarBool(g_hAllowCpOnBhopPlattforms);
+	HookConVarChange(g_hAllowCpOnBhopPlattforms, OnSettingChanged);	
+	
 	g_hColoredChatRanks = CreateConVar("kz_colored_chatranks", "1", "on/off - colored chat ranks", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bColoredChatRanks     = GetConVarBool(g_hColoredChatRanks);
 	HookConVarChange(g_hColoredChatRanks, OnSettingChanged);	
@@ -740,11 +744,11 @@ public OnPluginStart()
 	g_bfpsCheck     = GetConVarBool(g_hfpsCheck);
 	HookConVarChange(g_hfpsCheck, OnSettingChanged);	
 
-	g_hVipClantag = 	CreateConVar("kz_vip_clantag", "1", "on/off - VIP tag", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hVipClantag = 	CreateConVar("kz_vip_clantag", "1", "on/off - VIP clan tag (necessary flag: a)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bVipClantag     = GetConVarBool(g_hVipClantag);
 	HookConVarChange(g_hVipClantag, OnSettingChanged);	
 	
-	g_hAdminClantag = 	CreateConVar("kz_admin_clantag", "1", "on/off - Admin tag", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAdminClantag = 	CreateConVar("kz_admin_clantag", "1", "on/off - Admin clan tag (necessary flag: b or z)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAdminClantag     = GetConVarBool(g_hAdminClantag);
 	HookConVarChange(g_hAdminClantag, OnSettingChanged);	
 	
@@ -752,7 +756,7 @@ public OnPluginStart()
 	g_bGlobalDB     = GetConVarBool(g_hGlobalDB);
 	HookConVarChange(g_hGlobalDB, OnSettingChanged);			
 	
-	g_hAutoTimer = CreateConVar("kz_auto_timer", "0", "on/off - Timer automatically starts when a player joins a team, dies or uses '!start' (global records are disabled if enabled)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoTimer = CreateConVar("kz_auto_timer", "0", "on/off - Timer automatically starts when a player joins a team, dies or uses !start/!r (global records are disabled then)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoTimer     = GetConVarBool(g_hAutoTimer);
 	HookConVarChange(g_hAutoTimer, OnSettingChanged);
 
@@ -804,7 +808,7 @@ public OnPluginStart()
 	g_bJumpStats     = GetConVarBool(g_hJumpStats);
 	HookConVarChange(g_hJumpStats, OnSettingChanged);	
 	
-	g_hCountry 	= CreateConVar("kz_country_tag", "1", "on/off - Country tag", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hCountry 	= CreateConVar("kz_country_tag", "1", "on/off - Country clan tag", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bCountry     = GetConVarBool(g_hCountry);
 	HookConVarChange(g_hCountry, OnSettingChanged);
 	
@@ -840,7 +844,7 @@ public OnPluginStart()
 	GetConVarString(g_hArmModel,g_sArmModel,256);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
 	
-	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "Welcome. This server is using KZ Timer","Welcome message", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "[{olive}KZ{default}] {grey}Welcome! This server is using {lime}KZ Timer","Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
@@ -1091,7 +1095,10 @@ public OnPluginStart()
 	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
 	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_multiple", "OnStartTouch", Teleport_OnStartTouch);	
+	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
+	HookEntityOutput("trigger_multiple", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("func_button", "OnPressed", ButtonPress);
+	//AddNormalSoundHook(Hook_NormalSound);
 
 	//mapcycle array
 	new arraySize = ByteCountToCells(PLATFORM_MAX_PATH);
@@ -1202,20 +1209,20 @@ public OnMapStart()
 
 	InitPrecache();	
 	SetCashState();
-	CreateTimer(0.1, MainTimer, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(1.0, MainTimer2, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(2.0, RespawnTimer, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(2.0, SettingsEnforcerTimer, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(5.0, SecretTimer, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(0.1, MainTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(1.0, MainTimer2, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(2.0, RespawnTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(2.0, SettingsEnforcerTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(5.0, SecretTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(2.0, SpawnButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
-	CreateTimer(1.0, CheckRemainingTime, _, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(1.0, CheckRemainingTime, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE); 
 	
 	new String:tmp[64];
 	
 	CheatFlag("bot_zombie", false, true);	
 	
 	//srv settings
-	ServerCommand("mp_spectators_max 60;mp_limitteams 0;sv_deadtalk 1;sv_full_alltalk 1;sv_max_queries_sec 6;bot_quota 0;host_players_show 2;mp_autoteambalance 0;mp_playerid 0;mp_autoteambalance 0;mp_ignore_round_win_conditions 1;mp_do_warmup_period 0;mp_free_armor 1;sv_alltalk 1;bot_chatter off;bot_join_after_player 0;bot_zombie 1;mp_endmatch_votenextmap 0;mp_endmatch_votenextleveltime 5;mp_maxrounds 1;mp_match_end_changelevel 1;mp_match_can_clinch 0;mp_halftime 0");
+	ServerCommand("mp_match_restart_delay 10;mp_spectators_max 60;mp_limitteams 0;sv_deadtalk 1;sv_full_alltalk 1;sv_max_queries_sec 6;bot_quota 0;host_players_show 2;mp_autoteambalance 0;mp_playerid 0;mp_autoteambalance 0;mp_ignore_round_win_conditions 1;mp_do_warmup_period 0;mp_free_armor 1;sv_alltalk 1;bot_chatter off;bot_join_after_player 0;bot_zombie 1;mp_endmatch_votenextmap 0;mp_endmatch_votenextleveltime 10;mp_maxrounds 1;mp_match_end_changelevel 1;mp_match_can_clinch 0;mp_halftime 0");
 	Format(tmp,64, "bot_quota_mode %cnormal%c",QUOTE,QUOTE);
 	ServerCommand(tmp);
 	
@@ -1257,6 +1264,7 @@ public OnMapStart()
 	
 	//Skillgroups
 	SetSkillGroups();
+	
 }
 
 public OnMapEnd()
@@ -1473,6 +1481,7 @@ public OnClientPostAdminCheck(client)
 	g_bChallengeRequest[client] = false;
 	g_fLastTimeButtonSound[client] = 9999.9;
 	g_bMapRankToChat[client] = false;
+	g_bOnBhopPlattform[client] = false;
 	g_fJump_InitialLastHeight[client] = -1.012345;
 	g_fLastJumpDistance[client] = 0.0;		
 	g_good_sync[client] = 0.0;
@@ -1595,6 +1604,15 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 			g_bGoToServer = false;
 	}
+	if(convar == g_hAllowCpOnBhopPlattforms)
+	{
+		if(newValue[0] == '1')
+			g_bAllowCpOnBhopPlattforms = true;
+		else
+			g_bAllowCpOnBhopPlattforms = false;
+	}	
+	
+	
 	if(convar == g_hfpsCheck)
 	{
 		if(newValue[0] == '1')

@@ -52,6 +52,7 @@ new String:sql_selectPersonalRecords[] 			= "SELECT db2.mapname, db2.steamid, db
 new String:sql_selectPersonalAllRecords[] 		= "SELECT db1.name, db2.steamid, db2.mapname, db2.runtime as overall, db2.teleports AS tp, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0  UNION SELECT db1.name, db2.steamid, db2.mapname, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.steamid = '%s' AND db2.runtimepro > -1.0 ORDER BY mapname ASC;";
 new String:sql_selectTPClimbers[] 				= "SELECT db1.name, db2.runtime, db2.teleports, db2.steamid, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0 ORDER BY db2.runtime ASC LIMIT 20";
 new String:sql_selectProClimbers[] 				= "SELECT db1.name, db2.runtimepro, db2.steamid, db1.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY db2.runtimepro ASC LIMIT 20";
+new String:sql_selectTopClimbers2[] 			= "SELECT db2.steamid, db1.name, db2.runtime as overall, db2.teleports AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtime > -1.0 AND db2.teleports >= 0 UNION SELECT db2.steamid, db1.name, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname LIKE '%c%s%c' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
 new String:sql_selectTopClimbers[] 				= "SELECT db2.steamid, db1.name, db2.runtime as overall, db2.teleports AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtime > -1.0 AND db2.teleports >= 0 UNION SELECT db2.steamid, db1.name, db2.runtimepro as overall, db2.teleports_pro AS tp, db1.steamid, db2.mapname FROM playertimes as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.mapname = '%s' AND db2.runtimepro > -1.0 ORDER BY overall ASC LIMIT 100;";
 new String:sql_selectPlayerCount[] 				= "SELECT name FROM playertimes WHERE mapname = '%s' AND runtime  > -1.0;";
 new String:sql_selectPlayerProCount[] 			= "SELECT name FROM playertimes WHERE mapname = '%s' AND runtimepro  > -1.0;";
@@ -478,6 +479,7 @@ public sql_selectMapRecordGlobalCallback(Handle:owner, Handle:hndl, const String
 		}
 		else
 			g_fRecordTimeGlobal = 9999999.0;	
+
 	}
 }
 
@@ -1061,15 +1063,6 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 				AddMenuItem(menu, szVr, szVr);	
 				ljtrue=true;
 			}
-			if (ljblockdist > 0)
-			{
-				if (ljstrafes>9)
-					Format(szVr, 255, "Block LJ:   %i (%.1f)  %i       %.2f*    %.2f   %.1f      %i%c", ljblockdist,ljblockrecord,ljblockstrafes,ljblockpre,ljblockmax,ljblockheight,ljblocksync,PERCENT);
-				else
-					Format(szVr, 255, "Block LJ:    %i (%.1f)   %i       %.2f*    %.2f   %.1f      %i%c", ljblockdist,ljblockrecord,ljblockstrafes,ljblockpre,ljblockmax,ljblockheight,ljblocksync,PERCENT);
-				AddMenuItem(menu, szVr, szVr);	
-				ljtrue=true;
-			}	
 			if (bhoprecord > 0.0)
 			{
 				if (bhopstrafes>9)
@@ -1102,8 +1095,17 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 					Format(szVr, 255, "WJ:            %.3f         %i       %.2f       %.2f   %.1f      %i%c", wjrecord,wjstrafes,wjpre,wjmax,wjheight,wjsync,PERCENT);	
 				AddMenuItem(menu, szVr, szVr);	
 			}	
+			if (ljblockdist > 0)
+			{
+				if (ljstrafes>9)
+					Format(szVr, 255, "Block LJ:   %i (%.1f)  %i       %.2f*    %.2f   %.1f      %i%c", ljblockdist,ljblockrecord,ljblockstrafes,ljblockpre,ljblockmax,ljblockheight,ljblocksync,PERCENT);
+				else
+					Format(szVr, 255, "Block LJ:    %i (%.1f)   %i       %.2f*    %.2f   %.1f      %i%c", ljblockdist,ljblockrecord,ljblockstrafes,ljblockpre,ljblockmax,ljblockheight,ljblocksync,PERCENT);
+				AddMenuItem(menu, szVr, szVr);	
+				ljtrue=true;
+			}	
 			if (ljtrue && !g_bPreStrafe)
-				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %c* = TakeOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW);	
+				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %c*%c = TakeOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW,WHITE);	
 			SetMenuPagination(menu, 5);	
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 			DisplayMenu(menu, client, MENU_TIME_FOREVER);	
@@ -2697,7 +2699,7 @@ public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			switch(detailView[param1])
 			{
 				case 0: db_selectTopPlayers(param1);
-				case 1: db_selectTopClimbers(param1,g_szMapName);
+				case 1: db_selectTopClimbers(param1,g_szMapTopName[param1]);
 				case 2: db_selectTopLj(param1);	
 				case 3: db_selectTopChallengers(param1);
 				case 4: db_selectTopWj(param1);
@@ -3154,7 +3156,17 @@ public db_selectTopClimbers(client, String:mapname[128])
 	Format(szQuery, 1024, sql_selectTopClimbers, mapname, mapname);  
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
-	WritePackString(pack, g_szMapName);
+	WritePackString(pack, mapname);
+	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack);
+}
+
+public db_selectMapTopClimbers(client, String:mapname[128])
+{
+	decl String:szQuery[1024];       
+	Format(szQuery, 1024, sql_selectTopClimbers2, PERCENT,mapname,PERCENT,PERCENT, mapname,PERCENT);
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, client);
+	WritePackString(pack, mapname);
 	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack);
 }
 
@@ -3561,7 +3573,11 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	decl String:szSteamID[32];
 	new String:lineBuf[256];
 	new Handle:stringArray = CreateArray(100);
-	new Handle:menu = CreateMenu(MapMenuHandler1);
+	new Handle:menu;
+	if (StrEqual(szMap,g_szMapName))
+		menu = CreateMenu(MapMenuHandler1);
+	else
+		menu = CreateMenu(MapTopMenuHandler2);		
 	SetMenuPagination(menu, 5);
 	new bool:bduplicat = false;
 	decl String:title[256];
@@ -3614,6 +3630,7 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	}
 	else
 		PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
+	Format(g_szMapTopName[client], MAX_MAP_LENGTH, "%s",szMap);	
 	StopClimbersMenu(client);
 	Format(title, 256, "Top 50 Times on %s (local)\n    Rank    Time          TP's        Player", szMap);
 	SetMenuTitle(menu, title);     
@@ -3915,6 +3932,18 @@ public MapMenuHandler1(Handle:menu, MenuAction:action, param1, param2)
 		CloseHandle(menu);
 	}
 }
+
+public MapTopMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
+{
+	if (action ==  MenuAction_Select)
+	{
+		decl String:info[32];
+		GetMenuItem(menu, param2, info, sizeof(info));
+		detailView[param1] = 1;
+		db_viewPlayerRank(param1, info);		
+	}
+}
+
 
 public MapMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 {
@@ -5444,8 +5473,8 @@ public db_selectTop100PlayersCallback(Handle:owner, Handle:hndl, const String:er
 	decl String:szPerc[16];
 	new points;
 	new Handle:menu = CreateMenu(TopPlayersMenuHandler1);
-	SetMenuPagination(menu, 5); 
 	SetMenuTitle(menu, "Top 100 Players\n    Rank   Points         Maps            Player");     
+	SetMenuPagination(menu, 5); 
 	if(SQL_HasResultSet(hndl))
 	{
 		new i = 1;

@@ -100,7 +100,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			
 			//set speclist
 			Format(g_szPlayerPanelText[client], 512, "");		
-
+			
 			if (g_bClimbersMenuOpen2[client] && (GetClientTeam(client) > 1))
 			{
 				g_bClimbersMenuOpen2[client] = false;
@@ -357,6 +357,8 @@ public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBr
 					
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 {
+	if (g_bRoundEnd)
+		return Plugin_Continue;
 	new timeleft;
 	GetMapTimeLeft(timeleft);
 	if (timeleft>= -1)
@@ -368,12 +370,13 @@ public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	g_bRoundEnd=true;
-	return Plugin_Continue; 
 }
 
 // OnRoundRestart
 public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
+	FindNHookWalls();
+	HookTrigger();
 	g_bRoundEnd=false;
 	db_selectMapButtons();
 	OnPluginPauseChange(false);
@@ -476,7 +479,10 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 					
 	//some methods..	
 	if(IsValidEntity(client) && IsClientInGame(client) && IsPlayerAlive(client))	
-	{		
+	{	
+		if (g_ground_frames[client] > 11)
+			g_bOnBhopPlattform[client] = false;
+					
 		MenuRefresh(client);
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
@@ -580,7 +586,17 @@ public OnTouch(client, other)
 public Teleport_OnStartTouch(const String:output[], caller, activator, Float:delay)
 {
 	if (1 <= activator <= MaxClients && IsClientInGame(activator))
+	{
+		if (g_bAllowCpOnBhopPlattforms)
+			g_bOnBhopPlattform[activator]=true;
 		g_bValidTeleport[activator]=true;
+	}
+}  
+
+public Teleport_OnEndTouch(const String:output[], caller, activator, Float:delay)
+{
+	if (1 <= activator <= MaxClients && IsClientInGame(activator) && g_bAllowCpOnBhopPlattforms)
+		CreateTimer(0.1, BhopEndTouchTimer, activator,TIMER_FLAG_NO_MAPCHANGE);
 }  
 
 //https://forums.alliedmods.net/showthread.php?p=1678026 by Inami
@@ -718,4 +734,55 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 			}
 		}
 	}
+}
+
+//by zipcore
+FindNHookWalls()
+{
+	SDKHook(0,SDKHook_Touch,Touch_Wall);
+	new ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_breakable")) != -1)
+
+	SDKHook(ent,SDKHook_Touch,Touch_Wall);
+
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_illusionary")) != -1)
+
+	SDKHook(ent,SDKHook_Touch,Touch_Wall);
+
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_wall")) != -1)
+	SDKHook(ent,SDKHook_Touch,Touch_Wall);
+}
+
+//by zipcore
+public Action:Touch_Wall(ent,client)
+{
+	if(0 < client <= MaxClients)
+	{
+		if(!(GetEntityFlags(client)&FL_ONGROUND)  && g_bPlayerJumped[client])
+		{
+			new Float:origin[3], Float:temp[3];
+			GetGroundOrigin(client, origin);
+			GetClientAbsOrigin(client, temp);
+			if(temp[2] - origin[2] <= 0.2)
+				ResetJump(client);
+		}
+	}
+	return Plugin_Continue;
+}
+//by zipcore
+HookTrigger()
+{
+	new ent = -1;
+	while((ent = FindEntityByClassname(ent, "trigger_push")) != -1)
+		SDKHook(ent,SDKHook_Touch,Push_Touch);
+}
+
+//by zipcore
+public Action:Push_Touch(ent,client)
+{
+	if(0 < client <= MaxClients  && g_bPlayerJumped[client])
+		ResetJump(client);
+	return Plugin_Continue;
 }

@@ -22,6 +22,11 @@ public Action:HyperscrollWarningTimer(Handle:timer, any:client)
 	g_bHyperscrollWarning[client] = true;
 }
 
+public Action:BhopEndTouchTimer(Handle:timer, any:client)
+{
+	g_bOnBhopPlattform[client] = false;
+}
+
 public Action:MoveTypeNoneTimer(Handle:timer, any:client)
 {
 	SetEntityMoveType(client, MOVETYPE_NONE);
@@ -50,40 +55,32 @@ public Action:CheckRemainingTime(Handle:timer)
 	if (g_bMapEnd)
 	{
 		new timeleft;
-		GetMapTimeLeft(timeleft);
-		if (timeleft==600)
-			PrintToChatAll("[%cMAP%c] 10 minutes remaining",DARKRED,WHITE);
-		if (timeleft==300)
-			PrintToChatAll("[%cMAP%c] 5 minutes remaining",DARKRED,WHITE);
-		if (timeleft==120)
-			PrintToChatAll("[%cMAP%c] 2 minutes remaining",DARKRED,WHITE);	
-		if (timeleft==60)
-			PrintToChatAll("[%cMAP%c] 60 seconds remaining",DARKRED,WHITE);
-		if (timeleft==30)
-			PrintToChatAll("[%cMAP%c] 30 seconds remaining",DARKRED,WHITE);
-		if (timeleft==15)
-			PrintToChatAll("[%cMAP%c] 15 seconds remaining",DARKRED,WHITE);
-		if (timeleft==5)
-			PrintToChatAll("[%cMAP%c] 5..",DARKRED,WHITE);
-		if (timeleft==4)
-			PrintToChatAll("[%cMAP%c] 4.",DARKRED,WHITE);
-		if (timeleft==3)
-			PrintToChatAll("[%cMAP%c] 3..",DARKRED,WHITE);
-		if (timeleft==2)
+		GetMapTimeLeft(timeleft);		
+		switch(timeleft)
 		{
-			ServerCommand("mp_ignore_round_win_conditions 0");
-			PrintToChatAll("[%cMAP%c] 2..",DARKRED,WHITE);
-		}
-		if (timeleft==1)
-		{
-			g_bRoundEnd=true;
-			PrintToChatAll("[%cMAP%c] 1..",DARKRED,WHITE);
-			for (new client = 1; client <= MaxClients; client++)				
-				if(IsClientInGame(client) && IsPlayerAlive(client))
-					SlapPlayer(client,100);
+			case 1800: PrintToChatAll("[%cMAP%c] 30 minutes remaining",LIGHTRED,WHITE);
+			case 1200: PrintToChatAll("[%cMAP%c] 20 minutes remaining",LIGHTRED,WHITE);
+			case 600: PrintToChatAll("[%cMAP%c] 10 minutes remaining",LIGHTRED,WHITE);
+			case 300: PrintToChatAll("[%cMAP%c] 5 minutes remaining",LIGHTRED,WHITE);
+			case 120: PrintToChatAll("[%cMAP%c] 2 minutes remaining",LIGHTRED,WHITE);
+			case 60: PrintToChatAll("[%cMAP%c] 60 seconds remaining",LIGHTRED,WHITE); 
+			case 30: PrintToChatAll("[%cMAP%c] 30 seconds remaining",LIGHTRED,WHITE);
+			case 15: PrintToChatAll("[%cMAP%c] 15 seconds remaining",LIGHTRED,WHITE);			
+			case -1: PrintToChatAll("[%cMAP%c] 3..",LIGHTRED,WHITE);
+			case -2: PrintToChatAll("[%cMAP%c] 2..",LIGHTRED,WHITE);
+			case -3:
+			{
+				if (!g_bRoundEnd)
+				{
+					g_bRoundEnd=true;			
+					ServerCommand("mp_ignore_round_win_conditions 0");
+					PrintToChatAll("[%cMAP%c] 1..",LIGHTRED,WHITE);
+					CreateTimer(1.0, TerminateRoundTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
+				}
+			}
 		}
 	}
-}
+} 
 
 public Action:MainTimer2(Handle:timer)
 {
@@ -344,6 +341,12 @@ public Action:SettingsEnforcerTimer(Handle:timer)
 	return Plugin_Continue;
 }
 
+public Action:TerminateRoundTimer(Handle:timer)
+{
+	PrintToChatAll("[%cMAP%c] 0..",LIGHTRED,WHITE);
+	CS_TerminateRound(1.0, CSRoundEnd_CTWin, true);
+}
+
 
 public Action:MainTimer(Handle:timer)
 {
@@ -365,7 +368,7 @@ public Action:MainTimer(Handle:timer)
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
 	if (IsClientInGame(client) && !IsFakeClient(client))
-		PrintToChat(client, "[%cKZ%c] %s", MOSSGREEN,WHITE, g_sWelcomeMsg);
+		CPrintToChat(client, "%s", g_sWelcomeMsg);
 }
 
 public Action:OverlayTimer(Handle:timer, any:client)

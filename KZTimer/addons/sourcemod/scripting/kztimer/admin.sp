@@ -1,4 +1,3 @@
-
 public OnAdminMenuReady(Handle:topmenu)
 {
 	if (topmenu == g_hAdminMenu)
@@ -195,6 +194,11 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[33.] Colored chat ranks  -  Enabled"); 	
 	else
 		Format(szTmp, sizeof(szTmp), "[33.] Colored chat ranks  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bAllowCpOnBhopPlattforms)
+		Format(szTmp, sizeof(szTmp), "[34.] Checkpoints on bhop plattforms  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[34.] Checkpoints on bhop plattforms  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);		
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -446,7 +450,14 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				ServerCommand("kz_colored_chatranks 1");
 			else
 				ServerCommand("kz_colored_chatranks 0");
-		}		
+		}
+		if(param2 == 33)
+		{
+			if (!g_bAllowCpOnBhopPlattforms)
+				ServerCommand("kz_checkpoints_on_bhop_plattforms 1");
+			else
+				ServerCommand("kz_checkpoints_on_bhop_plattforms 0");
+		}
 		g_AdminMenuLastPage[param1]=param2;
 		if (menu != INVALID_HANDLE)
 			CloseHandle(menu);

@@ -482,7 +482,8 @@ public Action:Command_JoinTeam(client, const String:command[], argc)
 			}
 			g_bSpectate[client] = false;
 		}	
-		ChangeClientTeam(client, team); 
+		if (IsClientInGame(client))
+			ChangeClientTeam(client, team); 
 		return Plugin_Handled; 
 	}
 	return Plugin_Continue;
@@ -584,7 +585,7 @@ public Action:Client_MapTop(client, args)
 	}
 	decl String:szArg[128];   
 	GetCmdArg(1, szArg, 128);
-	db_selectTopClimbers(client,szArg);
+	db_selectMapTopClimbers(client,szArg);
 	return Plugin_Handled;
 }
 
@@ -1574,6 +1575,7 @@ public SaveClientLocation(client)
 {
 	if (IsFakeClient(client) || !IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
 		return;
+			
 		
 	if (!g_bCCheckpoints[client] && g_bChallenge[client])
 	{
@@ -1589,6 +1591,15 @@ public SaveClientLocation(client)
 		{
 			g_CurrentCp[client] = -1;
 			g_CounterCp[client] = 0;
+		}
+		
+		//on bhop block?
+		if (g_bOnBhopPlattform[client])
+		{
+			if (g_bClimbersMenuSounds[client])
+				EmitSoundToClient(client,"buttons/button10.wav",client);
+			PrintToChat(client, "%t", "CheckpointsNotonBhopPlattforms", MOSSGREEN,WHITE,RED);
+			return;
 		}
 		
 		//save coordinates for new cp
@@ -1678,7 +1689,6 @@ public TeleClient(client,pos)
 			SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 			
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
-			//GetGroundOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			g_bValidTeleport[client]=true;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
@@ -1780,6 +1790,8 @@ public ClimbersMenu(client)
 				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause - ON");
 			else
 				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause");
+				
+			AddMenuItem(g_hclimbersmenu[client], "!restart", "Start");
 		}	
 		else
 		{
@@ -1814,6 +1826,7 @@ public ClimbersMenu(client)
 		AddMenuItem(g_hclimbersmenu[client], "!restart", "Start");
 		AddMenuItem(g_hclimbersmenu[client], "!Options", "Options");
 	}
+	SetMenuPagination(g_hclimbersmenu[client], MENU_NO_PAGINATION); 
 	SetMenuOptionFlags(g_hclimbersmenu[client], MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(g_hclimbersmenu[client], client, MENU_TIME_FOREVER);
 }
@@ -1835,6 +1848,7 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 					case 3: Client_Next(param1,0); 
 					case 4: Client_Undo(param1,0); 
 					case 5: PauseMethod(param1);
+					case 6: Client_Start(param1, 0);
 				}
 			}
 			else
@@ -2169,12 +2183,15 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "KZ Timer settings");
 	PrintToConsole(client, "-----------------");
 	PrintToConsole(client, "kz_admin_clantag %b", g_bAdminClantag);
+	
+	
 	PrintToConsole(client, "kz_anticheat_ban_duration %.1fh", g_fBanDuration);
 	PrintToConsole(client, "kz_auto_bhop %i (bhop_ & surf_ maps)", g_bAutoBhop);
 	PrintToConsole(client, "kz_auto_timer %i", g_bAutoTimer);
 	PrintToConsole(client, "kz_autoheal %i", g_Autohealing_Hp);
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
+	PrintToConsole(client, "kz_checkpoints_on_bhop_plattforms %b", g_bAllowCpOnBhopPlattforms);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
 	PrintToConsole(client, "kz_colored_chatranks %b", g_bColoredChatRanks);
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);

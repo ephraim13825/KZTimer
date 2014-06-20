@@ -1,4 +1,12 @@
 // misc.sp
+stock bool:IsValidClient(client, bool:bAlive = false)
+{
+    if(client >= 1 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && (bAlive == false || IsPlayerAlive(client)))
+    {
+        return true;
+    }  
+    return false;
+}  
 
 public SetServerTags()
 {
@@ -173,6 +181,35 @@ public StripWeapons(client)
 	}
 	if (IsFakeClient(client))
 		GivePlayerItem(client, "weapon_usp_silencer");		
+}
+
+public PlayButtonSound(client)
+{
+	decl String:buffer[255];
+	Format(buffer, sizeof(buffer), "play %s", RELATIVE_BUTTON_PATH); 
+	new Float:diff = GetEngineTime() - g_fLastTimeButtonSound[client];
+	if (diff > 0.1)
+	{
+		ClientCommand(client, buffer); 	
+		//spec stop sound
+		for(new i = 1; i <= MaxClients; i++) 
+		{		
+			if (IsClientInGame(i) && !IsPlayerAlive(i))
+			{			
+				new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+				if (SpecMode == 4 || SpecMode == 5)
+				{		
+					new Target = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");	
+					if (Target == client)
+					{
+						decl String:szsound[255];
+						Format(szsound, sizeof(szsound), "play %s", RELATIVE_BUTTON_PATH); 
+						ClientCommand(i,szsound);
+					}
+				}					
+			}
+		}
+	}
 }
 
 public DeleteButtons(client)
@@ -1177,10 +1214,11 @@ public bool:WallCheck(client)
 	while (angs[1] != 180.0)
 	{
 		new Handle:trace = TR_TraceRayFilterEx(pos, angs, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
+
 		if(TR_DidHit(trace))
-		{
+		{				
 				TR_GetEndPosition(endpos, trace);
-				new Float: fdist = GetVectorDistance(endpos, pos, false);
+				new Float: fdist = GetVectorDistance(endpos, pos, false);			
 				if (fdist <= 25.0)
 				{			
 					CloseHandle(trace); 
@@ -1475,6 +1513,7 @@ public CalcJumpHeight(client)
 		GetClientAbsOrigin(client, height);
 		if (height[2] > g_fMaxHeight[client])
 			g_fMaxHeight[client] = height[2];	
+		g_fLastHeight[client] = height[2];
 	}
 }
 

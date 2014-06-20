@@ -554,6 +554,11 @@
 		"#format"   "{1:c},{2:c},{3:c}"
 		"en"        "[{1}KZ{2}] {3}Checkpoint not supported while in the air."
 	}
+	"CheckpointsNotonBhopPlattforms"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Checkpoint on a bunnyhop block forbidden."
+	}
 	"NoCheckpointsFound"
 	{
 		"#format"   "{1:c},{2:c}"
