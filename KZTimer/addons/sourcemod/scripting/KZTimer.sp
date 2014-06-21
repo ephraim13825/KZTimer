@@ -539,6 +539,7 @@ new g_time_type[MAXPLAYERS+1];
 new g_sound_type[MAXPLAYERS+1];
 new g_tprecords[MAXPLAYERS+1];
 new g_prorecords[MAXPLAYERS+1];
+new g_TotalGroundFrames[MAXPLAYERS+1];
 new g_record_type[MAXPLAYERS+1];
 new g_challenge_win_ratio[MAXPLAYERS+1];
 new g_CountdownTime[MAXPLAYERS+1];
@@ -712,7 +713,7 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "1", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "0", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCpOnBhopPlattforms     = GetConVarBool(g_hAllowCpOnBhopPlattforms);
 	HookConVarChange(g_hAllowCpOnBhopPlattforms, OnSettingChanged);	
 	

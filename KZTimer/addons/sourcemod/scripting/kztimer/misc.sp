@@ -2018,6 +2018,14 @@ public DeadMainTimer(client)
 
 public AliveMainTimer(client)
 {
+	//bhop plattform
+	if (GetEntityFlags(client) & FL_ONGROUND)
+		g_TotalGroundFrames[client]++;
+	else
+		g_TotalGroundFrames[client]=0;
+	if (g_TotalGroundFrames[client] > 1 && g_bOnBhopPlattform[client])
+		g_bOnBhopPlattform[client] = false;
+		
 	//Get Speed
 	g_fSpeed[client] = GetSpeed(client);
 	
@@ -2560,12 +2568,11 @@ public Entity_Touch(bhop,client)
 	//bhop = entity
 	if(0 < client <= MaxClients) 
 	{
-		static Float:flPunishTime[MAXPLAYERS + 1], iLastBlock[MAXPLAYERS + 1] = { -1,... };
-		
-		new Float:time = GetGameTime();
-		
-		new Float:diff = time - flPunishTime[client];
-		
+		if (!g_bAllowCpOnBhopPlattforms)
+			g_bOnBhopPlattform[client]=true;
+		static Float:flPunishTime[MAXPLAYERS + 1], iLastBlock[MAXPLAYERS + 1] = { -1,... };		
+		new Float:time = GetGameTime();		
+		new Float:diff = time - flPunishTime[client];		
 		if(iLastBlock[client] != bhop || diff > BLOCK_COOLDOWN) 
 		{
 			//reset cooldown

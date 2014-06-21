@@ -367,7 +367,7 @@ public Action:MainTimer(Handle:timer)
 
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsClientInGame(client) && !IsFakeClient(client) && !StrEqual(g_sWelcomeMsg,""))
 		CPrintToChat(client, "%s", g_sWelcomeMsg);
 }
 

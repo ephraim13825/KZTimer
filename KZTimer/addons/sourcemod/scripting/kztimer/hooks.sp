@@ -476,13 +476,13 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	//Set ground frames
 	if (g_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
 		g_ground_frames[client]++;
-					
+
+	if (g_ground_frames[client] > 10 && g_bOnBhopPlattform[client])
+		g_bOnBhopPlattform[client] = false;
+		
 	//some methods..	
 	if(IsValidEntity(client) && IsClientInGame(client) && IsPlayerAlive(client))	
 	{	
-		if (g_ground_frames[client] > 11)
-			g_bOnBhopPlattform[client] = false;
-					
 		MenuRefresh(client);
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
@@ -587,7 +587,7 @@ public Teleport_OnStartTouch(const String:output[], caller, activator, Float:del
 {
 	if (1 <= activator <= MaxClients && IsClientInGame(activator))
 	{
-		if (g_bAllowCpOnBhopPlattforms)
+		if (!g_bAllowCpOnBhopPlattforms)
 			g_bOnBhopPlattform[activator]=true;
 		g_bValidTeleport[activator]=true;
 	}
