@@ -21,6 +21,7 @@ v1.38
 - added "start" to adv climbers menu
 - added kz_checkpoints_on_bhop_plattforms (on/off checkpoints on bhop plattforms)
 - minor code optimizations
+- *knife plugin updated
 
 v1.37
 - removed ljtop sql message in console
