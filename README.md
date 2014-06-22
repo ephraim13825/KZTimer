@@ -3,16 +3,14 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
-- PRO VERSION CURRENTLY NOT AVAILABLE
-
-
-do you wanna test kztimer before?
-176.57.141.133:27032 [UG] KREEDZ EUROPE
-
-
 
 Changelog
 =======
+
+v1.39
+- fixed a timer bug on bhop_eazy_csgo
+- fixed chat spam of remaining time if mp_timelimit is set to 0
+- fixed team selection overlay glitch (windows only)
 
 v1.38
 - fixed random map end crashes (major fix)
