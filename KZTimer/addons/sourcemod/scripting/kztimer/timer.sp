@@ -43,16 +43,21 @@ public Action:RespawnTimer(Handle:timer)
 	//Player Respawn
 	for (new client = 1; client <= MaxClients; client++)
 	{	
-		if (IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn && !IsFakeClient(client))	
+		if (IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn && !IsFakeClient(client) && !g_bFirstSpawn[client])	
 		{									
-			CreateTimer(1.0, RespawnPlayer, client);
+			CreateTimer(2.0, RespawnPlayer, client);
 		}
 	}
 }
 
 public Action:CheckRemainingTime(Handle:timer)
 {
-	if (g_bMapEnd)
+	new Handle:hTmp;	
+	hTmp = FindConVar("mp_timelimit");
+	new iTimeLimit = GetConVarInt(hTmp);			
+	if (hTmp != INVALID_HANDLE)
+		CloseHandle(hTmp);	
+	if (g_bMapEnd && iTimeLimit > 0)
 	{
 		new timeleft;
 		GetMapTimeLeft(timeleft);		
@@ -447,8 +452,7 @@ public Action:ClimbersMenuTimer(Handle:timer, any:client)
 
 public Action:RespawnPlayer(Handle:Timer, any:client)
 {
-	new timeleft;
-	if (timeleft>-2 && IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn)
+	if (IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn)
 		CS_RespawnPlayer(client);
 }
 		

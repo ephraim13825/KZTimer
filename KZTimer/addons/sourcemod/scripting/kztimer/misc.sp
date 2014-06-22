@@ -1401,8 +1401,7 @@ public TeleportCheck(client, Float: origin[3])
 					g_bPlayerJumped[client] = false;
 				}			
 			}
-		}		
-
+		}	
 		if (sum > 40.0 || sum < -40.0)
 		{
 			if (!g_bValidTeleport[client])
@@ -2563,13 +2562,14 @@ public Entity_BoostTouch(bhop,client)
 // https://forums.alliedmods.net/showthread.php?p=808724
 public Entity_Touch(bhop,client) 
 {
-	if (!g_bMultiplayerBhop)
-		return;
 	//bhop = entity
 	if(0 < client <= MaxClients) 
 	{
+		g_bValidTeleport[client] = true;
 		if (!g_bAllowCpOnBhopPlattforms)
 			g_bOnBhopPlattform[client]=true;
+		if (!g_bMultiplayerBhop)
+			return;
 		static Float:flPunishTime[MAXPLAYERS + 1], iLastBlock[MAXPLAYERS + 1] = { -1,... };		
 		new Float:time = GetGameTime();		
 		new Float:diff = time - flPunishTime[client];		

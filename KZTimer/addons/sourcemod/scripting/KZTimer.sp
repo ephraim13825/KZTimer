@@ -14,7 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.38"
+#define VERSION "1.39"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -713,7 +713,7 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "0", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "1", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCpOnBhopPlattforms     = GetConVarBool(g_hAllowCpOnBhopPlattforms);
 	HookConVarChange(g_hAllowCpOnBhopPlattforms, OnSettingChanged);	
 	
@@ -1094,6 +1094,7 @@ public OnPluginStart()
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
 	HookEvent("player_team", Event_OnPlayerTeamPre, EventHookMode_Pre);
 	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
+	HookEntityOutput("func_door", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_multiple", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
