@@ -7,6 +7,10 @@ Info:
 Changelog
 =======
 
+v1.4
+- fixed timer bug (thx 2 skill vs luck) 
+- minor optimizations
+
 v1.39
 - fixed a timer bug on bhop_eazy_csgo
 - fixed chat spam of remaining time if mp_timelimit is set to 0
