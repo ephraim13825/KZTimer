@@ -35,9 +35,11 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			
 			if (IsFakeClient(client))	
 			{
-				CS_SetClientClanTag(client, "LOCALHOST"); 
-				return;
+				CS_SetClientClanTag(client, "LOCALHOST"); 	
+				CreateTimer(5.0, CheckAgents, client,TIMER_FLAG_NO_MAPCHANGE);	
+				return Plugin_Continue;
 			}
+			
 			//fps Check
 			if (g_bfpsCheck)
 				QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
@@ -97,7 +99,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			
 			//set clantag
 			CreateTimer(1.5, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);	
-			
+					
 			//set speclist
 			Format(g_szPlayerPanelText[client], 512, "");		
 			
@@ -114,13 +116,8 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		else
 			CreateTimer(0.1, MoveTypeNoneTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 	}
-}
-
-public Action:Event_OnPlayerTeamPre(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	SetEventBroadcast(event, true);
 	return Plugin_Continue;
-} 
+}
 
 public Action:Say_Hook(client, args)
 {
@@ -177,9 +174,12 @@ public Action:Say_Hook(client, args)
 		
 		if (StrEqual("nextmap",sText,true))
 		{
-			decl String:NextMap[64];
-			GetNextMap(NextMap, sizeof(NextMap));
-			PrintToChat(client,"[%cKZ%c] Nextmap: %s",MOSSGREEN,WHITE, NextMap);
+			decl String:sNextMap[64];
+			if(g_bMapChooser && EndOfMapVoteEnabled() && !HasEndOfMapVoteFinished())
+				Format(sNextMap, sizeof(sNextMap), "Pending Vote");
+			else
+				GetNextMap(sNextMap, sizeof(sNextMap));
+			PrintToChat(client,"[%cKZ%c] Nextmap: %s",MOSSGREEN,WHITE, sNextMap);
 			g_bSayHook[client]=false;
 			return Plugin_Handled;
 		}
@@ -258,11 +258,17 @@ public Action:Say_Hook(client, args)
 	return Plugin_Continue;
 }
 
+public Action:Event_OnPlayerTeamPre(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	SetEventBroadcast(event, true);
+	return Plugin_Continue;
+} 
+
 public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if (!client || !IsClientInGame(client) || IsFakeClient(client))
-		return;
+		return Plugin_Continue;
 	new team = GetEventInt(event, "team");
 	if(team == 1)
 	{
@@ -300,6 +306,7 @@ public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:don
 			if (IsClientConnected(i) && IsClientInGame(i) && i != client)
 				PrintToChat(i, "%t", "TeamJoin",client,strTeamName);
 	}
+	return Plugin_Continue;
 }
 
 public OnMapVoteStarted()
@@ -336,23 +343,25 @@ public Action:Hook_SetTransmit(entity, client)
 // - PlayerDeath -
 public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));	
-	if(!client)
-		return;
-	if (!IsFakeClient(client))
+	new client = GetEventInt(event,"userid");
+	if (IsValidEntity(client) && IsClientInGame(client))
 	{
-		if(g_hRecording[client] != INVALID_HANDLE)
-			StopRecording(client);
-		CreateTimer(0.5, OnDeathTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+		if (!IsFakeClient(client))
+		{
+			if(g_hRecording[client] != INVALID_HANDLE)
+				StopRecording(client);			
+			CreateTimer(2.0, RemoveRagdoll, client);
+		}
+		else 
+			if(g_hBotMimicsRecord[client] != INVALID_HANDLE)
+			{
+				g_iBotMimicTick[client] = 0;
+				g_iCurrentAdditionalTeleportIndex[client] = 0;
+				if(GetClientTeam(client) >= CS_TEAM_T)
+					CreateTimer(1.0, RespawnBot, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+			}
 	}
-	else 
-	if(g_hBotMimicsRecord[client] != INVALID_HANDLE)
-	{
-		g_iBotMimicTick[client] = 0;
-		g_iCurrentAdditionalTeleportIndex[client] = 0;
-		if(GetClientTeam(client) >= CS_TEAM_T)
-			CreateTimer(1.0, Timer_DelayedRespawn, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
-	}
+	return Plugin_Continue;
 }
 					
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
@@ -370,6 +379,7 @@ public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	g_bRoundEnd=true;
+	return Plugin_Continue;
 }
 
 // OnRoundRestart
@@ -394,6 +404,7 @@ public Action:Event_OnRoundStart2(Handle:event, const String:name[], bool:dontBr
 			AcceptEntityInput(iEnt, "Kill");
 		}
 	}
+	return Plugin_Continue;
 }
 
 // PlayerHurt 
@@ -424,8 +435,9 @@ public Action:Hook_OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &d
 
 //hide enemies from radar
 public Hook_Radar(client)
+{
 	SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0); 
-
+}
 //fpscheck
 public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const String:cvarName[], const String:cvarValue[])
 {
@@ -572,6 +584,11 @@ public OnEntityCreated(iEntity, const String:classname[])
 	}
 }
 
+public Hook_PostThinkPost(entity)
+{
+	SetEntProp(entity, Prop_Send, "m_bInBuyZone", 0);
+} 
+
 public OnTouch(client, other)
 {
 	if (1 <= client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
@@ -587,7 +604,7 @@ public Teleport_OnStartTouch(const String:output[], caller, activator, Float:del
 {
 	if (1 <= activator <= MaxClients && IsClientInGame(activator))
 	{
-		if (!g_bAllowCpOnBhopPlattforms)
+		if (!g_bAllowCpOnBhopPlattforms && (GetEntityFlags(activator) & FL_ONGROUND))
 			g_bOnBhopPlattform[activator]=true;
 		g_bValidTeleport[activator]=true;
 	}
@@ -595,8 +612,8 @@ public Teleport_OnStartTouch(const String:output[], caller, activator, Float:del
 
 public Teleport_OnEndTouch(const String:output[], caller, activator, Float:delay)
 {
-	if (1 <= activator <= MaxClients && IsClientInGame(activator) && g_bAllowCpOnBhopPlattforms)
-		CreateTimer(0.1, BhopEndTouchTimer, activator,TIMER_FLAG_NO_MAPCHANGE);
+	if (1 <= activator <= MaxClients && IsClientInGame(activator) && g_bOnBhopPlattform[activator])
+		g_bOnBhopPlattform[activator] = false;	
 }  
 
 //https://forums.alliedmods.net/showthread.php?p=1678026 by Inami

@@ -4,7 +4,7 @@
 // http://forums.alliedmods.net/showthread.php?t=164148
 //
 
-public Action:Timer_DelayedRespawn(Handle:timer, any:userid)
+public Action:RespawnBot(Handle:timer, any:userid)
 {
 	new client = GetClientOfUserId(userid);
 	if(!client)
@@ -156,6 +156,19 @@ public LoadReplays()
 {
 	if (!g_bReplayBot)
 		return;
+		
+	//TEAM JOIN OVERLAY BUG
+	new bool:player_joined=false;
+	for(new client = 1; client <= MaxClients; client++) 
+	{					
+		if (IsClientInGame(client) && !IsFakeClient(client) && (IsPlayerAlive(client) || g_bSpectate[client]))
+			player_joined=true;		
+	}	
+	if (!player_joined)
+	{
+		CreateTimer(3.0,LoadReplaysTimer,_,TIMER_FLAG_NO_MAPCHANGE);
+		return;
+	}
 	
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
@@ -170,13 +183,15 @@ public LoadReplays()
 	new Handle:hFilex = OpenFile(sPath1, "r");
 	if(hFilex != INVALID_HANDLE)
 		g_bProReplay=true;
-		
+	
 	hFilex = OpenFile(sPath2, "r");
 	if(hFilex != INVALID_HANDLE)
 		g_bTpReplay=true;
+	
 	if(hFilex != INVALID_HANDLE)
 		CloseHandle(hFilex);	
 		
+
 	g_iBot = -1;
 	g_iBot2 = -1;
 	if (g_bProReplay)
@@ -356,17 +371,26 @@ public LoadReplayPro()
 	}
 	else
 	{
+		//bot_quota > 2 team selection bug .. ??!?!?!?? CSGO VOLVO WTF?
 		if(g_bTpReplay)
-			ServerCommand("bot_quota 2");
+		{
+			ServerCommand("bot_quota 3");
+		}
 		else
 			if(g_bProReplay)
-				ServerCommand("bot_quota 1");		
+				ServerCommand("bot_quota 3");		
 			else
 			{
 				ServerCommand("bot_quota 0");	
 				return;
 			}
-		CreateTimer(2.0, RefreshBot,TIMER_FLAG_NO_MAPCHANGE);
+		for(new i = 1; i <= MaxClients; i++)
+		{
+			g_iBot = i;
+			g_fRunTime[g_iBot] = 0.0;
+			break;
+		}
+		CreateTimer(1.0, RefreshBot,TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
 
@@ -392,7 +416,7 @@ public LoadReplayTp()
 	}
 
 	if(g_iBot2 > 0 && IsValidEntity(g_iBot2) && IsClientInGame(g_iBot2))
-	{			
+	{		
 		PlayRecord(g_iBot2,1);
 		SetEntityRenderColor(g_iBot2, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
 		decl String:szSkin[256];
@@ -407,17 +431,18 @@ public LoadReplayTp()
 	}
 	else
 	{
+		//bot_quota > 2 team selection bug .. ??!?!?!?? CSGO VOLVO WTF?
 		if(g_bProReplay)
-			ServerCommand("bot_quota 2");
+			ServerCommand("bot_quota 3");
 		else
 			if(g_bTpReplay)
-				ServerCommand("bot_quota 1");		
+				ServerCommand("bot_quota 3");		
 			else
 			{
 				ServerCommand("bot_quota 0");	
 				return;
 			}
-		CreateTimer(6.0, RefreshBotTp,TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(3.0, RefreshBotTp,TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
 

@@ -912,6 +912,18 @@ public SetPlayerRank(client)
 			Format(g_pr_chat_coloredrank[client], 32, "%cADMIN%c",LIMEGREEN,WHITE);
 		}
 }
+public SpectatorCount(client)
+{
+	decl String:szBuffer[64];
+	new specs = 0;
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (IsValidEntity(i) && IsClientInGame(i) && g_bSpectate[i])
+			specs++;
+	}
+	Format(szBuffer, sizeof(szBuffer), "[INFO] Specs: %i", specs);		
+	CS_SetClientName(client, szBuffer);		
+}
 
 stock Action:PrintSpecMessageAll(client)
 {
@@ -1381,47 +1393,50 @@ public WjJumpPreCheck(client, &buttons)
 
 public TeleportCheck(client, Float: origin[3])
 {
-	if (!IsFakeClient(client))
+	if((StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz")) || g_bAutoBhop2 == false)
 	{
-		new Float:sum = FloatAbs(origin[0]) - FloatAbs(g_fLastPosition[client][0]);
-		if (sum > 15.0 || sum < -15.0)
+		if (!IsFakeClient(client))
 		{
-				if (g_bPlayerJumped[client])	
-				{
-					g_bPlayerJumped[client] = false;
-				}	
-		}
-		else
-		{
-			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+			new Float:sum = FloatAbs(origin[0]) - FloatAbs(g_fLastPosition[client][0]);
 			if (sum > 15.0 || sum < -15.0)
 			{
-				if (g_bPlayerJumped[client])
-				{
-					g_bPlayerJumped[client] = false;
-				}			
+					if (g_bPlayerJumped[client])	
+					{
+						g_bPlayerJumped[client] = false;
+					}	
 			}
-		}	
-		if (sum > 40.0 || sum < -40.0)
-		{
-			if (!g_bValidTeleport[client])
+			else
 			{
-				g_bTimeractivated[client]=false;		
-			}
-			g_bValidTeleport[client]=false;
-		}
-		else
-		{
-			sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
-			if (sum > 40.0 || sum < -40.0)
+				sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+				if (sum > 15.0 || sum < -15.0)
+				{
+					if (g_bPlayerJumped[client])
+					{
+						g_bPlayerJumped[client] = false;
+					}			
+				}
+			}	
+			if (sum > 85.0 || sum < -85.0)
 			{
 				if (!g_bValidTeleport[client])
 				{
-					g_bTimeractivated[client]=false;	
+					g_bTimeractivated[client]=false;		
 				}
 				g_bValidTeleport[client]=false;
 			}
-		}	
+			else
+			{
+				sum = FloatAbs(origin[1]) - FloatAbs(g_fLastPosition[client][1]);
+				if (sum > 80.0 || sum < -80.0)
+				{
+					if (!g_bValidTeleport[client])
+					{
+						g_bTimeractivated[client]=false;	
+					}
+					g_bValidTeleport[client]=false;
+				}
+			}	
+		}
 	}
 }
 
@@ -2031,6 +2046,9 @@ public AliveMainTimer(client)
 	//Wall check (JumpStats)
 	SurfCheck(client);
 	
+	if (IsFakeClient(client))
+		return;
+		
 	//menu check
 	if (!g_bTimeractivated[client])
 	{

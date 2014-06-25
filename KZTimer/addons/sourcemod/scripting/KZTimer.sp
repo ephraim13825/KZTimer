@@ -10,11 +10,17 @@
 #include <KZTimer>
 #include <geoip>
 #include <colors>
+#include <mapchooser>
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.39"
+/*
+- fixed  timer bug (thx 2 skill vs luck) 
+- minor optimizations
+*/
+
+#define VERSION "1.4"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -173,6 +179,7 @@ new Float:vLastVelocity[MAXPLAYERS + 1][3];
 
 /* Sourcebans */
 new bool:bCanUseSourcebans = false;
+new g_i_ragdolls = -1;
 
 //multiplayer bunnyhop
 //https://forums.alliedmods.net/showthread.php?p=808724?p=808724
@@ -226,7 +233,6 @@ new Float:g_OriginBlock[MAXPLAYERS + 1][2][3];
 new Float:g_DestBlock[MAXPLAYERS + 1][2][3];
 new g_BlockDist[MAXPLAYERS + 1];
 new g_Beam[2];
-
 
 //cvars
 new Handle:g_hWelcomeMsg = INVALID_HANDLE;
@@ -422,6 +428,7 @@ new bool:g_bTpReplay;
 new bool:g_bUpdate;
 new bool:g_pr_refreshingDB;
 new bool:g_bAntiCheat;
+new bool:g_bMapChooser;
 new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bCCheckpoints[MAXPLAYERS+1];
@@ -499,6 +506,15 @@ new bool:g_borg_ShowSpecs[MAXPLAYERS+1];
 new bool:g_borg_CPTextMessage[MAXPLAYERS+1]; 
 new bool:g_borg_AdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_borg_AutoBhopClient[MAXPLAYERS+1];
+new bool:g_bValidAgent[MAXPLAYERS+1];
+new g_iPlayerManager;
+new g_iConnectedOffset;
+new g_iAliveOffset;
+new g_iTeamOffset;
+new g_iPingOffset;
+new g_iScoreOffset;
+new g_iDeathsOffset;
+new g_iHealthOffset;
 new g_bManualRecalcClientID=-1; 
 new g_unique_FileSize;
 new g_maptimes_pro;
@@ -673,6 +689,14 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 public OnPluginStart()
 {
 	g_bUpdate=false;
+	g_iConnectedOffset = FindSendPropOffs("CCSPlayerResource", "m_bConnected");
+	g_iAliveOffset = FindSendPropOffs("CCSPlayerResource", "m_bAlive");
+	g_iTeamOffset = FindSendPropOffs("CCSPlayerResource", "m_iTeam");
+	g_iPingOffset = FindSendPropOffs("CCSPlayerResource", "m_iPing");
+	g_iScoreOffset = FindSendPropOffs("CCSPlayerResource", "m_iScore");
+	g_iDeathsOffset = FindSendPropOffs("CCSPlayerResource", "m_iDeaths");
+	g_iHealthOffset = FindSendPropOffs("CCSPlayerResource", "m_iHealth");
+	
 	new Handle:hGameConf = LoadGameConfigFile("sdkhooks.games")
 
 	//<multibhop>
@@ -1066,6 +1090,7 @@ public OnPluginStart()
 	RegConsoleCmd("say_team", Say_Hook);
 	AutoExecConfig(true, "kztimer");
 	ownerOffset = FindSendPropOffs("CBaseCombatWeapon", "m_hOwnerEntity");
+	g_i_ragdolls = FindSendPropOffs("CCSPlayer","m_hRagdoll");
 	
 	//setskill groups
 	SetSkillGroups();
@@ -1094,14 +1119,12 @@ public OnPluginStart()
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
 	HookEvent("player_team", Event_OnPlayerTeamPre, EventHookMode_Pre);
 	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
-	HookEntityOutput("func_door", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_multiple", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("trigger_multiple", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("func_button", "OnPressed", ButtonPress);
-	//AddNormalSoundHook(Hook_NormalSound);
-
+	
 	//mapcycle array
 	new arraySize = ByteCountToCells(PLATFORM_MAX_PATH);
 	g_MapList = CreateArray(arraySize);	
@@ -1137,9 +1160,12 @@ public OnPluginStart()
 public OnLibraryAdded(const String:name[])
 {	
 	if (StrEqual("sourcebans", name))
-	{
-		bCanUseSourcebans = true;
-	}
+		bCanUseSourcebans = true;	
+	new Handle:tmp = FindPluginByFile("mapchooser_extended.smx");
+	if ((StrEqual("mapchooser", name)) ||(tmp != INVALID_HANDLE && GetPluginStatus(tmp) == Plugin_Running))
+		g_bMapChooser = true;
+	if (tmp != INVALID_HANDLE)
+		CloseHandle(tmp);
 }
 
 public OnLibraryRemoved(const String:name[])
@@ -1213,18 +1239,17 @@ public OnMapStart()
 	SetCashState();
 	CreateTimer(0.1, MainTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(1.0, MainTimer2, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(2.0, RespawnTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(2.0, SettingsEnforcerTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(5.0, SecretTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(2.0, SpawnButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
-	CreateTimer(1.0, CheckRemainingTime, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE); 
+	CreateTimer(1.0, CheckRemainingTime, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	
 	new String:tmp[64];
 	
 	CheatFlag("bot_zombie", false, true);	
 	
 	//srv settings
-	ServerCommand("mp_match_restart_delay 10;mp_spectators_max 60;mp_limitteams 0;sv_deadtalk 1;sv_full_alltalk 1;sv_max_queries_sec 6;bot_quota 0;host_players_show 2;mp_autoteambalance 0;mp_playerid 0;mp_autoteambalance 0;mp_ignore_round_win_conditions 1;mp_do_warmup_period 0;mp_free_armor 1;sv_alltalk 1;bot_chatter off;bot_join_after_player 0;bot_zombie 1;mp_endmatch_votenextmap 0;mp_endmatch_votenextleveltime 10;mp_maxrounds 1;mp_match_end_changelevel 1;mp_match_can_clinch 0;mp_halftime 0");
+	ServerCommand("mp_match_restart_delay 10;mp_spectators_max 30;mp_limitteams 0;sv_deadtalk 1;sv_full_alltalk 1;sv_max_queries_sec 6;bot_quota 0;host_players_show 2;mp_autoteambalance 0;mp_playerid 0;mp_ignore_round_win_conditions 1;mp_do_warmup_period 0;mp_free_armor 1;sv_alltalk 1;bot_chatter off;bot_join_after_player 0;bot_zombie 1;mp_endmatch_votenextmap 0;mp_endmatch_votenextleveltime 10;mp_maxrounds 1;mp_match_end_changelevel 1;mp_match_can_clinch 0;mp_halftime 0;mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_t 3.0;mp_respawnwavetime_ct 3.0");
 	Format(tmp,64, "bot_quota_mode %cnormal%c",QUOTE,QUOTE);
 	ServerCommand(tmp);
 	
@@ -1266,6 +1291,13 @@ public OnMapStart()
 	
 	//Skillgroups
 	SetSkillGroups();
+	
+	//hide agents from scoreboard
+	g_iPlayerManager = FindEntityByClassname(-1, "cs_player_manager");
+	if(g_iPlayerManager != -1)
+	{
+			SDKHook(g_iPlayerManager, SDKHook_ThinkPost, Hook_PMThink);
+	}
 	
 }
 
@@ -1360,6 +1392,7 @@ public OnPluginEnd()
 public OnClientPutInServer(client)
 {
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
+	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
 	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
 	SDKHook(client, SDKHook_PostThink, Hook_Radar);
 	bFlagged[client] = false;
@@ -1372,7 +1405,7 @@ public OnClientPutInServer(client)
 
 public OnClientAuthorized(client)
 {
-	if (g_bConnectMsg)
+	if (g_bConnectMsg && !IsFakeClient(client))
 	{
 		decl String:s_Country[32];
 		decl String:s_clientName[32];
@@ -1380,34 +1413,26 @@ public OnClientAuthorized(client)
 		GetClientIP(client, s_address, 32);
 		GetClientName(client, s_clientName, 32);
 		Format(s_Country, 100, "Unknown");
-		if(!IsFakeClient(client))
-		{
-			GeoipCountry(s_address, s_Country, 100);     
-			if(!strcmp(s_Country, NULL_STRING))
-				Format( s_Country, 100, "Unknown", s_Country );
-			else				
-				if( StrContains( s_Country, "United", false ) != -1 || 
-					StrContains( s_Country, "Republic", false ) != -1 || 
-					StrContains( s_Country, "Federation", false ) != -1 || 
-					StrContains( s_Country, "Island", false ) != -1 || 
-					StrContains( s_Country, "Netherlands", false ) != -1 || 
-					StrContains( s_Country, "Isle", false ) != -1 || 
-					StrContains( s_Country, "Bahamas", false ) != -1 || 
-					StrContains( s_Country, "Maldives", false ) != -1 || 
-					StrContains( s_Country, "Philippines", false ) != -1 || 
-					StrContains( s_Country, "Vatican", false ) != -1 )
-				{
-					Format( s_Country, 100, "The %s", s_Country );
-				}				
-			
-		}	
+		GeoipCountry(s_address, s_Country, 100);     
+		if(!strcmp(s_Country, NULL_STRING))
+			Format( s_Country, 100, "Unknown", s_Country );
+		else				
+			if( StrContains( s_Country, "United", false ) != -1 || 
+				StrContains( s_Country, "Republic", false ) != -1 || 
+				StrContains( s_Country, "Federation", false ) != -1 || 
+				StrContains( s_Country, "Island", false ) != -1 || 
+				StrContains( s_Country, "Netherlands", false ) != -1 || 
+				StrContains( s_Country, "Isle", false ) != -1 || 
+				StrContains( s_Country, "Bahamas", false ) != -1 || 
+				StrContains( s_Country, "Maldives", false ) != -1 || 
+				StrContains( s_Country, "Philippines", false ) != -1 || 
+				StrContains( s_Country, "Vatican", false ) != -1 )
+			{
+				Format( s_Country, 100, "The %s", s_Country );
+			}				
+				
 		if (StrEqual(s_Country, "Unknown",false) || StrEqual(s_Country, "Localhost",false))
-		{
-			if(IsFakeClient(client))
-				PrintToChatAll("BOT %s %cconnected%c.",s_clientName, GREEN,GRAY);
-			else
-				PrintToChatAll("Player %s %cconnected%c.",s_clientName, GREEN,GRAY);
-		}
+			PrintToChatAll("Player %s %cconnected%c.",s_clientName, GREEN,GRAY);
 		else
 			PrintToChatAll( "Player %s %cconnected from%c %s.", s_clientName, GREEN,GRAY,s_Country);
 	}
@@ -1458,6 +1483,7 @@ public OnClientPostAdminCheck(client)
 	g_bRestartCords[client] = false;
 	g_bPlayerJumped[client] = false;
 	g_brc_PlayerRank[client] = false;
+	g_bValidAgent[client]= false;
 	g_PrestrafeFrameCounter[client] = 0;
 	g_PrestrafeVelocity[client] = 1.0;
 	g_fRunTime[client] = -1.0;
@@ -2126,7 +2152,38 @@ public OnGameFrame()
 		}
 		iTickCount2++;
 	}
+	for(new i=1;i<=MaxClients;i++)
+	{
+		if(IsClientInGame(i) && IsFakeClient(i) && g_bValidAgent[i]  && i != g_iBot2 && i != g_iBot)
+		{
+			SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
+			SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);
+			SetEntData(g_iPlayerManager, g_iTeamOffset + (i * 4), 0, 4, true);
+			SetEntData(g_iPlayerManager, g_iPingOffset + (i * 4), 0, 4, true);
+			SetEntData(g_iPlayerManager, g_iScoreOffset + (i * 4), 0, 4, true);
+			SetEntData(g_iPlayerManager, g_iDeathsOffset + (i * 4), 0, 4, true);
+			SetEntData(g_iPlayerManager, g_iHealthOffset + (i * 4), 0, 4, true);
+		}
+	}
 }
+
+public Hook_PMThink(entity)
+{
+        for(new i=1;i<=MaxClients;i++)
+        {
+                if(IsClientInGame(i) && IsFakeClient(i) && g_bValidAgent[i] && i != g_iBot2 && i != g_iBot)
+                {
+					SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
+					SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);
+					SetEntData(g_iPlayerManager, g_iTeamOffset + (i * 4), 0, 4, true);
+					SetEntData(g_iPlayerManager, g_iPingOffset + (i * 4), 0, 4, true);
+					SetEntData(g_iPlayerManager, g_iScoreOffset + (i * 4), 0, 4, true);
+					SetEntData(g_iPlayerManager, g_iDeathsOffset + (i * 4), 0, 4, true);
+					SetEntData(g_iPlayerManager, g_iHealthOffset + (i * 4), 0, 4, true);
+                }
+        }
+}
+ 
 
 public Plugin:myinfo =
 {

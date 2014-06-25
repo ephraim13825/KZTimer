@@ -22,11 +22,6 @@ public Action:HyperscrollWarningTimer(Handle:timer, any:client)
 	g_bHyperscrollWarning[client] = true;
 }
 
-public Action:BhopEndTouchTimer(Handle:timer, any:client)
-{
-	g_bOnBhopPlattform[client] = false;
-}
-
 public Action:MoveTypeNoneTimer(Handle:timer, any:client)
 {
 	SetEntityMoveType(client, MOVETYPE_NONE);
@@ -36,18 +31,6 @@ public Action:BhopCheck(Handle:timer, any:client)
 {
 	if (!g_bBhop[client])
 		g_LeetJumpDominating[client] = 0;
-}
-
-public Action:RespawnTimer(Handle:timer)
-{
-	//Player Respawn
-	for (new client = 1; client <= MaxClients; client++)
-	{	
-		if (IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn && !IsFakeClient(client) && !g_bFirstSpawn[client])	
-		{									
-			CreateTimer(2.0, RespawnPlayer, client);
-		}
-	}
 }
 
 public Action:CheckRemainingTime(Handle:timer)
@@ -91,38 +74,98 @@ public Action:MainTimer2(Handle:timer)
 {
 	if (g_bRoundEnd)
 		return Plugin_Continue;
-	
-	//Scoreboard		
-	for (new i = 1; i <= MaxClients; i++)
-	{	
-		if (!IsValidEntity(i) || !IsClientInGame(i) || g_bPause[i]) 
-			continue;
-		new Float:fltime = GetEngineTime() - g_fStartTime[i] - g_fPauseTime[i] + 1.0;
-		if (IsPlayerAlive(i) && g_bTimeractivated[i])
-		{
-			new time = RoundToZero(fltime);
-			Client_SetScore(i,time); 
-			Client_SetAssists(i,g_OverallCp[i]);		
-			Client_SetDeaths(i,g_OverallTp[i]);								
-		}
-		else
-		{		
-			Client_SetScore(i,0);
-			Client_SetDeaths(i,0);
-			Client_SetAssists(i,0);
-		}
-		if (!IsFakeClient(i) && !g_pr_Calculating[i])
-			CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
-	}
 
-	//Last Cords & Angles
+	new agent=0;
 	for (new i = 1; i <= MaxClients; i++)
 	{	
-		if (!IsValidEntity(i) || !IsClientInGame(i) || !IsPlayerAlive(i) || !(GetEntityFlags(i) & FL_ONGROUND)) 
-			continue;	
-		GetClientAbsOrigin(i,g_fPlayerCordsLastPosition[i]);
-		GetClientEyeAngles(i,g_fPlayerAnglesLastPosition[i]);
-		g_fPlayerLastTime[i] = g_fRunTime[i];
+		if (!IsValidEntity(i) || !IsClientInGame(i))
+			continue;
+		//nextmap & localtime bots
+		if (g_iBot != i && g_iBot2 != i && IsFakeClient(i))
+		{
+			if (agent==0)
+			{		
+				decl String:szBuffer[64];
+				decl String:sNextMap[128];
+				if(g_bMapChooser && EndOfMapVoteEnabled() && !HasEndOfMapVoteFinished())
+					Format(sNextMap, sizeof(sNextMap), "Pending Vote");
+				else
+				{
+					GetNextMap(sNextMap, sizeof(sNextMap));
+					new String:mapPieces[6][128];
+					new lastPiece = ExplodeString(sNextMap, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
+					Format(sNextMap, sizeof(sNextMap), "%s", mapPieces[lastPiece-1]); 			
+				}	
+				
+				new timeleft;
+				GetMapTimeLeft(timeleft);
+				new Float:ftime = float(timeleft);
+				FormatTimeFloat(i,ftime,4);
+				
+				
+				new Handle:hTmp;	
+				hTmp = FindConVar("mp_timelimit");
+				new iTimeLimit = GetConVarInt(hTmp);			
+				if (hTmp != INVALID_HANDLE)
+					CloseHandle(hTmp);	
+				if (g_bMapEnd && iTimeLimit > 0)
+					Format(szBuffer, sizeof(szBuffer), "Nextmap: %s (in %s)",sNextMap, g_szTime[i]);
+				else
+					Format(szBuffer, sizeof(szBuffer), "Nextmap: Pending Vote (no time limit)");
+				CS_SetClientName(i, szBuffer);	
+			}
+			if (agent==1)
+			{
+				decl String:szTime[64];
+				decl String:szTime24[64];
+				decl String:szHours[64];
+				FormatTime(szTime, sizeof(szTime), "%I:%M:%S", GetTime());
+				
+				//am/pm check
+				FormatTime(szTime24, sizeof(szTime24), "%H:%M:%S", GetTime());
+				SplitString(szTime24,":",szHours,64);
+				new hours;
+				hours = StringToInt(szHours);
+
+				if (hours > 12)
+					Format(szTime, sizeof(szTime), "%s pm", szTime);
+				else
+					Format(szTime, sizeof(szTime), "%s am", szTime);
+				decl String:szBuffer2[64];
+				Format(szBuffer2, sizeof(szBuffer2), "Local Time: %s", szTime);		
+				CS_SetClientName(i, szBuffer2);	
+			}
+			agent++;
+		}
+		
+		//Scoreboard			
+		if (!g_bPause[i]) 
+		{
+			new Float:fltime = GetEngineTime() - g_fStartTime[i] - g_fPauseTime[i] + 1.0;
+			if (IsPlayerAlive(i) && g_bTimeractivated[i])
+			{
+				new time = RoundToZero(fltime);
+				Client_SetScore(i,time); 
+				Client_SetAssists(i,g_OverallCp[i]);		
+				Client_SetDeaths(i,g_OverallTp[i]);								
+			}
+			else
+			{		
+				Client_SetScore(i,0);
+				Client_SetDeaths(i,0);
+				Client_SetAssists(i,0);
+			}
+			if (!IsFakeClient(i) && !g_pr_Calculating[i])
+				CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
+		}
+		
+		//Last Cords & Angles
+		if (IsPlayerAlive(i) && (GetEntityFlags(i) & FL_ONGROUND)) 
+		{
+			GetClientAbsOrigin(i,g_fPlayerCordsLastPosition[i]);
+			GetClientEyeAngles(i,g_fPlayerAnglesLastPosition[i]);
+			g_fPlayerLastTime[i] = g_fRunTime[i];
+		}
 	}
 	
 	//clean weapons on ground
@@ -130,14 +173,14 @@ public Action:MainTimer2(Handle:timer)
 	decl String:classx[20];
 	if (g_bCleanWeapons)
 	{
-		for (new i = MaxClients + 1; i < maxEntities; i++)
+		for (new j = MaxClients + 1; j < maxEntities; j++)
 		{
-			if (IsValidEdict(i) && (GetEntDataEnt2(i, ownerOffset) == -1))
+			if (IsValidEdict(j) && (GetEntDataEnt2(j, ownerOffset) == -1))
 			{
-				GetEdictClassname(i, classx, sizeof(classx));
+				GetEdictClassname(j, classx, sizeof(classx));
 				if ((StrContains(classx, "weapon_") != -1) || (StrContains(classx, "item_") != -1))
 				{
-					AcceptEntityInput(i, "Kill");
+					AcceptEntityInput(j, "Kill");
 				}
 			}
 		}
@@ -216,6 +259,26 @@ public Action:ProReplayTimer(Handle:timer, any:client)
 	if (client && IsClientConnected(client) && !IsFakeClient(client))
 		SaveRecording(client,0);
 }
+
+public Action:CheckAgents(Handle:timer, any:client)
+{
+	if (IsClientInGame(client) && IsFakeClient(client) && client != g_iBot && client != g_iBot2)
+	{
+		Format(g_pr_rankname[client], 16, "BOT");
+		SetEntProp(client, Prop_Send, "m_iAddonBits", 0);
+		SetEntProp(client, Prop_Send, "m_iPrimaryAddon", 0);
+		SetEntProp(client, Prop_Send, "m_iSecondaryAddon", 0); 		
+		decl String:szName[32];	
+		GetClientName(client, szName, 32);
+		decl String:szBuffer[64];
+		Format(szBuffer, sizeof(szBuffer), "Free Agent %s", szName);		
+		CS_SetClientName(client, szBuffer);				
+		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", 99);  
+		TeleportEntity(client, Float:{-9999.0,-9999.0,-9999.0},NULL_VECTOR, Float:{0.0,0.0,-100.0});
+		g_bValidAgent[client]=true;
+	}
+}
+
 
 public Action:CheckChallenge(Handle:timer, any:client)
 {
@@ -359,7 +422,7 @@ public Action:MainTimer(Handle:timer)
 		return Plugin_Continue;
 	for (new client = 1; client <= MaxClients; client++)
 	{		
-		if (IsValidEntity(client) && IsClientInGame(client) && !IsFakeClient(client))
+		if (IsValidEntity(client) && IsClientInGame(client))
 		{			
 			if(IsPlayerAlive(client))
 				AliveMainTimer(client);
@@ -450,12 +513,16 @@ public Action:ClimbersMenuTimer(Handle:timer, any:client)
 	}
 }
 
-public Action:RespawnPlayer(Handle:Timer, any:client)
+public Action:RemoveRagdoll(Handle:timer, any:victim)
 {
-	if (IsClientInGame(client) && !IsPlayerAlive(client) && (GetClientTeam(client) > 1) && !g_bSpectate[client] && g_bAutoRespawn)
-		CS_RespawnPlayer(client);
+    if (IsValidEntity(victim) && !IsPlayerAlive(victim))
+    {
+        new player_ragdoll = GetEntDataEnt2(victim, g_i_ragdolls);
+        if (player_ragdoll != -1)
+            RemoveEdict(player_ragdoll);
+    }
 }
-		
+
 public Action:HideRadar(Handle:timer, any:client)
 {
 	if (IsValidEntity(client) && IsClientInGame(client) && !IsFakeClient(client))

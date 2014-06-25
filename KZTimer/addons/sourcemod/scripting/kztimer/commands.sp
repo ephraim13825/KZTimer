@@ -645,6 +645,7 @@ public Handler_MainMenu(Handle:menu,MenuAction:action,param1,param2)
 public SpecPlayer(client,args)
 {
 	decl String:szPlayerName[MAX_NAME_LENGTH];
+	decl String:szPlayerName2[128];
 	decl String:szOrgTargetName[MAX_NAME_LENGTH];
 	decl String:szTargetName[MAX_NAME_LENGTH];
 	decl String:szArg[MAX_NAME_LENGTH];
@@ -666,15 +667,14 @@ public SpecPlayer(client,args)
 		{
 			if (g_iBot != -1 && IsValidEntity(g_iBot) && IsClientInGame(g_iBot) && IsPlayerAlive(g_iBot))
 			{
-				GetClientName(g_iBot, szPlayerName, MAX_NAME_LENGTH);	
-				AddMenuItem(menu, "PRO RECORD REPLAY", "PRO RECORD REPLAY");
+				Format(szPlayerName2, 128, "PRO Replay (%s)",g_szReplayTime);
+				AddMenuItem(menu, "PRO RECORD REPLAY", szPlayerName2);
 				playerCount++;
 			}
 			if (g_iBot2 != -1 && IsValidEntity(g_iBot2) && IsClientInGame(g_iBot2) && IsPlayerAlive(g_iBot2))
 			{
-			
-				GetClientName(g_iBot2, szPlayerName, MAX_NAME_LENGTH);	
-				AddMenuItem(menu, "TP RECORD REPLAY", "TP RECORD REPLAY");
+				Format(szPlayerName2, 128, "TP Replay (%s)",g_szReplayTimeTp);
+				AddMenuItem(menu, "TP RECORD REPLAY", szPlayerName2);
 				playerCount++;
 			}
 		}
@@ -682,11 +682,12 @@ public SpecPlayer(client,args)
 		//add players
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && i != g_iBot && i != g_iBot2)
+			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
-				AddMenuItem(menu, szPlayerName, szPlayerName);
-				playerCount++;
+				Format(szPlayerName2, 128, "%s (%s)",szPlayerName, g_pr_rankname[i]);
+				AddMenuItem(menu, szPlayerName, szPlayerName2);
+				playerCount++;			
 			}
 		}
 		
