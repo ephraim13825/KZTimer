@@ -7,6 +7,13 @@ Info:
 Changelog
 =======
 
+v1.41
+- fixed a "undo tp" bug which occurs in combination with bunnyhop plattforms (thx 2 skill vs luck)
+- added !wr command (opens the map top directly)
+- added "unfinished maps" to player profile
+- changed global database password
+- minor optimizations
+
 v1.4
 - fixed timer bug (thx 2 skill vs luck) 
 - minor optimizations
