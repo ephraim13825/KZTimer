@@ -2019,9 +2019,15 @@ public DeadMainTimer(client)
 			if (g_bJumpStats)
 			{
 				if (g_bPlayerJumped[ObservedUser] && g_bPreStrafe)
-					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],g_fPreStrafe[ObservedUser],sResult);
+				{
+					if (ObservedUser == g_iBot || ObservedUser == g_iBot2)
+						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
+					else
+						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],g_fPreStrafe[ObservedUser],sResult);
+				}
 				else
 					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
+				
 			}
 			else
 				PrintHintText(client,"Speed: %.1f u/s\nVelocity: %.1f u/s\n%s",g_fSpeed[ObservedUser],GetVelocity(ObservedUser),sResult);

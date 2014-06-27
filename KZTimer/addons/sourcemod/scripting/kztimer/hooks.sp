@@ -498,11 +498,17 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		MenuRefresh(client);
 		
 		//undo check
-		if(!g_bAllowCpOnBhopPlattforms && g_bUndo[client])
+		if(!g_bAllowCpOnBhopPlattforms && (g_bUndo[client] || g_bUndoTimer[client]))
 		{
 			buttons &= ~IN_JUMP;
 			buttons &= ~IN_DUCK;
+			if ((GetEntityFlags(client) & FL_ONGROUND) && g_bUndo[client])
+			{
+				CreateTimer(0.5, ResetUndo, client, TIMER_FLAG_NO_MAPCHANGE);
+				g_bUndo[client]	= false;
+			}
 		}
+			
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);

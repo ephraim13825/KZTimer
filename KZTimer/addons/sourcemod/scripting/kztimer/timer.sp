@@ -251,8 +251,12 @@ public Action:Timer_Countdown(Handle:timer, any:client)
 
 public Action:ResetUndo(Handle:timer, any:client)
 {
-	if (IsValidClient(client))
-		g_bUndo[client] = false;
+	if (IsValidClient(client) && !g_bUndo[client])
+	{
+		new Float: diff = GetEngineTime() - g_fLastUndo[client];
+		if (diff >= 0.5)
+			g_bUndoTimer[client] = false;
+	}
 }
 
 public Action:TpReplayTimer(Handle:timer, any:client)

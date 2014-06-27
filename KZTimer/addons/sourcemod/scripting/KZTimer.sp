@@ -70,10 +70,6 @@
 #define FRAME_INFO_SIZE 15
 #define FRAME_INFO_SIZE_V1 14
 #define AT_SIZE 10
-#define AT_ORIGIN 0
-#define AT_ANGLES 1
-#define AT_VELOCITY 2
-#define AT_FLAGS 3
 #define ORIGIN_SNAPSHOT_INTERVAL 100
 #define FILE_HEADER_LENGTH 74
 
@@ -392,6 +388,7 @@ new Float:g_fDroppedUnits[MAXPLAYERS+1];
 new Float:g_fMaxSpeed[MAXPLAYERS+1];
 new Float:g_fLastSpeed[MAXPLAYERS+1];
 new Float:g_fMaxSpeed2[MAXPLAYERS +1];
+new Float:g_fLastUndo[MAXPLAYERS +1];
 new Float:g_flastHeight[MAXPLAYERS +1];
 new Float:g_fMaxHeight[MAXPLAYERS+1];
 new Float:g_fLastJumpTime[MAXPLAYERS+1];
@@ -424,6 +421,7 @@ new bool:g_bUpdate;
 new bool:g_pr_refreshingDB;
 new bool:g_bAntiCheat;
 new bool:g_bMapChooser;
+new bool:g_bUndoTimer[MAXPLAYERS+1];
 new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bCCheckpoints[MAXPLAYERS+1];
@@ -1042,7 +1040,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 5 Global, Top 5 Global 128tick, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_top15", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 5 Global, Top 5 Global 128tick, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
-	RegConsoleCmd("sm_wr", Client_Wr, "[KZTimer] opens map top menu");
+	//RegConsoleCmd("sm_wr", Client_Wr, "[KZTimer] opens map top menu");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
 	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks into chat");
@@ -1470,6 +1468,7 @@ public OnClientPostAdminCheck(client)
 	g_CounterCp[client] = 0;
 	g_OverallCp[client] = 0;
 	g_bUndo[client] = false;
+	g_bUndoTimer[client] = false;
 	g_OverallTp[client] = 0;
 	g_pr_points[client] = 0;
 	if (IsFakeClient(client))
@@ -1590,6 +1589,7 @@ public OnClientDisconnect(client)
 			g_iBot2 = -1;
 		return;
 	}	
+
 	//Database	
 	if (IsValidClient(client))
 	{

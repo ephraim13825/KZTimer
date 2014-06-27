@@ -514,8 +514,11 @@ public Action:Client_Undo(client, args)
 			return Plugin_Handled;
 		g_bValidTeleport[client]=true;
 		if (!g_bAllowCpOnBhopPlattforms)
+		{
 			g_bUndo[client]	= true;
-		CreateTimer(0.25, ResetUndo, client,TIMER_FLAG_NO_MAPCHANGE);
+			g_bUndoTimer[client] = true;
+			g_fLastUndo[client] = GetEngineTime();
+		}	
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 	}
 	return Plugin_Handled;
@@ -1973,14 +1976,14 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			}
 }
 
-public Action:Client_Wr(client, args) 
+/*public Action:Client_Wr(client, args) 
 {
 	detailView[client]=-1;
 	g_bTopMenuOpen[client]=true;
 	g_bClimbersMenuOpen[client]=false;
 	MapTopMenu(client);
 	return Plugin_Handled;
-}
+}*/
 
 public MapTopMenu(client)
 {
