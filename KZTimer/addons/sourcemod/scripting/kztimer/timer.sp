@@ -8,7 +8,7 @@ public Action:RefreshAdminMenu(Handle:timer, any:client)
 
 public Action:DBUpdateTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))	
+	if (IsValidClient(client) && !IsFakeClient(client))	
 		db_updateStat(client);	
 }
 
@@ -78,8 +78,9 @@ public Action:MainTimer2(Handle:timer)
 	new agent=0;
 	for (new i = 1; i <= MaxClients; i++)
 	{	
-		if (!IsValidEntity(i) || !IsClientInGame(i))
+		if (!IsValidClient(i))
 			continue;
+			
 		//nextmap & localtime bots
 		if (g_iBot != i && g_iBot2 != i && IsFakeClient(i))
 		{
@@ -195,7 +196,7 @@ public Action:SpawnButtons(Handle:timer)
 
 public Action:OnDeathTimer(Handle:Timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		new team = GetClientTeam(client);
 		if ( team != 1)
@@ -216,7 +217,7 @@ public Action:OnDeathTimer(Handle:Timer, any:client)
 
 public Action:KickPlayer(Handle:Timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		decl String:szReason[64];
 		Format(szReason, 64, "Please set your fps_max between 100 and 300");
@@ -228,7 +229,7 @@ public Action:KickPlayer(Handle:Timer, any:client)
 //challenge start countdown
 public Action:Timer_Countdown(Handle:timer, any:client)
 {
-	if (IsClientConnected(client) && g_bChallenge[client] && !IsFakeClient(client))
+	if (IsValidClient(client) && g_bChallenge[client] && !IsFakeClient(client))
 	{
 		PrintToChat(client,"[%cKZ%c] %c%i",RED,WHITE,YELLOW,g_CountdownTime[client]);
 		g_CountdownTime[client]--;
@@ -248,21 +249,27 @@ public Action:Timer_Countdown(Handle:timer, any:client)
 	return Plugin_Continue;
 }
 
+public Action:ResetUndo(Handle:timer, any:client)
+{
+	if (IsValidClient(client))
+		g_bUndo[client] = false;
+}
+
 public Action:TpReplayTimer(Handle:timer, any:client)
 {
-	if (client && IsClientConnected(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 		SaveRecording(client,1);
 }
 
 public Action:ProReplayTimer(Handle:timer, any:client)
 {
-	if (client && IsClientConnected(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 		SaveRecording(client,0);
 }
 
 public Action:CheckAgents(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && IsFakeClient(client) && client != g_iBot && client != g_iBot2)
+	if (IsValidClient(client) && IsFakeClient(client) && client != g_iBot && client != g_iBot2)
 	{
 		Format(g_pr_rankname[client], 16, "BOT");
 		SetEntProp(client, Prop_Send, "m_iAddonBits", 0);
@@ -273,7 +280,7 @@ public Action:CheckAgents(Handle:timer, any:client)
 		decl String:szBuffer[64];
 		Format(szBuffer, sizeof(szBuffer), "Free Agent %s", szName);		
 		CS_SetClientName(client, szBuffer);				
-		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", 99);  
+		SetEntProp(client, Prop_Send, "m_iObserverMode", 1);
 		TeleportEntity(client, Float:{-9999.0,-9999.0,-9999.0},NULL_VECTOR, Float:{0.0,0.0,-100.0});
 		g_bValidAgent[client]=true;
 	}
@@ -286,11 +293,11 @@ public Action:CheckChallenge(Handle:timer, any:client)
 	decl String:szSteamId[32];
 	decl String:szName[32];
 	decl String:szNameTarget[32];
-	if (g_bChallenge[client] && IsClientConnected(client) && IsClientInGame(client) && !IsFakeClient(client))
+	if (g_bChallenge[client] && IsValidClient(client) && !IsFakeClient(client))
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsClientInGame(i) && i != client)
+			if (IsValidClient(i) && i != client)
 			{	
 				GetClientAuthString(i, szSteamId, 32);		
 				if (StrEqual(szSteamId,g_szCOpponentID[client]))
@@ -331,7 +338,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			db_selectRankedPlayer(g_szCOpponentID[client], g_CBet[client]);
 			
 			//chat msgs
-			if (IsClientInGame(client))
+			if (IsValidClient(client))
 				PrintToChat(client, "%t", "ChallengeWon",RED,WHITE,YELLOW,WHITE);
 
 			//db client
@@ -360,7 +367,7 @@ public Action:LoadReplaysTimer(Handle:timer)
 
 public Action:SetClanTag(Handle:timer, any:client)
 {
-	if (client > MaxClients || client < 1 || !IsValidEntity(client) || !IsClientInGame(client) || IsFakeClient(client) || g_pr_Calculating[client])
+	if (!IsValidClient(client) || IsFakeClient(client) || g_pr_Calculating[client])
 		return;
 
 	if (!g_bCountry && !g_bPointSystem && !g_bAdminClantag && !g_bVipClantag)
@@ -393,7 +400,7 @@ public Action:SetClanTag(Handle:timer, any:client)
 	
 	//new rank
 	if (oldrank && g_bPointSystem)
-		if (!StrEqual(g_pr_rankname[client], old_pr_rankname, false) && IsClientInGame(client))
+		if (!StrEqual(g_pr_rankname[client], old_pr_rankname, false) && IsValidClient(client))
 		{
 			if (g_bColoredChatRanks)
 				CPrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,GRAY, g_pr_chat_coloredrank[client]);
@@ -411,7 +418,7 @@ public Action:SettingsEnforcerTimer(Handle:timer)
 
 public Action:TerminateRoundTimer(Handle:timer)
 {
-	PrintToChatAll("[%cMAP%c] 0..",LIGHTRED,WHITE);
+	//PrintToChatAll("[%cMAP%c] 0..",LIGHTRED,WHITE);
 	CS_TerminateRound(1.0, CSRoundEnd_CTWin, true);
 }
 
@@ -422,7 +429,7 @@ public Action:MainTimer(Handle:timer)
 		return Plugin_Continue;
 	for (new client = 1; client <= MaxClients; client++)
 	{		
-		if (IsValidEntity(client) && IsClientInGame(client))
+		if (IsValidClient(client))
 		{			
 			if(IsPlayerAlive(client))
 				AliveMainTimer(client);
@@ -435,7 +442,7 @@ public Action:MainTimer(Handle:timer)
 
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client) && !StrEqual(g_sWelcomeMsg,""))
+	if (IsValidClient(client) && !IsFakeClient(client) && !StrEqual(g_sWelcomeMsg,""))
 		CPrintToChat(client, "%s", g_sWelcomeMsg);
 }
 
@@ -446,19 +453,19 @@ public Action:OverlayTimer(Handle:timer, any:client)
 
 public Action:HelpMsgTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 		PrintToChat(client, "%t", "HelpMsg", MOSSGREEN,WHITE,GREEN,WHITE);
 }
 
 public Action:SteamGroupTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 		PrintToChat(client, "%t", "SteamGroup", MOSSGREEN,WHITE);
 }
 
 public Action:GetTakeOffSpeedTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl Float:fVelocity[3];
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
@@ -469,7 +476,7 @@ public Action:GetTakeOffSpeedTimer(Handle:timer, any:client)
 
 public Action:StartMsgTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		if (g_bAntiCheat)
 			PrintToChat(client, "%t", "AntiCheatEnabled", MOSSGREEN,WHITE,LIMEGREEN);
@@ -484,7 +491,7 @@ public Action:StartMsgTimer(Handle:timer, any:client)
 
 public Action:CenterMsgTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		if (g_bRestoreCMsg[client])
 		{
@@ -505,7 +512,7 @@ public Action:CenterMsgTimer(Handle:timer, any:client)
 
 public Action:ClimbersMenuTimer(Handle:timer, any:client)
 {
-	if (IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		if (g_bAllowCheckpoints)
 			if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"bkz"))
@@ -525,7 +532,7 @@ public Action:RemoveRagdoll(Handle:timer, any:victim)
 
 public Action:HideRadar(Handle:timer, any:client)
 {
-	if (IsValidEntity(client) && IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0);
 		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);	
@@ -534,7 +541,7 @@ public Action:HideRadar(Handle:timer, any:client)
 
 public Action:OpenMapTimes(Handle:timer, any:client)
 {
-	if (IsValidEntity(client) && IsClientInGame(client) && !IsFakeClient(client))
+	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		decl String:szSteamId[32];
 		GetClientAuthString(client, szSteamId, 32);		

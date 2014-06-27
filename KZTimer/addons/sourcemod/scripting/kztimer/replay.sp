@@ -10,7 +10,7 @@ public Action:RespawnBot(Handle:timer, any:userid)
 	if(!client)
 		return Plugin_Stop;
 	
-	if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsClientInGame(client) && !IsPlayerAlive(client) && IsFakeClient(client) && GetClientTeam(client) >= CS_TEAM_T)
+	if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsValidClient(client) && !IsPlayerAlive(client) && IsFakeClient(client) && GetClientTeam(client) >= CS_TEAM_T)
 		CS_RespawnPlayer(client);
 	
 	return Plugin_Stop;
@@ -30,7 +30,7 @@ public Action:Hook_WeaponCanSwitchTo(client, weapon)
 
 public StartRecording(client)
 {
-	if(client < 1 || client > MaxClients || !IsClientInGame(client) || IsFakeClient(client))
+	if(!IsValidClient(client) || IsFakeClient(client))
 		return;
 	
 	g_hRecording[client] = CreateArray(_:FrameInfo);
@@ -43,7 +43,7 @@ public StartRecording(client)
 
 public StopRecording(client)
 {
-	if(client < 1 || client > MaxClients || !IsClientInGame(client) || g_hRecording[client] == INVALID_HANDLE)
+	if(!IsValidClient(client) || g_hRecording[client] == INVALID_HANDLE)
 		return;
 	CloseHandle(g_hRecording[client]);
 	CloseHandle(g_hRecordingAdditionalTeleport[client]);	
@@ -58,7 +58,7 @@ public StopRecording(client)
 
 public SaveRecording(client, type)
 {
-	if(client < 1 || client > MaxClients || !IsClientInGame(client) || g_hRecording[client] == INVALID_HANDLE)
+	if(!IsValidClient(client) || g_hRecording[client] == INVALID_HANDLE)
 		return;
 		
 	decl String:sPath2[256];
@@ -161,7 +161,7 @@ public LoadReplays()
 	new bool:player_joined=false;
 	for(new client = 1; client <= MaxClients; client++) 
 	{					
-		if (IsClientInGame(client) && !IsFakeClient(client) && (IsPlayerAlive(client) || g_bSpectate[client]))
+		if (IsValidClient(client) && !IsFakeClient(client) && (IsPlayerAlive(client) || g_bSpectate[client]))
 			player_joined=true;		
 	}	
 	if (!player_joined)
@@ -241,7 +241,7 @@ public PlayRecord(client, type)
 	Array_Copy(iFileHeader[_:FH_initialAngles], g_fInitialAngles[client], 3);
 	SDKHook(client, SDKHook_WeaponCanSwitchTo, Hook_WeaponCanSwitchTo);
 	// Respawn him to get him moving!
-	if(IsClientInGame(client) && !IsPlayerAlive(client) && GetClientTeam(client) >= CS_TEAM_T)
+	if(IsValidClient(client) && !IsPlayerAlive(client) && GetClientTeam(client) >= CS_TEAM_T)
 		CS_RespawnPlayer(client);
 }
 
@@ -341,9 +341,7 @@ public LoadReplayPro()
 	g_iBot = -1;
 	for(new i = 1; i <= MaxClients; i++)
 	{
-		if(!IsClientInGame(i))
-			continue;
-		if(!IsFakeClient(i))
+		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot2)
 			continue;
 		if(!IsPlayerAlive(i))
 		{
@@ -355,7 +353,7 @@ public LoadReplayPro()
 		break;
 	}
 
-	if(g_iBot > 0 && IsValidEntity(g_iBot) && IsClientInGame(g_iBot))
+	if(g_iBot > 0 && IsValidClient(g_iBot))
 	{		
 		PlayRecord(g_iBot,0);
 		SetEntityRenderColor(g_iBot, g_ReplayBotProColor[0], g_ReplayBotProColor[1], g_ReplayBotProColor[2], 50);
@@ -399,23 +397,19 @@ public LoadReplayTp()
 	g_iBot2 = -1;
 	for(new i = 1; i <= MaxClients; i++)
 	{
-		if(!IsClientInGame(i))
-			continue;
-		if(!IsFakeClient(i))
+		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot)
 			continue;
 		if(!IsPlayerAlive(i))
 		{
 			CS_RespawnPlayer(i);
 			continue;
 		}
-		if(i==g_iBot)
-			continue;
 		g_iBot2 = i;
 		g_fRunTime[g_iBot2] = 0.0;
 		break;
 	}
 
-	if(g_iBot2 > 0 && IsValidEntity(g_iBot2) && IsClientInGame(g_iBot2))
+	if(g_iBot2 > 0 && IsValidClient(g_iBot2))
 	{		
 		PlayRecord(g_iBot2,1);
 		SetEntityRenderColor(g_iBot2, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
@@ -448,7 +442,7 @@ public LoadReplayTp()
 
 public StopPlayerMimic(client)
 {
-	if(client < 1 || client > MaxClients || !IsClientInGame(client))
+	if(!IsValidClient(client))
 		return;
 	g_iBotMimicTick[client] = 0;
 	g_iCurrentAdditionalTeleportIndex[client] = 0;
@@ -460,11 +454,8 @@ public StopPlayerMimic(client)
 
 public IsPlayerMimicing(client)
 {
-	if(client < 1 || client > MaxClients || !IsClientInGame(client))
-	{
-		ThrowNativeError(SP_ERROR_NATIVE, "Bad player index %d", client);
-		return false;
-	}	
+	if(!IsValidClient(client))
+		return false;	
 	return g_hBotMimicsRecord[client] != INVALID_HANDLE;
 }
 

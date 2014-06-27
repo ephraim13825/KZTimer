@@ -15,12 +15,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-/*
-- fixed  timer bug (thx 2 skill vs luck) 
-- minor optimizations
-*/
-
-#define VERSION "1.4"
+#define VERSION "1.41"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -458,6 +453,7 @@ new bool:g_bOnBhopPlattform[MAXPLAYERS+1];
 new bool:g_bMapFinished[MAXPLAYERS+1]; 
 new bool:g_bRespawnPosition[MAXPLAYERS+1]; 
 new bool:g_bKickStatus[MAXPLAYERS+1]; 
+new bool:g_bUndo[MAXPLAYERS+1]; 
 new bool:g_bManualRecalc; 
 new bool:g_bSelectProfile[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuwasOpen[MAXPLAYERS+1]; 
@@ -478,7 +474,6 @@ new bool:g_bAutoBhopWasActive[MAXPLAYERS+1];
 new bool:g_bColorChat[MAXPLAYERS+1]=true;
 new bool:g_bNewReplay[MAXPLAYERS+1];
 new bool:g_bPositionRestored[MAXPLAYERS+1];
-new bool:g_BGlobalDBConnected=false;
 new bool:g_bInfoPanel[MAXPLAYERS+1]=false;
 new bool:g_bClimbersMenuSounds[MAXPLAYERS+1]=true;
 new bool:g_bEnableQuakeSounds[MAXPLAYERS+1]=true;
@@ -737,7 +732,7 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "1", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "0", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCpOnBhopPlattforms     = GetConVarBool(g_hAllowCpOnBhopPlattforms);
 	HookConVarChange(g_hAllowCpOnBhopPlattforms, OnSettingChanged);	
 	
@@ -1047,6 +1042,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 5 Global, Top 5 Global 128tick, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_top15", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 5 Global, Top 5 Global 128tick, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
+	RegConsoleCmd("sm_wr", Client_Wr, "[KZTimer] opens map top menu");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
 	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks into chat");
@@ -1260,7 +1256,7 @@ public OnMapStart()
 		ServerCommand("sv_infinite_ammo 0");
 
 	//valid timestamp? [global db]
-	if (fileFound && g_BGlobalDBConnected && g_bGlobalDB)
+	if (fileFound && g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 	{	
 		g_unique_FileSize =  FileSize(mapPath);
 		//supported map tags 
@@ -1473,6 +1469,7 @@ public OnClientPostAdminCheck(client)
 	g_SpecTarget[client] = -1;
 	g_CounterCp[client] = 0;
 	g_OverallCp[client] = 0;
+	g_bUndo[client] = false;
 	g_OverallTp[client] = 0;
 	g_pr_points[client] = 0;
 	if (IsFakeClient(client))
@@ -1594,7 +1591,7 @@ public OnClientDisconnect(client)
 		return;
 	}	
 	//Database	
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		db_insertLastPosition(client,g_szMapName);
 		db_updatePlayerOptions(client);
@@ -1679,7 +1676,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 		{		
 			for (new i = 1; i <= MaxClients; i++)
-			if (IsClientInGame(i))	
+			if (IsValidClient(i))	
 			{
 				if (i == g_iBot2 || i == g_iBot)
 				{
@@ -1709,14 +1706,14 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			g_bAdminClantag = true;
 			for (new i = 1; i <= MaxClients; i++)
-				if (IsClientInGame(i))	
+				if (IsValidClient(i))	
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);						
 		}
 		else
 		{
 			g_bAdminClantag = false;
 			for (new i = 1; i <= MaxClients; i++)
-				if (IsClientInGame(i))	
+				if (IsValidClient(i))	
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
 	}
@@ -1727,14 +1724,14 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			g_bVipClantag = true;
 			for (new i = 1; i <= MaxClients; i++)
-				if (IsClientInGame(i))	
+				if (IsValidClient(i))	
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
 		else
 		{
 			g_bVipClantag = false;
 			for (new i = 1; i <= MaxClients; i++)
-				if (IsClientInGame(i))	
+				if (IsValidClient(i))	
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
 	}
@@ -1825,7 +1822,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			g_bPlayerSkinChange = true;
 			for (new i = 1; i <= MaxClients; i++)
-				if (1 <= i <= MaxClients && IsClientInGame(i) && i != g_iBot2 && i != g_iBot)	
+				if (IsValidClient(i) && i != g_iBot2 && i != g_iBot)	
 				{
 					SetEntPropString(i, Prop_Send, "m_szArmsModel", g_sArmModel);
 					SetEntityModel(i,  g_sPlayerModel);
@@ -1840,13 +1837,13 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			g_bPointSystem = true;		
 			for (new i = 1; i <= MaxClients; i++)
-				if (1 <= i <= MaxClients && IsClientInGame(i))				
+				if (IsValidClient(i))				
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);					
 		}
 		else
 		{
 			for (new i = 1; i <= MaxClients; i++)
-				if (1 <= i <= MaxClients && IsClientInGame(i))
+				if (IsValidClient(i))
 				{
 					Format(g_pr_rankname[i], 32, "");
 					CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);
@@ -1883,7 +1880,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bCleanWeapons = true;
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (1 <= i <= MaxClients && IsClientInGame(i) && IsPlayerAlive(i))
+				if (IsValidClient(i) && IsPlayerAlive(i))
 				{
 					for(new j = 0; j < 4; j++)
 					{
@@ -1951,7 +1948,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bCountry = true;
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (1 <= i <= MaxClients && IsClientInGame(i))
+				if (IsValidClient(i))
 				{
 					GetCountry(i);
 					if (g_bPointSystem)
@@ -1964,7 +1961,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bCountry = false;
 			if (g_bPointSystem)
 				for (new i = 1; i <= MaxClients; i++)
-					if (1 <= i <= MaxClients && IsClientInGame(i))				
+					if (IsValidClient(i))				
 						CreateTimer(0.5, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
 	}	
@@ -2031,7 +2028,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bgodmode = false;
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{	
 				if (g_bgodmode)
 					SetEntProp(i, Prop_Data, "m_takedamage", 0, 1);
@@ -2071,7 +2068,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		if (!g_bPlayerSkinChange)
 			return;
 		for (new i = 1; i <= MaxClients; i++)
-			if (1 <= i <= MaxClients && IsClientInGame(i) && i != g_iBot2 && i != g_iBot)	
+			if (IsValidClient(i) && i != g_iBot2 && i != g_iBot)	
 				SetEntityModel(i,  newValue[0]);
 	}
 	
@@ -2083,7 +2080,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		if (!g_bPlayerSkinChange)
 			return;
 		for (new i = 1; i <= MaxClients; i++)
-			if (1 <= i <= MaxClients && IsClientInGame(i) && i != g_iBot2 && i != g_iBot)	
+			if (IsValidClient(i) && i != g_iBot2 && i != g_iBot)	
 				SetEntPropString(i, Prop_Send, "m_szArmsModel", newValue[0]);
 	}
 	
@@ -2140,7 +2137,7 @@ public OnGameFrame()
 		if (iTickCount2 % 1 == 0)
 		{
 			new index = iTickCount2 / 1;
-			if (bSurfCheck[index] && IsClientInGame(index) && IsPlayerAlive(index))
+			if (bSurfCheck[index] && IsValidClient(index) && IsPlayerAlive(index))
 			{	
 				GetEntPropVector(index, Prop_Data, "m_vecVelocity", avVEL[index]);
 				if (avVEL[index][2] < -290)
@@ -2154,7 +2151,7 @@ public OnGameFrame()
 	}
 	for(new i=1;i<=MaxClients;i++)
 	{
-		if(IsClientInGame(i) && IsFakeClient(i) && g_bValidAgent[i]  && i != g_iBot2 && i != g_iBot)
+		if(IsValidClient(i) && IsFakeClient(i) && g_bValidAgent[i]  && i != g_iBot2 && i != g_iBot)
 		{
 			SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
 			SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);
@@ -2171,7 +2168,7 @@ public Hook_PMThink(entity)
 {
         for(new i=1;i<=MaxClients;i++)
         {
-                if(IsClientInGame(i) && IsFakeClient(i) && g_bValidAgent[i] && i != g_iBot2 && i != g_iBot)
+                if(IsValidClient(i) && IsFakeClient(i) && g_bValidAgent[i] && i != g_iBot2 && i != g_iBot)
                 {
 					SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
 					SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);

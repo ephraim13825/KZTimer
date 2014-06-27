@@ -9,7 +9,7 @@ public Action:Client_Usp(client, args)
 
 public Action:Client_Ljblock(client, args)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client))
+	if (IsValidClient(client) && IsPlayerAlive(client))
 		LJBlockMenu(client);
 	return Plugin_Handled;
 }
@@ -44,7 +44,7 @@ public LjBlockMenuHandler(Handle:menu, MenuAction:action, client, select)
 
 public Action:Client_Flashlight(client, args)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client)) 
+	if (IsValidClient(client) && IsPlayerAlive(client)) 
 		SetEntProp(client, Prop_Send, "m_fEffects", GetEntProp(client, Prop_Send, "m_fEffects") ^ 4);
 	return Plugin_Handled;
 }
@@ -189,7 +189,7 @@ public ChallengeMenuHandler2(Handle:menu, MenuAction:action, param1,param2)
 		new playerCount=0;
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != param1 && !IsFakeClient(i))
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != param1 && !IsFakeClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				AddMenuItem(menu2, szPlayerName, szPlayerName);	
@@ -230,7 +230,7 @@ public ChallengeMenuHandler3(Handle:menu, MenuAction:action, param1,param2)
 		GetMenuItem(menu, param2, info, sizeof(info));
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != param1)
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != param1)
 			{
 				GetClientName(i, szTargetName, MAX_NAME_LENGTH);	
 				
@@ -318,7 +318,7 @@ public Action:Client_Accept(client, args)
 	GetClientAuthString(client, szSteamId, 32);		
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && g_bChallengeRequest[i])
+		if (IsValidClient(i) && IsPlayerAlive(i) && i != client && g_bChallengeRequest[i])
 		{
 			if(StrEqual(szSteamId,g_szCOpponentID[i]))
 			{		
@@ -393,7 +393,7 @@ public Action:Client_Surrender (client, args)
 		GetClientName(client, szName, MAX_NAME_LENGTH);
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsClientInGame(i) && i != client)
+			if (IsValidClient(i) && i != client)
 			{	
 				GetClientAuthString(i, szSteamIdOpponent, 32);		
 				if (StrEqual(szSteamIdOpponent,g_szCOpponentID[client]))
@@ -408,7 +408,7 @@ public Action:Client_Surrender (client, args)
 					//msg
 					for (new j = 1; j <= MaxClients; j++)
 					{
-						if (1 <= j <= MaxClients && IsClientInGame(j) && IsValidEntity(j))
+						if (IsValidClient(j) && IsValidEntity(j))
 						{						
 								PrintToChat(j, "%t", "Challenge4",RED,WHITE,MOSSGREEN,szNameOpponent, WHITE,MOSSGREEN,szName,WHITE);
 						}
@@ -431,7 +431,7 @@ public Action:Client_Surrender (client, args)
 						PrintToChat(client, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
 						new lostpoints = g_CBet[client] * g_pr_points_finished;
 						for (new j = 1; j <= MaxClients; j++)
-							if (1 <= j <= MaxClients && IsClientInGame(j) && IsValidEntity(j))
+							if (IsValidClient(j) && IsValidEntity(j))
 								PrintToChat(j, "[%cKZ%c] %c%s%c has lost %c%i %cpoints!", MOSSGREEN, WHITE, PURPLE,szName, GRAY, RED, lostpoints,GRAY);
 					}
 					//db update
@@ -482,7 +482,7 @@ public Action:Command_JoinTeam(client, const String:command[], argc)
 			}
 			g_bSpectate[client] = false;
 		}	
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			ChangeClientTeam(client, team); 
 		return Plugin_Handled; 
 	}
@@ -508,11 +508,14 @@ public Action:Client_Next(client, args)
 
 public Action:Client_Undo(client, args)
 {	
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
 			return Plugin_Handled;
 		g_bValidTeleport[client]=true;
+		if (!g_bAllowCpOnBhopPlattforms)
+			g_bUndo[client]	= true;
+		CreateTimer(0.25, ResetUndo, client,TIMER_FLAG_NO_MAPCHANGE);
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 	}
 	return Plugin_Handled;
@@ -520,7 +523,7 @@ public Action:Client_Undo(client, args)
 
 public Action:NoClip(client, args)
 {
-	if (IsClientInGame(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC))
+	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC))
 	{
 		if (!g_bMapFinished[client])
 		{
@@ -535,7 +538,7 @@ public Action:NoClip(client, args)
 				Action_NoClip(client);	
 	}
 	else
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			PrintToChat(client, "%t", "NoclipNotAvailable3",MOSSGREEN, WHITE);
 	return Plugin_Handled;
 }
@@ -665,13 +668,13 @@ public SpecPlayer(client,args)
 		//add replay bots
 		if (g_iBot != -1 || g_iBot2 != -1)
 		{
-			if (g_iBot != -1 && IsValidEntity(g_iBot) && IsClientInGame(g_iBot) && IsPlayerAlive(g_iBot))
+			if (g_iBot != -1 && IsValidClient(g_iBot) && IsPlayerAlive(g_iBot))
 			{
 				Format(szPlayerName2, 128, "PRO Replay (%s)",g_szReplayTime);
 				AddMenuItem(menu, "PRO RECORD REPLAY", szPlayerName2);
 				playerCount++;
 			}
-			if (g_iBot2 != -1 && IsValidEntity(g_iBot2) && IsClientInGame(g_iBot2) && IsPlayerAlive(g_iBot2))
+			if (g_iBot2 != -1 && IsValidClient(g_iBot2) && IsPlayerAlive(g_iBot2))
 			{
 				Format(szPlayerName2, 128, "TP Replay (%s)",g_szReplayTimeTp);
 				AddMenuItem(menu, "TP RECORD REPLAY", szPlayerName2);
@@ -682,7 +685,7 @@ public SpecPlayer(client,args)
 		//add players
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				Format(szPlayerName2, 128, "%s (%s)",szPlayerName, g_pr_rankname[i]);
@@ -717,7 +720,7 @@ public SpecPlayer(client,args)
 		StringToUpper(szTargetName);	
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client )
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != client )
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);		
 				StringToUpper(szPlayerName);
@@ -744,7 +747,7 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		GetMenuItem(menu, param2, info, sizeof(info));
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != param1)
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != param1)
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				if (i == g_iBot2)
@@ -775,7 +778,7 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 
 public Action:Client_Kzmenu(client, args)
 {
-	if (!g_bAllowCheckpoints && IsClientInGame(client))
+	if (!g_bAllowCheckpoints && IsValidClient(client))
 		PrintToChat(client, "%t", "CMenuDisabled",MOSSGREEN, WHITE);
 	else
 	{
@@ -797,7 +800,7 @@ public CompareMenu(client,args)
 		new playerCount=0;
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				AddMenuItem(menu, szPlayerName, szPlayerName);	
@@ -836,7 +839,7 @@ public CompareMenu(client,args)
 			decl String:szName2[MAX_NAME_LENGTH];		
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (1 <= i <= MaxClients && IsClientInGame(i) && i!=client)
+				if (IsValidClient(i) && i!=client)
 				{
 					GetClientName(i, szName, MAX_NAME_LENGTH);		
 					StringToUpper(szName);
@@ -867,7 +870,7 @@ public CompareSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && i != param1)
+			if (IsValidClient(i) && i != param1)
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				if(StrEqual(info,szPlayerName))
@@ -883,12 +886,12 @@ public CompareSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	else
 	if(action == MenuAction_Cancel)
 	{
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (IsValidClient(param1))
 			g_bMenuOpen[param1]=false;	
 	}
 	else if (action == MenuAction_End)
 	{	
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (IsValidClient(param1))
 			g_bSelectProfile[param1]=false;
 		CloseHandle(menu);
 	}
@@ -918,7 +921,7 @@ public ProfileMenu(client,args)
 		new playerCount=1;
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i) && i != client && !IsFakeClient(i))
+			if (IsValidClient(i) && i != client && !IsFakeClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				AddMenuItem(menu, szPlayerName, szPlayerName);	
@@ -960,7 +963,7 @@ public ProfileMenu(client,args)
 		decl String:szName2[MAX_NAME_LENGTH];		
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				GetClientName(i, szName, MAX_NAME_LENGTH);		
 				StringToUpper(szName);
@@ -992,7 +995,7 @@ public ProfileSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsValidEntity(i) && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				if(StrEqual(info,szPlayerName))
@@ -1008,12 +1011,12 @@ public ProfileSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	else
 	if(action == MenuAction_Cancel)
 	{
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (IsValidClient(param1))
 			g_bMenuOpen[param1]=false;	
 	}
 	else if (action == MenuAction_End)
 	{	
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (IsValidClient(param1))
 			g_bSelectProfile[param1]=false;
 		CloseHandle(menu);
 	}
@@ -1080,7 +1083,7 @@ public Action:Client_Help(client, args)
 
 public Action:Client_Ranks(client, args)
 {
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 		PrintToChat(client, "[%cKZ%c] %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s",MOSSGREEN,WHITE, WHITE, g_szSkillGroups[0],WHITE, g_szSkillGroups[1],GRAY, g_szSkillGroups[2],LIGHTBLUE, g_szSkillGroups[3],BLUE, g_szSkillGroups[4],DARKBLUE, g_szSkillGroups[5],PINK, g_szSkillGroups[6],LIGHTRED, g_szSkillGroups[7],DARKRED,g_szSkillGroups[8]);
 	return Plugin_Handled;
 }
@@ -1099,7 +1102,7 @@ public Action:Client_Compare(client, args)
 
 public Action:Client_Start(client, args)
 {
-	if (!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
 		return Plugin_Handled;
 	
 	new Float: e_time = GetEngineTime();
@@ -1286,7 +1289,7 @@ public GoToMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		GetMenuItem(menu, param2, info, sizeof(info));
 		for (new i = 1; i <= MaxClients; i++)
 		{	
-			if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != param1)
+			if (IsValidClient(i) && IsPlayerAlive(i) && i != param1)
 			{
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				if(StrEqual(info,szPlayerName))
@@ -1317,7 +1320,7 @@ public GoToMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 
 public GotoMethod(client, i)
 {	
-	if (!IsClientInGame(client) || IsFakeClient(client))
+	if (!IsValidClient(client) || IsFakeClient(client))
 		return;
 	decl String:szTargetName[MAX_NAME_LENGTH];
 	GetClientName(i, szTargetName, MAX_NAME_LENGTH);	
@@ -1378,7 +1381,7 @@ public Action:Client_GoTo(client, args)
 			new playerCount=0;
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(client))
+				if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(client))
 				{
 					GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 					AddMenuItem(menu, szPlayerName, szPlayerName);	
@@ -1414,7 +1417,7 @@ public Action:Client_GoTo(client, args)
 			StringToUpper(szTargetName);	
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (IsValidEntity(i) && IsClientInGame(i) && IsPlayerAlive(i) && i != client )
+				if (IsValidClient(i) && IsPlayerAlive(i) && i != client )
 				{
 					GetClientName(i, szPlayerName, MAX_NAME_LENGTH);		
 					StringToUpper(szPlayerName);
@@ -1574,7 +1577,7 @@ public Action:Client_bhop(client, args)
 
 public SaveClientLocation(client)
 {
-	if (IsFakeClient(client) || !IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
+	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
 		return;
 			
 		
@@ -1626,7 +1629,7 @@ public SaveClientLocation(client)
 
 public TeleClient(client,pos)
 {
-	if (!IsClientInGame(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1) 
+	if (!IsValidClient(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1) 
 		return;
 		
 	if (!g_bAllowCheckpoints)
@@ -1685,10 +1688,11 @@ public TeleClient(client,pos)
 		fVelocity[0] = 0.0;
 		fVelocity[1] = 0.0;
 		fVelocity[2] = 0.0;
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 		{			
 			SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 			
+
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			g_bValidTeleport[client]=true;
@@ -1702,7 +1706,7 @@ public TeleClient(client,pos)
 
 public Action_NoClip(client)
 {    
-	if(client != 0 && IsClientInGame(client) && !IsFakeClient(client) && IsClientConnected(client) && IsPlayerAlive(client))
+	if(IsValidClient(client) && !IsFakeClient(client) && IsPlayerAlive(client))
 	{
 		new team = GetClientTeam(client);
 		if (team==2 || team==3)
@@ -1730,7 +1734,7 @@ public Action_NoClip(client)
 
 public Action_UnNoClip(client)
 {    
-	if(client != 0 && IsClientInGame(client) && !IsFakeClient(client) && IsClientConnected(client) && IsPlayerAlive(client))
+	if(IsValidClient(client) && !IsFakeClient(client) && IsPlayerAlive(client))
 	{
 		new team = GetClientTeam(client);
 		if (team==2 || team==3)
@@ -1969,6 +1973,15 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			}
 }
 
+public Action:Client_Wr(client, args) 
+{
+	detailView[client]=-1;
+	g_bTopMenuOpen[client]=true;
+	g_bClimbersMenuOpen[client]=false;
+	MapTopMenu(client);
+	return Plugin_Handled;
+}
+
 public MapTopMenu(client)
 {
 	new Handle:topmenu2 = CreateMenu(MapTopMenuHandler);
@@ -1986,7 +1999,7 @@ public MapTopMenu(client)
 		AddMenuItem(topmenu2, "!proclimbers", "Top 20 Pro (local)",ITEMDRAW_DISABLED);
 		AddMenuItem(topmenu2, "!cpclimbers", "Top 20 TP (local)",ITEMDRAW_DISABLED);
 	}
-	if (!g_bMapButtons && g_bGlobalDB && g_BGlobalDBConnected && g_hDbGlobal != INVALID_HANDLE && g_bglobalValidFilesize && g_bAntiCheat && !g_bAutoTimer && !g_bAutoBhop2)
+	if (!g_bAllowCpOnBhopPlattforms && !g_bMapButtons && g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE && g_bglobalValidFilesize && g_bAntiCheat && !g_bAutoTimer && !g_bAutoBhop2)
 	{
 		AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 64)");
 		AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 102)");

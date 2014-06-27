@@ -1,10 +1,8 @@
 // misc.sp
-stock bool:IsValidClient(client, bool:bAlive = false)
+stock bool:IsValidClient(client)
 {
-    if(client >= 1 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && (bAlive == false || IsPlayerAlive(client)))
-    {
-        return true;
-    }  
+    if(client >= 1 && client <= MaxClients && IsValidEntity(client) && IsClientConnected(client) && IsClientInGame(client))
+        return true;  
     return false;
 }  
 
@@ -65,7 +63,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2], g_pr_rank_Scrub,g_szSkillGroups[3], g_pr_rank_Rookie,g_szSkillGroups[4], g_pr_rank_Skilled);
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Expert, g_szSkillGroups[6],g_pr_rank_Pro, g_szSkillGroups[7], g_pr_rank_Elite, g_szSkillGroups[8], g_pr_rank_Master);
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");	
-	if (g_hDbGlobal == INVALID_HANDLE || !g_BGlobalDBConnected)
+	if (g_hDbGlobal == INVALID_HANDLE)
 		PrintToConsole(client, "[KZ] Global Records disabled. Reason: No connection to the global database.");
 	else
 		if (g_bMapButtons)
@@ -85,6 +83,9 @@ public PrintConsoleInfo(client)
 						else
 							if (g_bAutoBhopWasActive[client])
 								PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_auto_bhop enabled.");	
+							else
+								if (g_bAllowCpOnBhopPlattforms)
+									PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_checkpoints_on_bhop_plattforms enabled. (0 required)");		
 	PrintToConsole(client," ");
 }
 stock FakePrecacheSound( const String:szPath[] )
@@ -111,7 +112,7 @@ public SetStandingStopButton(client)
 
 public Action:BlockRadio(client, const String:command[], args) 
 {
-	if(!g_bRadioCommands && IsClientInGame(client))
+	if(!g_bRadioCommands && IsValidClient(client))
 	{
 		PrintToChat(client, "%t", "RadioCommandsDisabled", LIMEGREEN,WHITE);
 		return Plugin_Handled;
@@ -194,7 +195,7 @@ public PlayButtonSound(client)
 		//spec stop sound
 		for(new i = 1; i <= MaxClients; i++) 
 		{		
-			if (IsClientInGame(i) && !IsPlayerAlive(i))
+			if (IsValidClient(i) && !IsPlayerAlive(i))
 			{			
 				new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 				if (SpecMode == 4 || SpecMode == 5)
@@ -260,7 +261,7 @@ public DeleteButtons(client)
 
 	//stop player times (global record fake)
 	for (new i = 1; i <= MaxClients; i++)
-	if (IsClientInGame(i) && !IsFakeClient(client))	
+	if (IsValidClient(i) && !IsFakeClient(client))	
 	{
 		Client_Stop(i,0);
 	}
@@ -270,7 +271,7 @@ public DeleteButtons(client)
 
 public CreateButton(client,String:targetname[]) 
 {
-	if (IsPlayerAlive(client))
+	if (IsValidClient(client) && IsPlayerAlive(client))
 	{
 		//location (crosshair)
 		new Float:locationPlayer[3];
@@ -420,7 +421,7 @@ public PlayLeetJumpSound(client)
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{ 
-			if(IsClientInGame(i) && !IsFakeClient(i) && i != client && g_bColorChat[i] && g_bEnableQuakeSounds[i])
+			if(IsValidClient(i) && !IsFakeClient(i) && i != client && g_bColorChat[i] && g_bEnableQuakeSounds[i])
 			{	
 					if (g_LeetJumpDominating[client]==3)
 					{
@@ -438,7 +439,7 @@ public PlayLeetJumpSound(client)
 	}
 	
 	//client sound
-	if 	(IsClientInGame(client) && !IsFakeClient(client) && g_bEnableQuakeSounds[client])
+	if 	(IsValidClient(client) && !IsFakeClient(client) && g_bEnableQuakeSounds[client])
 	{
 		if (g_LeetJumpDominating[client] != 3 && g_LeetJumpDominating[client] != 5)
 		{
@@ -465,7 +466,7 @@ public SetCashState()
 	ServerCommand("mp_startmoney 0; mp_playercashawards 0; mp_teamcashawards 0");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientConnected(i) && IsClientInGame(i))
+		if (IsValidClient(i))
 			SetEntProp(i, Prop_Send, "m_iAccount", 0);
 	}
 }
@@ -476,7 +477,7 @@ public PlayRecordSound(iRecordtype)
 	if (iRecordtype==1)
 	    for(new i = 1; i <= GetMaxClients(); i++) 
 		{ 
-			if(IsClientInGame(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
+			if(IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
 			{ 
 				Format(buffer, sizeof(buffer), "play %s", PRO_RELATIVE_SOUND_PATH); 
 				ClientCommand(i, buffer); 
@@ -486,7 +487,7 @@ public PlayRecordSound(iRecordtype)
 		if (iRecordtype==2 || iRecordtype == 3)
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
+				if(IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
 				{ 
 					Format(buffer, sizeof(buffer), "play %s", CP_RELATIVE_SOUND_PATH); 
 					ClientCommand(i, buffer); 
@@ -605,7 +606,7 @@ public PrintMapRecords(client)
 
 public MapFinishedMsgs(client, type)
 {	
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		
 		decl String:szName[MAX_NAME_LENGTH];
@@ -626,82 +627,82 @@ public MapFinishedMsgs(client, type)
 			FormatTimeFloat(client, g_fRecordTime, 3);	
 		}
 		for(new i = 1; i <= GetMaxClients(); i++) 
-		if(IsClientInGame(i) && !IsFakeClient(i)) 
-		{
-			if (g_time_type[client] == 0)
+			if(IsValidClient(i) && !IsFakeClient(i)) 
 			{
-				PrintToChat(i, "%t", "MapFinished0",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
-				PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],rank,count,g_szTime[client]); 
-			}
-			else
-			if (g_time_type[client] == 1)
-			{
-				PrintToChat(i, "%t", "MapFinished1",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
-				PrintToConsole(i, "%s finished with a pro time of (%s). [rank #%i/%i | record %s]",szName,g_szNewTime[client],rank,count,g_szTime[client]);  
-			}			
-			else
-				if (g_time_type[client] == 2)
+				if (g_time_type[client] == 0)
 				{
-					PrintToChat(i, "%t", "MapFinished2",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
-					PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],g_szTimeDifference[client],rank,count,g_szTime[client]);  
+					PrintToChat(i, "%t", "MapFinished0",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
+					PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],rank,count,g_szTime[client]); 
 				}
 				else
-					if (g_time_type[client] == 3)
+				if (g_time_type[client] == 1)
+				{
+					PrintToChat(i, "%t", "MapFinished1",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
+					PrintToConsole(i, "%s finished with a pro time of (%s). [rank #%i/%i | record %s]",szName,g_szNewTime[client],rank,count,g_szTime[client]);  
+				}			
+				else
+					if (g_time_type[client] == 2)
 					{
-						PrintToChat(i, "%t", "MapFinished3",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
-						PrintToConsole(i, "%s finished with a pro time of (%s). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 	
+						PrintToChat(i, "%t", "MapFinished2",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
+						PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],g_szTimeDifference[client],rank,count,g_szTime[client]);  
 					}
 					else
-						if (g_time_type[client] == 4)
+						if (g_time_type[client] == 3)
 						{
-							PrintToChat(i, "%t", "MapFinished4",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
-							PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
+							PrintToChat(i, "%t", "MapFinished3",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
+							PrintToConsole(i, "%s finished with a pro time of (%s). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 	
 						}
 						else
-							if (g_time_type[client] == 5)
+							if (g_time_type[client] == 4)
 							{
-								PrintToChat(i, "%t", "MapFinished5",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
-								PrintToConsole(i, "%s finished with a pro time of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
+								PrintToChat(i, "%t", "MapFinished4",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_newTp[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
+								PrintToConsole(i, "%s finished with a tp time of (%s, TP's: %i). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_newTp[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
 							}
-			//new record msg
-			if (g_record_type[client] == 5)				
-			{
-				PrintToChat(i, "%t", "NewGlobalRecord102",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-				PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (102)",szName); 		
-			}
-			else
-				if (g_record_type[client] == 4)				
+							else
+								if (g_time_type[client] == 5)
+								{
+									PrintToChat(i, "%t", "MapFinished5",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
+									PrintToConsole(i, "%s finished with a pro time of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
+								}
+				//new record msg
+				if (g_record_type[client] == 5)				
 				{
-					PrintToChat(i, "%t", "NewGlobalRecord128",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-					PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (128)",szName); 		
+					PrintToChat(i, "%t", "NewGlobalRecord102",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+					PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (102)",szName); 		
 				}
 				else
-					if (g_record_type[client] == 3)				
+					if (g_record_type[client] == 4)				
 					{
-						PrintToChat(i, "%t", "NewGlobalRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-						PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD",szName); 		
+						PrintToChat(i, "%t", "NewGlobalRecord128",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+						PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (128)",szName); 		
 					}
 					else
-						if (g_record_type[client] == 2)				
+						if (g_record_type[client] == 3)				
 						{
-							PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE);  
-							PrintToConsole(i, "[KZ] %s scored a new PRO RECORD",szName); 	
-						}		
+							PrintToChat(i, "%t", "NewGlobalRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+							PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD",szName); 		
+						}
 						else
-							if (g_record_type[client] == 1)				
+							if (g_record_type[client] == 2)				
 							{
-								PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
-								PrintToConsole(i, "[KZ] %s scored a new TP RECORD",szName); 	
-							}					
-		}
+								PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE);  
+								PrintToConsole(i, "[KZ] %s scored a new PRO RECORD",szName); 	
+							}		
+							else
+								if (g_record_type[client] == 1)				
+								{
+									PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
+									PrintToConsole(i, "[KZ] %s scored a new TP RECORD",szName); 	
+								}					
+			}
 		
-		if (rank==99999)
+		if (rank==99999 && IsValidClient(client))
 			PrintToChat(client, "[%cKZ%c] %cFailed to save your data correctly! Please contact an admin.",MOSSGREEN,WHITE,DARKRED,RED,DARKRED); 	
 		//Sound
 		PlayRecordSound(g_sound_type[client]);			
 	
 		//noclip MsgMsg
-		if (IsClientInGame(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],"MASTER") && !(GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC) && g_bNoClipS)
+		if (IsValidClient(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],"MASTER") && !(GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC) && g_bNoClipS)
 			PrintToChat(client, "%t", "NoClipUnlocked",MOSSGREEN,WHITE,YELLOW);
 		g_bMapFinished[client] = true;
 		CreateTimer(2.0, DBUpdateTimer, client,TIMER_FLAG_NO_MAPCHANGE);
@@ -918,7 +919,7 @@ public SpectatorCount(client)
 	new specs = 0;
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsValidEntity(i) && IsClientInGame(i) && g_bSpectate[i])
+		if (IsValidClient(i) && g_bSpectate[i])
 			specs++;
 	}
 	Format(szBuffer, sizeof(szBuffer), "[INFO] Specs: %i", specs);		
@@ -952,7 +953,7 @@ stock Action:PrintSpecMessageAll(client)
 			else		
 				CPrintToChatAll("*SPEC* {grey}%s{default}: %s", szName, szTextToAll);
 	for (new i = 1; i <= MaxClients; i++)
-		if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))	
+		if (IsValidClient(i))	
 		{
 			if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
 				PrintToConsole(i, "%s [%s] *SPEC* %s: %s", g_szCountryCode[client],g_pr_rankname[client],szName, szTextToAll);
@@ -1023,7 +1024,7 @@ public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:r
 
 public PlayerPanel(client)
 {	
-	if (!IsClientInGame(client) || !IsPlayerAlive(client) || g_bTopMenuOpen[client] || IsFakeClient(client))
+	if (!IsValidClient(client) || g_bTopMenuOpen[client] || IsFakeClient(client))
 		return;
 	
 	if (GetClientMenu(client) == MenuSource_None)
@@ -1081,9 +1082,9 @@ public GetRGBColor(bot, String:color[256])
 	else
 		g_ReplayBotProColor[2] = StringToInt(sPart);
 	
-	if (bot == 0 && g_iBot != -1 && IsValidEntity(g_iBot) && IsClientInGame(g_iBot))
+	if (bot == 0 && g_iBot != -1 && IsValidClient(g_iBot))
 		SetEntityRenderColor(g_iBot, g_ReplayBotProColor[0], g_ReplayBotProColor[1], g_ReplayBotProColor[2], 50);
-	if (bot == 1 && g_iBot2 != -1  && IsValidEntity(g_iBot2) && IsClientInGame(g_iBot2))
+	if (bot == 1 && g_iBot2 != -1  && IsValidClient(g_iBot2))
 		SetEntityRenderColor(g_iBot2, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
 }
 
@@ -1109,7 +1110,7 @@ public SetSkillGroups()
 	
 public SpecList(client)
 {
-	if (!IsClientInGame(client) || g_bTopMenuOpen[client]  || IsFakeClient(client))
+	if (!IsValidClient(client) || g_bTopMenuOpen[client]  || IsFakeClient(client))
 		return;
 		
 	if (GetClientMenu(client) == MenuSource_None)
@@ -1160,7 +1161,7 @@ public PlayQuakeSound_Spec(client, String:buffer[255])
 	new SpecMode;
 	for(new x = 1; x <= MaxClients; x++) 
 	{
-		if (IsClientInGame(x) && !IsPlayerAlive(x))
+		if (IsValidClient(x) && !IsPlayerAlive(x))
 		{			
 			SpecMode = GetEntProp(x, Prop_Send, "m_iObserverMode");
 			if (SpecMode == 4 || SpecMode == 5)
@@ -1176,7 +1177,7 @@ public PlayQuakeSound_Spec(client, String:buffer[255])
 
 public PerformBan(client, String:szbantype[16])
 {
-	if (IsValidEntity(client) && IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl String:szSteamID[32];
 		decl String:szName[64];
@@ -1195,7 +1196,7 @@ public PerformBan(client, String:szbantype[16])
 
 public GiveUsp(client)
 {
-	if(!IsPlayerAlive(client) || GetClientTeam(client) == 1)
+	if(!IsValidClient(client) || !IsPlayerAlive(client))
 		return;		
 	g_UspDrops[client]++;
 	GivePlayerItem(client, "weapon_usp_silencer");
@@ -1247,7 +1248,7 @@ public bool:WallCheck(client)
 
 public Prestrafe(client, mouse_ang, &buttons)
 {
-	if (!IsPlayerAlive(client) || !g_bPreStrafe)
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || !g_bPreStrafe)
 		return;
 	decl String:classname[64];
 	GetClientWeapon(client, classname, 64);
@@ -1329,7 +1330,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 
 public MenuRefresh(client)
 {
-	if (IsFakeClient(client))
+	if (!IsValidClient(client) || IsFakeClient(client))
 		return;
 		
 	if (GetClientMenu(client) == MenuSource_None)
@@ -1462,7 +1463,7 @@ public NoClipCheck(client)
 
 public SpeedCap(client)
 {
-	if (!IsPlayerAlive(client)  || IsFakeClient(client))
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
 		return;
 	static bool:IsOnGround[MAXPLAYERS + 1]; 
 	new ClientFlags = GetEntityFlags(client);
@@ -1774,7 +1775,7 @@ public StrafeHackAntiCheat(client,Float:angles[3],&buttons)
 
 public AutoBhopFunction(client,&buttons)
 {
-	if (IsFakeClient(client))
+	if (!IsValidClient(client))
 		return;
 	if (g_bAutoBhop2 && g_bAutoBhopClient[client])
 	{
@@ -1863,7 +1864,7 @@ public DeadMainTimer(client)
 		{
 			for(new x = 1; x <= MaxClients; x++) 
 			{					
-				if (IsClientInGame(x) && IsValidEntity(x) && !IsPlayerAlive(x) && GetClientTeam(x) >= 1 && GetClientTeam(x) <= 3)
+				if (IsValidClient(x) && !IsFakeClient(client) && !IsPlayerAlive(x) && GetClientTeam(x) >= 1 && GetClientTeam(x) <= 3)
 				{
 				
 					SpecMode = GetEntProp(x, Prop_Send, "m_iObserverMode");	
@@ -1876,7 +1877,7 @@ public DeadMainTimer(client)
 							if (count < 6)
 							Format(sSpecs, 512, "%s%N\n", sSpecs, x);									
 						}	
-						if (count ==5)
+						if (count ==6)
 							Format(sSpecs, 512, "%s...", sSpecs);	
 					}
 				}					
@@ -2072,7 +2073,7 @@ public AliveMainTimer(client)
 	{
 		SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.0);
 		//exception for monsterjam		
-		if (g_BGlobalDBConnected)
+		if (g_hDbGlobal != INVALID_HANDLE)
 		{
 			if (!StrEqual(g_szMapName,"bhop_monster_jam_b1"))
 				SetEntPropFloat(client, Prop_Data, "m_flGravity", 0.0);	
@@ -2171,7 +2172,7 @@ public AliveMainTimer(client)
 	new count=0;
 	for(new i = 1; i <= MaxClients; i++) 
 	{
-		if (IsClientInGame(i) && !IsPlayerAlive(i) && !g_bFirstSpawn[i] && g_bSpectate[i])
+		if (IsValidClient(i) && !IsFakeClient(client) && !IsPlayerAlive(i) && !g_bFirstSpawn[i] && g_bSpectate[i])
 		{			
 			SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 			if (SpecMode == 4 || SpecMode == 5)
@@ -2184,7 +2185,7 @@ public AliveMainTimer(client)
 					Format(sSpecs, 512, "%s%N\n", sSpecs, i);
 
 				}	
-				if (count ==5)
+				if (count == 6)
 					Format(sSpecs, 512, "%s...", sSpecs);
 			}					
 		}		
@@ -2923,7 +2924,7 @@ stock ComputeStrafes(client)
 			
 			if (g_bAntiCheat)
 			{
-				if (g_BGlobalDBConnected && g_bGlobalDB)
+				if (g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 				{
 					decl String:szName[64];
 					GetClientName(client,szName,64);

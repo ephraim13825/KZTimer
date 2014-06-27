@@ -122,7 +122,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 public Action:Say_Hook(client, args)
 {
 	g_bSayHook[client]=true;
-	if (client > 0 && IsClientInGame(client))
+	if (IsValidClient(client))
 	{		
 		decl String:sText[1024];
 		GetCmdArgString(sText, sizeof(sText));
@@ -267,7 +267,7 @@ public Action:Event_OnPlayerTeamPre(Handle:event, const String:name[], bool:dont
 public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (!client || !IsClientInGame(client) || IsFakeClient(client))
+	if (!IsValidClient(client) || IsFakeClient(client))
 		return Plugin_Continue;
 	new team = GetEventInt(event, "team");
 	if(team == 1)
@@ -303,7 +303,7 @@ public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:don
 	if (client != 0 && !IsFakeClient(client))
 	{
 		for (new i = 1; i <= MaxClients; i++)
-			if (IsClientConnected(i) && IsClientInGame(i) && i != client)
+			if (IsValidClient(i) && i != client)
 				PrintToChat(i, "%t", "TeamJoin",client,strTeamName);
 	}
 	return Plugin_Continue;
@@ -324,7 +324,7 @@ public OnMapVoteStarted()
 
 public Action:Hook_SetTransmit(entity, client) 
 { 
-    if (client != entity && (0 < entity <= MaxClients) && IsClientInGame(client)) 
+    if (client != entity && (0 < entity <= MaxClients) && IsValidClient(client)) 
 	{
 		if (g_bChallenge[client])
 		{
@@ -344,7 +344,7 @@ public Action:Hook_SetTransmit(entity, client)
 public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetEventInt(event,"userid");
-	if (IsValidEntity(client) && IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		if (!IsFakeClient(client))
 		{
@@ -441,7 +441,7 @@ public Hook_Radar(client)
 //fpscheck
 public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const String:cvarName[], const String:cvarValue[])
 {
-	if (IsClientConnected(client) && !IsFakeClient(client) && !g_bKickStatus[client])
+	if (IsValidClient(client) && !IsFakeClient(client) && !g_bKickStatus[client])
 	{
 		new fps_max = StringToInt(cvarValue);        
 		if (fps_max < 100 || fps_max > 300 || fps_max<=0)
@@ -459,7 +459,7 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
 {	
     if ((1 > target > MaxClients))
         return Plugin_Continue;
-    if (IsValidEntity(target) && IsClientInGame(target) && IsPlayerAlive(target) && g_bTimeractivated[target] && !IsFakeClient(target))
+    if (IsValidClient(target) && IsPlayerAlive(target) && g_bTimeractivated[target] && !IsFakeClient(target))
 	{
 		new String:logtag[PLATFORM_MAX_PATH];
 		if (ident == Identity_Plugin)
@@ -476,7 +476,7 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
 public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon, &subtype, &cmdnum, &tickcount, &seed, mouse[2])
 {
 	new Float:speed, Float:origin[3],Float:ang[3];
-	if (g_bRoundEnd || 1 > client > MaxClients || !IsClientInGame(client))
+	if (g_bRoundEnd || !IsValidClient(client))
 		return Plugin_Continue;	
 	
 	//client information
@@ -493,9 +493,16 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		g_bOnBhopPlattform[client] = false;
 		
 	//some methods..	
-	if(IsValidEntity(client) && IsClientInGame(client) && IsPlayerAlive(client))	
+	if(IsValidClient(client) && IsPlayerAlive(client))	
 	{	
 		MenuRefresh(client);
+		
+		//undo check
+		if(!g_bAllowCpOnBhopPlattforms && g_bUndo[client])
+		{
+			buttons &= ~IN_JUMP;
+			buttons &= ~IN_DUCK;
+		}
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
@@ -575,12 +582,12 @@ public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 		Prethink(client, Float:{0.0,0.0,0.0},0.0);
 }
 			
-public OnEntityCreated(iEntity, const String:classname[]) 
+public OnEntityCreated(client, const String:classname[]) 
 { 
-	if (1 <= iEntity <= MaxClients && IsClientInGame(iEntity))
+	if (IsValidClient(client))
 	{	
 		if(StrEqual(classname, "player"))   
-			SDKHook(iEntity, SDKHook_StartTouch, OnTouch);
+			SDKHook(client, SDKHook_StartTouch, OnTouch);
 	}
 }
 
@@ -591,7 +598,7 @@ public Hook_PostThinkPost(entity)
 
 public OnTouch(client, other)
 {
-	if (1 <= client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
+	if (IsValidClient(client) && IsPlayerAlive(client))
 	{
 		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
 		{
@@ -600,27 +607,27 @@ public OnTouch(client, other)
 	}
 }  
 
-public Teleport_OnStartTouch(const String:output[], caller, activator, Float:delay)
+public Teleport_OnStartTouch(const String:output[], caller, client, Float:delay)
 {
-	if (1 <= activator <= MaxClients && IsClientInGame(activator))
+	if (IsValidClient(client))
 	{
-		if (!g_bAllowCpOnBhopPlattforms && (GetEntityFlags(activator) & FL_ONGROUND))
-			g_bOnBhopPlattform[activator]=true;
-		g_bValidTeleport[activator]=true;
+		if (!g_bAllowCpOnBhopPlattforms && (GetEntityFlags(client) & FL_ONGROUND))
+			g_bOnBhopPlattform[client]=true;
+		g_bValidTeleport[client]=true;
 	}
 }  
 
-public Teleport_OnEndTouch(const String:output[], caller, activator, Float:delay)
+public Teleport_OnEndTouch(const String:output[], caller, client, Float:delay)
 {
-	if (1 <= activator <= MaxClients && IsClientInGame(activator) && g_bOnBhopPlattform[activator])
-		g_bOnBhopPlattform[activator] = false;	
+	if (IsValidClient(client) && g_bOnBhopPlattform[client])
+		g_bOnBhopPlattform[client] = false;	
 }  
 
 //https://forums.alliedmods.net/showthread.php?p=1678026 by Inami
 public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-	if(IsClientInGame(client) && !IsFakeClient(client) && !g_bAutoBhop2)
+	if(IsValidClient(client) && !IsFakeClient(client) && !g_bAutoBhop2)
 	{	
 		afAvgJumps[client] = ( afAvgJumps[client] * 9.0 + float(aiJumps[client]) ) / 10.0;	
 		decl Float:vec_vel[3];
@@ -690,7 +697,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 					}
 					else
 					{
-						if (g_BGlobalDBConnected && g_bGlobalDB)
+						if (g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 						{
 							decl String:szName[64];
 							GetClientName(client,szName,64);
@@ -731,7 +738,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		{
 			if (g_bAntiCheat && !bFlagged[client])
 			{
-				if (g_BGlobalDBConnected && g_bGlobalDB)
+				if (g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 				{
 					decl String:szName[64];
 					GetClientName(client,szName,64);
@@ -775,7 +782,7 @@ FindNHookWalls()
 //by zipcore
 public Action:Touch_Wall(ent,client)
 {
-	if(0 < client <= MaxClients)
+	if(IsValidClient(client))
 	{
 		if(!(GetEntityFlags(client)&FL_ONGROUND)  && g_bPlayerJumped[client])
 		{
@@ -799,7 +806,7 @@ HookTrigger()
 //by zipcore
 public Action:Push_Touch(ent,client)
 {
-	if(0 < client <= MaxClients  && g_bPlayerJumped[client])
+	if(IsValidClient(client) && g_bPlayerJumped[client])
 		ResetJump(client);
 	return Plugin_Continue;
 }

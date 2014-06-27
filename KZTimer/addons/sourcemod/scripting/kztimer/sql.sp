@@ -45,7 +45,7 @@ new String:sql_CountFinishedMapsPro[] 			= "SELECT mapname FROM playertimes wher
 new String:sql_selectPlayer[] 					= "SELECT steamid FROM playertimes WHERE steamid = '%s' AND mapname = '%s';";
 new String:sql_selectRecordTp[] 					= "SELECT mapname, steamid, name, runtime, teleports  FROM playertimes WHERE steamid = '%s' AND mapname = '%s' AND runtime > -1.0;";
 new String:sql_selectProRecord[] 				= "SELECT mapname, steamid, name, runtimepro FROM playertimes WHERE steamid = '%s' AND mapname = '%s' AND runtimepro > -1.0;";
-new String:sql_selectRecord[] 					= "SELECT steamid FROM playertimes WHERE steamid = '%s' AND mapname = '%s' AND (runtime  > 0.0 OR runtimepro  > 0.0)";
+new String:sql_selectRecord[] 					= "SELECT steamid, runtime, runtimepro FROM playertimes WHERE steamid = '%s' AND mapname = '%s' AND (runtime  > 0.0 OR runtimepro  > 0.0)";
 new String:sql_selectMapRecordCP[] 				= "SELECT db2.runtime, db1.name, db2.teleports, db1.steamid, db2.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db1.steamid = db2.steamid WHERE db2.mapname = '%s' AND db2.runtime  > -1.0 ORDER BY db2.runtime ASC LIMIT 1"; 
 new String:sql_selectMapRecordPro[] 			= "SELECT db2.runtimepro, db1.name, db2.teleports, db1.steamid, db2.steamid FROM playertimes as db2 INNER JOIN playerrank as db1 on db1.steamid = db2.steamid WHERE db2.mapname = '%s' AND db2.runtimepro  > -1.0 ORDER BY db2.runtimepro ASC LIMIT 1"; 
 new String:sql_selectPersonalRecords[] 			= "SELECT db2.mapname, db2.steamid, db1.name, db2.runtime, db2.runtimepro, db2.teleports, db1.steamid  FROM playertimes as db2 INNER JOIN playerrank as db1 on db1.steamid = db2.steamid WHERE db2.steamid = '%s' AND db2.mapname = '%s' AND (db2.runtime > 0.0 OR db2.runtimepro > 0.0)"; 
@@ -204,7 +204,7 @@ public SQL_ViewRankedPlayer2Callback(Handle:owner, Handle:hndl, const String:err
 	new client = data;
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{	
-		if (!IsClientConnected(client))
+		if (!IsValidClient(client))
 			return;	
 		decl String:szSteamId[32];
 		GetClientAuthString(client, szSteamId, 32);	
@@ -234,7 +234,7 @@ public sql_selectChallengesCompareCallback(Handle:owner, Handle:hndl, const Stri
 	new Handle:pack = data;
 	ResetPack(pack);
 	new client = ReadPackCell(pack);      
-	if (!IsClientConnected(client))
+	if (!IsValidClient(client))
 		return;
 	decl String:szSteamId[32];
 	GetClientAuthString(client, szSteamId, 32);	
@@ -330,7 +330,7 @@ public SQL_ViewPlayerAll2Callback(Handle:owner, Handle:hndl, const String:error[
 	ReadPackString(pack, szName, MAX_NAME_LENGTH)
 	decl String:szSteamId[32];
 	decl String:szSteamId2[32];
-	if (!IsClientConnected(client))	
+	if (!IsValidClient(client))	
 	{
 		CloseHandle(pack);
 		return;
@@ -349,7 +349,7 @@ public SQL_ViewPlayerAll2Callback(Handle:owner, Handle:hndl, const String:error[
 
 public dbCheckFileSize()
 {
-	if (!g_BGlobalDBConnected) return;	
+	if (g_hDbGlobal == INVALID_HANDLE) return;	
 	decl String:szQuery[256];
 	Format(szQuery, 256, sqlglobal_selectFilesize, g_szMapName);
 	SQL_TQuery(g_hDbGlobal, sqlglobal_selectFilesizeCallback, szQuery);
@@ -374,7 +374,7 @@ public sqlglobal_selectFilesizeCallback(Handle:owner, Handle:hndl, const String:
 
 public dbInsertGlobalMap()
 {
-	if (!g_BGlobalDBConnected) return;	
+	if (g_hDbGlobal == INVALID_HANDLE) return;	
 	decl String:szQuery[256];
 	Format(szQuery, 256, sqlglobal_insertFilesize, g_szMapName,g_unique_FileSize);
 	SQL_TQuery(g_hDbGlobal, sqlglobal_insertFilesizeCallback, szQuery);
@@ -382,7 +382,7 @@ public dbInsertGlobalMap()
 
 public db_InsertBan(String:szSteamId[32], String:szName[64])
 {
-	if (!g_BGlobalDBConnected) return;	
+	if (g_hDbGlobal == INVALID_HANDLE) return;	
 	decl String:szQuery[256];
 	Format(szQuery, 256, sqlglobal_insertBan, szSteamId,szName);
 	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);
@@ -402,7 +402,7 @@ public sqlglobal_insertFilesizeCallback(Handle:owner, Handle:hndl, const String:
 
 public db_deleteInvalidGlobalEntries()
 {
-	if (!g_BGlobalDBConnected) return;		
+	if (g_hDbGlobal == INVALID_HANDLE) return;		
 	decl String:szQuery[255];      
 	if (g_tickrate==64)
 		Format(szQuery, 255, sqlglobal_selectPlayers, g_szMapName); 
@@ -442,7 +442,7 @@ public sqlglobal_selectPlayers2Callback(Handle:owner, Handle:hndl, const String:
 			
 public db_GetMapRecord_Global()
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[255];    
 	if (g_tickrate==64)
 	{
@@ -523,7 +523,7 @@ public sql_selectMapRecordGlobal128Callback(Handle:owner, Handle:hndl, const Str
 
 public db_selectGlobalTopClimbers(client)
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sqlglobal_selectGlobalTop, g_szMapName);   
 	if (g_hDbGlobal != INVALID_HANDLE)
@@ -532,7 +532,7 @@ public db_selectGlobalTopClimbers(client)
 
 public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error[], any:data)
 {   
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	new client = data;   
 	if (hndl != INVALID_HANDLE)
 		if(SQL_HasResultSet(hndl))
@@ -571,14 +571,14 @@ public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error
 			}
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 			DisplayMenu(menu, client, MENU_TIME_FOREVER);
-			if (i == 1 && IsClientInGame(client))
+			if (i == 1 && IsValidClient(client))
 				PrintToChat(client, "%t", "NoGlobalRecords64", MOSSGREEN,WHITE, g_szMapName);
 		}	
 }
 
 public db_selectGlobalTopClimbers128(client)
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sqlglobal_selectGlobalTop128, g_szMapName);   
 	if (g_hDbGlobal != INVALID_HANDLE)
@@ -625,7 +625,7 @@ public sql_selectGlobalTopClimbers128(Handle:owner, Handle:hndl, const String:er
 			}
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 			DisplayMenu(menu, client, MENU_TIME_FOREVER);
-			if (i == 1 && IsClientInGame(client))
+			if (i == 1 && IsValidClient(client))
 				PrintToChat(client, "%t", "NoGlobalRecords128", MOSSGREEN,WHITE, g_szMapName);
 		}
 		
@@ -633,7 +633,7 @@ public sql_selectGlobalTopClimbers128(Handle:owner, Handle:hndl, const String:er
 
 public db_selectGlobalTopClimbers102(client)
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sqlglobal_selectGlobalTop102, g_szMapName);   
 	if (g_hDbGlobal != INVALID_HANDLE)
@@ -680,7 +680,7 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 			}
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 			DisplayMenu(menu, client, MENU_TIME_FOREVER);
-			if (i == 1 && IsClientInGame(client))
+			if (i == 1 && IsValidClient(client))
 				PrintToChat(client, "%t", "NoGlobalRecords102", MOSSGREEN,WHITE, g_szMapName);
 		}
 		
@@ -688,11 +688,11 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 
 public db_insertGlobalRecord(client)
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
 	decl String:szUName[MAX_NAME_LENGTH];
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szSteamId, 32);
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -720,11 +720,11 @@ public SQL_GlobalCallback(Handle:owner, Handle:hndl, const String:error[], any:d
 
 public db_updateGlobalRecord(client)
 {
-	if (!g_BGlobalDBConnected) return;
+	if (g_hDbGlobal == INVALID_HANDLE) return;
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
 	decl String:szUName[MAX_NAME_LENGTH];
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szSteamId, 32);
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -747,7 +747,7 @@ public db_updateGlobalRecord(client)
 
 public db_GlobalRecord(client)
 {
-	if (g_bGlobalDB && g_BGlobalDBConnected && g_hDbGlobal != INVALID_HANDLE)
+	if (g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE)
 	{
 		decl String:szQuery[255];
 		if (g_tickrate==64)
@@ -768,7 +768,7 @@ public SQL_SelectGlobalPlayersCallback(Handle:owner, Handle:hndl, const String:e
 	new counter=0;
 	new bool: newtime=false;
 	new bool: newpersonalbest=false;
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szSteamId, 32);		
 		if (hndl == INVALID_HANDLE)
@@ -805,7 +805,7 @@ public db_setupDatabase()
         
 	if(g_hDb == INVALID_HANDLE)
 	{
-		SetFailState("[KZPro] Unable to connect to database (%s)");
+		SetFailState("[KZTimer] Unable to connect to database (%s)");
 		return;
 	}
         
@@ -851,7 +851,7 @@ public db_createTables()
 
 public db_insertPlayerChallenge(client)
 {
-	if (!IsClientConnected(client))
+	if (!IsValidClient(client))
 		return;
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
@@ -875,7 +875,7 @@ public db_insertPlayer(client)
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
 	decl String:szUName[MAX_NAME_LENGTH];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szSteamId, 32);
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -910,7 +910,7 @@ public db_selectLastRun(client)
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
 
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -922,7 +922,7 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 {
 	new client = data;	
 	g_bTimeractivated[client] = false;
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl) && IsClientInGame(client))
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl) && IsValidClient(client))
 	{
 	
 		//Get last psition
@@ -1219,7 +1219,7 @@ public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any
 			}
 			else
 			{
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
@@ -1262,7 +1262,7 @@ public SQL_LJBlockRecordCallback(Handle:owner, Handle:hndl, const String:error[]
 			}
 			else
 			{
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankLjBlock, szSteamId);
@@ -1313,7 +1313,7 @@ public ContinueRecalc(client)
 	else
 	{
 		//ON CONNECT
-		if (!IsClientInGame(client))
+		if (!IsValidClient(client))
 			return;
 		new Float: diff = GetEngineTime() - g_fMapStartTime;
 		if (GetClientTime(client) < diff)
@@ -1344,7 +1344,7 @@ public SQL_ViewBhopRecordCallback(Handle:owner, Handle:hndl, const String:error[
 			}
 			else
 			{
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankBhop, szSteamId);
@@ -1384,7 +1384,7 @@ public SQL_ViewDropBhopRecordCallback(Handle:owner, Handle:hndl, const String:er
 			else
 			{
 
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankDropBhop, szSteamId);
@@ -1430,7 +1430,7 @@ public SQL_ViewWeirdRecordCallback(Handle:owner, Handle:hndl, const String:error
 			}
 			else
 			{
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankWJ, szSteamId);
@@ -1476,7 +1476,7 @@ public SQL_ViewMultiBhopRecordCallback(Handle:owner, Handle:hndl, const String:e
 			}
 			else
 			{
-				if (IsClientConnected(client))
+				if (IsValidClient(client))
 				{
 					GetClientAuthString(client, szSteamId, 32);
 					Format(szQuery, 255, sql_selectPlayerRankMultiBhop, szSteamId);
@@ -1518,7 +1518,7 @@ public db_selectPlayer(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1532,7 +1532,7 @@ public db_viewBhopRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1544,7 +1544,7 @@ public db_viewDropBhopRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1641,7 +1641,7 @@ public SQL_viewBhop2RecordCallback2(Handle:owner, Handle:hndl, const String:erro
 			g_BhopRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 					
 					PrintToChat(i, "%t", "Jumpstats_BhopTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_fPersonalBhopRecord[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Bunnyhop Top 20! [%.3f units]", szName, rank, g_fPersonalBhopRecord[client]);
@@ -1669,7 +1669,7 @@ public SQL_viewDropBhop2RecordCallback2(Handle:owner, Handle:hndl, const String:
 			g_DropBhopRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 			
 					PrintToChat(i, "%t", "Jumpstats_DropBhopTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_fPersonalDropBhopRecord[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Drop-Bunnyhop Top 20! [%.3f units]", szName, rank, g_fPersonalDropBhopRecord[client]);
@@ -1685,7 +1685,7 @@ public db_viewMultiBhopRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1727,7 +1727,7 @@ public SQL_viewMultiBhop2RecordCallback2(Handle:owner, Handle:hndl, const String
 			g_MultiBhopRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 					
 					PrintToChat(i, "%t", "Jumpstats_MultiBhopTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_fPersonalMultiBhopRecord[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Multi-Bunnyhop Top 20! [%.3f units]", szName, rank, g_fPersonalMultiBhopRecord[client]);
@@ -1743,7 +1743,7 @@ public db_viewLjRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1755,7 +1755,7 @@ public db_viewLjBlockRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1817,7 +1817,7 @@ public SQL_viewLjBlock2RecordCallback2(Handle:owner, Handle:hndl, const String:e
 			g_LjBlockRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 		
 					PrintToChat(i, "%t", "Jumpstats_LjBlockTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_PersonalLjBlockRecord[client],g_fPersonalLjBlockRecordDist[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Longjump 20! [%i units block/%.3f units jump]", szName, rank, g_PersonalLjBlockRecord[client],g_fPersonalLjBlockRecordDist[client]);
@@ -1846,7 +1846,7 @@ public SQL_viewLj2RecordCallback2(Handle:owner, Handle:hndl, const String:error[
 			g_LjRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 		
 					PrintToChat(i, "%t", "Jumpstats_LjTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_fPersonalLjRecord[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Longjump 20! [%.3f units]", szName, rank, g_fPersonalLjRecord[client]);
@@ -1862,7 +1862,7 @@ public db_viewWjRecord2(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -1905,7 +1905,7 @@ public SQL_viewWj2RecordCallback2(Handle:owner, Handle:hndl, const String:error[
 			g_wjRank[client] = rank;
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsClientInGame(i) && !IsFakeClient(i)) 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
 				{ 		
 					PrintToChat(i, "%t", "Jumpstats_WjTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_fPersonalWjRecord[client]);
 					PrintToConsole(i, "[KZ] %s is now #%i in the Weirdjump 20! [%.3f units]", szName, rank, g_fPersonalWjRecord[client]);
@@ -1917,6 +1917,57 @@ public SQL_viewWj2RecordCallback2(Handle:owner, Handle:hndl, const String:error[
 	}
 }
 
+public db_viewUnfinishedMaps(client, String:szSteamId[32])
+{
+	decl String:szQuery[1024];       
+	new String:map[128];
+	for (new i = 0; i < GetArraySize(g_MapList); i++)
+	{
+		GetArrayString(g_MapList, i, map, sizeof(map));
+		Format(szQuery, 1024, sql_selectRecord, szSteamId, map);  
+		new Handle:pack = CreateDataPack();			
+		WritePackString(pack, map);
+		WritePackCell(pack, client);
+		SQL_TQuery(g_hDb, db_viewUnfinishedMapsCallback, szQuery, pack);
+	}	
+	if (IsValidClient(client))
+	{
+		PrintToConsole(client," ");
+		PrintToConsole(client,"-------------");
+		PrintToConsole(client,"Unfinished Maps");
+		PrintToConsole(client,"SteamID: %s", szSteamId);
+		PrintToConsole(client,"-------------");
+		PrintToConsole(client," ");
+		PrintToChat(client, "%t", "ConsoleOutput", LIMEGREEN,WHITE); 	
+		ProfileMenu(client, -1);
+	}
+}
+
+public db_viewUnfinishedMapsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new Handle:pack = data;
+	ResetPack(pack);
+	decl String:szMap[128];
+	ReadPackString(pack, szMap, 128);
+	new client = ReadPackCell(pack);
+	new Float:tptime;
+	new Float:protime;
+	CloseHandle(pack);
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{	
+		tptime = SQL_FetchFloat(hndl, 1);
+		protime = SQL_FetchFloat(hndl, 2);
+		if (tptime <= 0.0)
+			PrintToConsole(client, "%s (TP)",szMap);
+		if (protime <= 0.0)
+			PrintToConsole(client, "%s (PRO)",szMap);
+	}
+	else
+	{
+		if (IsValidClient(client))
+			PrintToConsole(client, "%s (PRO)\n%s (TP)",szMap,szMap);
+	}
+}
 
 public db_viewAllRecords(client, String:szSteamId[32])
 {
@@ -1929,6 +1980,7 @@ public db_viewAllRecords(client, String:szSteamId[32])
 			PrintToChat(client,"[%cKZ%c] Invalid SteamID found.",RED,WHITE);
 	ProfileMenu(client, -1);
 }
+
 
 public SQL_ViewAllRecordsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -1970,7 +2022,7 @@ public SQL_ViewAllRecordsCallback(Handle:owner, Handle:hndl, const String:error[
 					{
 						PrintToConsole(client," ");
 						PrintToConsole(client,"-------------");
-						PrintToConsole(client,"Map times");
+						PrintToConsole(client,"Finished Maps");
 						PrintToConsole(client,"Player: %s", szName);
 						PrintToConsole(client,"SteamID: %s", szSteamId);
 						PrintToConsole(client,"-------------");
@@ -2319,17 +2371,19 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	new Handle:menu = CreateMenu(ProfileMenuHandler);
 	SetMenuTitle(menu, szTitle);
 	AddMenuItem(menu, "Current map time", "Current map time");
-	AddMenuItem(menu, "All map times", "All map times");
 	AddMenuItem(menu, "Jumpstats", "Jumpstats");
-		   
+	AddMenuItem(menu, "Finished maps", "Finished maps");
 	decl String:szcSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szcSteamId, 32);  
 		if(StrEqual(szSteamId,szcSteamId))
+		{
+			AddMenuItem(menu, "Unfinished maps", "Unfinished maps");
 			if (g_bPointSystem)
 				AddMenuItem(menu, "Refresh my profile", "Refresh my profile");
-	}
+		}
+	}	
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
 	g_bClimbersMenuOpen[client]=false;
@@ -2677,30 +2731,34 @@ public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		switch(param2)
 		{
 			case 0: db_viewRecord(param1, g_szProfileSteamId[param1], g_szMapName);
-			case 1: db_viewAllRecords(param1, g_szProfileSteamId[param1]);
-			case 2: db_viewJumpStats(param1, g_szProfileSteamId[param1]);			
+			case 1: 
+			{
+				db_viewJumpStats(param1, g_szProfileSteamId[param1]);
+				if (!g_bJumpStats)
+					PrintToChat(param1, "%t", "JumpstatsDisabled",MOSSGREEN,WHITE);
+			}
+			case 2: db_viewAllRecords(param1, g_szProfileSteamId[param1]);			
+			case 3: db_viewUnfinishedMaps(param1, g_szProfileSteamId[param1]);	
+			case 4:
+			{
+				if(g_brc_PlayerRank[param1])
+				{
+					PrintToChat(param1, "%t", "PrUpdateInProgress", MOSSGREEN,WHITE);
+				}
+				else
+				{
+				
+					g_brc_PlayerRank[param1]=true;
+					PrintToChat(param1, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
+					CalculatePlayerRank(param1);
+				}
+			}		
 		}	
-		if (param2==2 && !g_bJumpStats)
-			PrintToChat(param1, "%t", "JumpstatsDisabled",MOSSGREEN,WHITE);
-		if (param2==3)
-		{
-			if(g_brc_PlayerRank[param1])
-			{
-				PrintToChat(param1, "%t", "PrUpdateInProgress", MOSSGREEN,WHITE);
-			}
-			else
-			{
-			
-				g_brc_PlayerRank[param1]=true;
-				PrintToChat(param1, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
-				CalculatePlayerRank(param1);
-			}
-		}
 	}
 	else
 	if(action == MenuAction_Cancel)
 	{
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (1 <= param1 <= MaxClients && IsValidClient(param1))
 		{
 			switch(detailView[param1])
 			{
@@ -2738,7 +2796,7 @@ public db_selectRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2751,7 +2809,7 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 	new client = data;
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2798,7 +2856,7 @@ public db_updateLjRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2811,7 +2869,7 @@ public db_updateLjBlockRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2824,7 +2882,7 @@ public db_updateWjRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2837,7 +2895,7 @@ public db_updateBhopRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2850,7 +2908,7 @@ public db_updateDropBhopRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2863,7 +2921,7 @@ public db_updateMultiBhopRecord(client)
 {
 	decl String:szQuery[255];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -2919,7 +2977,7 @@ public SQL_selectMapButtonsCallback(Handle:owner, Handle:hndl, const String:erro
 public SQL_UpdateLjRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
@@ -2945,7 +3003,7 @@ public SQL_UpdateLjRecordCallback(Handle:owner, Handle:hndl, const String:error[
 public SQL_UpdateLjBlockRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
@@ -2971,7 +3029,7 @@ public SQL_UpdateLjBlockRecordCallback(Handle:owner, Handle:hndl, const String:e
 public SQL_UpdateWjRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
@@ -2997,7 +3055,7 @@ public SQL_UpdateWjRecordCallback(Handle:owner, Handle:hndl, const String:error[
 public SQL_UpdateDropBhopRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
@@ -3023,7 +3081,7 @@ public SQL_UpdateDropBhopRecordCallback(Handle:owner, Handle:hndl, const String:
 public SQL_UpdateBhopRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
@@ -3049,14 +3107,14 @@ public SQL_UpdateBhopRecordCallback(Handle:owner, Handle:hndl, const String:erro
 public SQL_UpdateMultiBhopRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	if (IsClientInGame(client))
+	if (IsValidClient(client))
 	{
 		decl String:szQuery[512];
 		decl String:szUName[MAX_NAME_LENGTH];
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
 		decl String:szName[MAX_NAME_LENGTH*2+1];
 		decl String:szSteamId[32];
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -3102,7 +3160,7 @@ public db_updateRecordCP(client)
 	decl String:szQuery[1024];
 	decl String:szUName[MAX_NAME_LENGTH];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		GetClientAuthString(client, szSteamId, 32);
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -3121,7 +3179,7 @@ public db_updateRecordPro(client)
 	decl String:szQuery[1024];
 	decl String:szUName[MAX_NAME_LENGTH];
 	decl String:szSteamId[32];	
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 	{
 		GetClientName(client, szUName, MAX_NAME_LENGTH);
 		GetClientAuthString(client, szSteamId, 32);
@@ -4018,7 +4076,7 @@ public MenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 public SQL_SelectPlayerCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
 	new client = data;
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl) && IsClientInGame(client))
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl) && IsValidClient(client))
 	{
 	}
 	else
@@ -4126,7 +4184,7 @@ public db_resetMapRecords(client, String:szMapName[128])
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				g_fPersonalRecord[i] = 0.0;
 				g_fPersonalRecordPro[i] = 0.0;
@@ -4150,7 +4208,7 @@ public db_resetPlayerRecords(client, String:steamid[128])
  
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4181,7 +4239,7 @@ public db_resetPlayerRecordTp(client, String:steamid[128], String:szMapName[MAX_
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				decl String:szSteamId2[32];
 				GetClientAuthString(i, szSteamId2, 32);
@@ -4210,7 +4268,7 @@ public db_resetPlayerRecordPro(client, String:steamid[128], String:szMapName[MAX
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				decl String:szSteamId2[32];
 				GetClientAuthString(i, szSteamId2, 32);
@@ -4239,7 +4297,7 @@ public db_resetPlayerRecords2(client, String:steamid[128], String:szMapName[MAX_
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (1 <= i <= MaxClients && IsClientInGame(i))
+			if (IsValidClient(i))
 			{
 				decl String:szSteamId2[32];
 				GetClientAuthString(i, szSteamId2, 32);
@@ -4267,7 +4325,7 @@ public db_resetPlayerBhopRecord(client, String:steamid[128])
 	PrintToConsole(client, "bhop record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4290,7 +4348,7 @@ public db_resetPlayerDropBhopRecord(client, String:steamid[128])
 	PrintToConsole(client, "dropbhop record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4313,7 +4371,7 @@ public db_resetPlayerWJRecord(client, String:steamid[128])
 	PrintToConsole(client, "wj record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4336,7 +4394,7 @@ public db_resetPlayerJumpstats(client, String:steamid[128])
 	PrintToConsole(client, "jumpstats cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4367,7 +4425,7 @@ public db_resetPlayerMultiBhopRecord(client, String:steamid[128])
 	PrintToConsole(client, "multibhop record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4390,7 +4448,7 @@ public db_resetPlayerLjRecord(client, String:steamid[128])
 	PrintToConsole(client, "lj record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4413,7 +4471,7 @@ public db_resetPlayerLjBlockRecord(client, String:steamid[128])
 	PrintToConsole(client, "ljblock record cleared (%s).", szsteamid);
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (1 <= i <= MaxClients && IsClientInGame(i))
+		if (IsValidClient(i))
 		{
 			decl String:szSteamId2[32];
 			GetClientAuthString(i, szSteamId2, 32);
@@ -4506,7 +4564,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 	{
 		decl String:szQuery[512];      
 		decl String:szSteamId[32];
-		if (IsClientConnected(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -4538,7 +4596,7 @@ public db_viewPlayerPoints(client)
 	g_pr_points[client] = 0;
 	decl String:szQuery[255];      
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -4563,13 +4621,13 @@ public db_viewPlayerPointsCallback(Handle:owner, Handle:hndl, const String:error
 	}
 	else
 	{
-		if (client <= MaxClients && IsClientInGame(client))
+		if (IsValidClient(client))
 		{
 			//insert
 			decl String:szSteamId[32];		
 			decl String:szQuery[512];
 			decl String:szUName[MAX_NAME_LENGTH];
-			if (IsClientConnected(client))
+			if (IsValidClient(client))
 			{
 				GetClientAuthString(client, szSteamId, 32);
 				GetClientName(client, szUName, MAX_NAME_LENGTH);
@@ -4640,7 +4698,7 @@ public CalculatePlayerRank(client)
 	}
 	else
 	{
-		if (!g_bPointSystem || !IsClientInGame(client))
+		if (!g_bPointSystem || !IsValidClient(client))
 			return;
 		GetClientAuthString(client, szSteamId, 32);
 	}	
@@ -4656,7 +4714,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 	else
 	{
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -4668,7 +4726,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 		if (g_pr_multiplier[client]>0)
 			g_pr_points[client]+=  g_pr_points_finished*g_pr_multiplier[client];					
 		
-		if (client<=MAXPLAYERS && IsValidEntity(client) && IsClientConnected(client))
+		if (IsValidClient(client))
 		{
 			g_pr_Calculating[client] = true;
 			//challenge ratios 
@@ -4720,7 +4778,7 @@ public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:e
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 	else
 	{
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -4763,7 +4821,7 @@ public sql_CountFinishedMapsProCallback(Handle:owner, Handle:hndl, const String:
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 	else
 	{
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -4809,7 +4867,7 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 	else
 	{
-		if (IsClientInGame(client))
+		if (IsValidClient(client))
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
@@ -5001,7 +5059,7 @@ public db_updatePoints(client)
 	}
 	else
 	{
-		if (IsClientConnected(client))
+		if (IsValidClient(client))
 		{
 			GetClientName(client, szName, MAX_NAME_LENGTH);	
 			GetClientAuthString(client, szSteamId, 32);		
@@ -5076,7 +5134,7 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 		}
 		else*/
 		//console info
-		if (g_bManualRecalc && IsValidEntity(g_bManualRecalcClientID) && IsClientInGame(g_bManualRecalcClientID))
+		if (g_bManualRecalc && IsValidEntity(g_bManualRecalcClientID) && IsValidClient(g_bManualRecalcClientID))
 		{
 			PrintToConsole(g_bManualRecalcClientID, "%i/%i",g_i,g_pr_rowcount); 
 			new x = 66+g_i;
@@ -5092,7 +5150,7 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 			else
 			{
 				for (new i = 1; i <= MaxClients; i++)
-				if (1 <= i <= MaxClients && IsValidEntity(i) && IsClientInGame(i))
+				if (1 <= i <= MaxClients && IsValidEntity(i) && IsValidClient(i))
 					PrintToChat(i, "%t", "PrUpdateFinished", MOSSGREEN, WHITE, LIMEGREEN);
 				g_bManualRecalc=false;
 				g_pr_refreshingDB=false;
@@ -5106,11 +5164,11 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 		if (g_brc_PlayerRank[client] && client <= MAXPLAYERS)
 		{
 			ProfileMenu(client, -1);
-			if (IsClientInGame(client))
+			if (IsValidClient(client))
 				PrintToChat(client, "%t", "Rc_PlayerRankFinished", MOSSGREEN,WHITE,GRAY,PURPLE,g_pr_points[client],GRAY);	
 			g_brc_PlayerRank[client]=false;
 		}
-		if (client <= MAXPLAYERS && IsClientInGame(client) && g_pr_showmsg[client])
+		if (IsValidClient(client) && g_pr_showmsg[client])
 		{	
 			decl String:szName[MAX_NAME_LENGTH];	
 			GetClientName(client, szName, MAX_NAME_LENGTH);	
@@ -5118,7 +5176,7 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 			if (diff > 0)
 			{
 				for (new i = 1; i <= MaxClients; i++)
-					if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))
+					if (IsValidClient(i))
 						PrintToChat(i, "%t", "EarnedPoints", MOSSGREEN, WHITE, PURPLE,szName, GRAY, PURPLE, diff,GRAY,PURPLE, g_pr_points[client], GRAY);
 			}
 			g_pr_showmsg[client]=false;
@@ -5182,7 +5240,7 @@ public db_viewMapRankPro(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;
@@ -5215,7 +5273,7 @@ public db_viewMapRankTp(client)
 {
 	decl String:szQuery[512];
 	decl String:szSteamId[32];
-	if (IsClientConnected(client))
+	if (IsValidClient(client))
 		GetClientAuthString(client, szSteamId, 32);
 	else
 		return;

@@ -38,7 +38,7 @@ public Action:Admin_KzPanel(client, args)
 	
 public KzAdminMenu(client)
 {
-	if(client == 0 || !IsClientInGame(client))
+	if(!IsValidClient(client))
 		return;
 	g_bClimbersMenuOpen[client] = false;
 	g_bMenuOpen[client]=true;
@@ -470,7 +470,7 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 	if(action == MenuAction_End)
 	{
 		//test
-		if (1 <= param1 <= MaxClients && IsClientInGame(param1))
+		if (IsValidClient(param1))
 		{
 			g_bMenuOpen[param1] = false;
 			if (menu != INVALID_HANDLE)
@@ -506,7 +506,7 @@ public Action:Admin_ResetAllLjRecords(client, args)
 	PrintToConsole(client, "lj records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_LjRank[i] = 99999999;
 			g_fPersonalLjRecord[i] = -1.0;
@@ -523,7 +523,7 @@ public Action:Admin_ResetAllWjRecords(client, args)
 	PrintToConsole(client, "wj records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_wjRank[i] = 99999999;
 			g_fPersonalWjRecord[i] = -1.0;
@@ -540,7 +540,7 @@ public Action:Admin_ResetAllBhopRecords(client, args)
 	PrintToConsole(client, "bhop records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_BhopRank[i] = 99999999;
 			g_fPersonalBhopRecord[i] = -1.0;
@@ -557,7 +557,7 @@ public Action:Admin_ResetAllDropBhopRecords(client, args)
 	PrintToConsole(client, "dropbhop records reseted.");	
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_DropBhopRank[i] = 99999999;
 			g_fPersonalDropBhopRecord[i] = -1.0;
@@ -574,7 +574,7 @@ public Action:Admin_ResetAllMultiBhopRecords(client, args)
 	PrintToConsole(client, "multibhop records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_MultiBhopRank[i] = 99999999;
 			g_fPersonalMultiBhopRecord[i] = -1.0;
@@ -591,7 +591,7 @@ public Action:Admin_ResetAllLjBlockRecords(client, args)
 	PrintToConsole(client, "ljblock records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsValidClient(i))
 		{	
 			g_MultiBhopRank[i] = 99999999;
 			g_fPersonalMultiBhopRecord[i] = -1.0;

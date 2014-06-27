@@ -435,7 +435,7 @@ public Prethink (client, Float:pos[3], Float:vel)
 
 public Postthink(client)
 {	
-	if (!IsClientInGame(client))
+	if (!IsValidClient(client))
 		return;
 	new ground_frames = g_ground_frames[client];
 	new strafes = g_strafecount[client];
@@ -659,7 +659,7 @@ public Postthink(client)
 				//chat all
 				for (new i = 1; i <= MaxClients; i++)
 				{
-					if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))
+					if (IsValidClient(i))
 					{						
 						if (g_bColorChat[i] && i != client)
 							PrintToChat(i, "%t", "Jumpstats_LjAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_fJump_Distance[client],MOSSGREEN,GREEN,sBlockDist);
@@ -687,7 +687,7 @@ public Postthink(client)
 					//all
 					for (new i = 1; i <= MaxClients; i++)
 					{
-						if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))
+						if (IsValidClient(i))
 						{						
 							if (g_bColorChat[i] && i != client)
 							{
@@ -794,7 +794,7 @@ public Postthink(client)
 				//all
 				for (new i = 1; i <= MaxClients; i++)
 				{
-					if (1 <= i <= MaxClients && IsClientInGame(i) && IsValidEntity(i))
+					if (IsValidClient(i))
 					{
 						if (g_bColorChat[i] && i != client)					
 							PrintToChat(i, "%t", "Jumpstats_MultiBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_fJump_Distance[client],MOSSGREEN,GREEN);
@@ -825,7 +825,7 @@ public Postthink(client)
 				//all
 				for (new i = 1; i <= MaxClients; i++)
 				{
-					if (1 <= i <= MaxClients && IsClientInGame(i))
+					if (IsValidClient(i))
 					{
 						if (g_bColorChat[i] && i != client)
 						{
@@ -913,7 +913,7 @@ public Postthink(client)
 						//all
 						for (new i = 1; i <= MaxClients; i++)
 						{
-							if (1 <= i <= MaxClients && IsClientInGame(i))
+							if (IsValidClient(i))
 							{
 								if (g_bColorChat[i]==true && i != client)
 									PrintToChat(i, "%t", "Jumpstats_DropBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_fJump_Distance[client],MOSSGREEN,GREEN);
@@ -943,7 +943,7 @@ public Postthink(client)
 							//all
 							for (new i = 1; i <= MaxClients; i++)
 							{
-								if (1 <= i <= MaxClients && IsClientInGame(i))
+								if (IsValidClient(i))
 								{
 									if (g_bColorChat[i]==true && i != client)
 									{
@@ -1032,7 +1032,7 @@ public Postthink(client)
 							//all
 							for (new i = 1; i <= MaxClients; i++)
 							{
-								if (1 <= i <= MaxClients && IsClientInGame(i))
+								if (IsValidClient(i))
 								{
 									if (g_bColorChat[i]==true && i != client)
 										PrintToChat(i, "%t", "Jumpstats_WeirdAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_fJump_Distance[client],MOSSGREEN,GREEN);
@@ -1063,7 +1063,7 @@ public Postthink(client)
 								//all
 								for (new i = 1; i <= MaxClients; i++)
 								{
-									if (1 <= i <= MaxClients && IsClientInGame(i))
+									if (IsValidClient(i))
 									{
 										if (g_bColorChat[i]==true && i != client)
 										{
@@ -1144,7 +1144,7 @@ public Postthink(client)
 						//all
 						for (new i = 1; i <= MaxClients; i++)
 						{
-							if (1 <= i <= MaxClients && IsClientInGame(i))
+							if (IsValidClient(i))
 							{
 								if (g_bColorChat[i]==true && i != client)
 									PrintToChat(i, "%t", "Jumpstats_BhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_fJump_Distance[client],MOSSGREEN,GREEN);
@@ -1175,7 +1175,7 @@ public Postthink(client)
 							//all
 							for (new i = 1; i <= MaxClients; i++)
 							{
-								if (1 <= i <= MaxClients && IsClientInGame(i))
+								if (IsValidClient(i))
 								{
 									if (g_bColorChat[i]==true && i != client)
 									{

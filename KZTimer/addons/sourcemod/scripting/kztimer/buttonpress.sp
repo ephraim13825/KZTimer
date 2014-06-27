@@ -92,7 +92,7 @@ public CL_OnStartTimerPress(client)
 		{
 			for(new i = 1; i <= MaxClients; i++) 
 			{
-				if (IsClientInGame(i) && !IsPlayerAlive(i))
+				if (IsValidClient(i) && !IsPlayerAlive(i))
 				{			
 					new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 					if (SpecMode == 4 || SpecMode == 5)
@@ -198,7 +198,7 @@ public CL_OnEndTimerPress(client)
 	{
 		for(new i = 1; i <= MaxClients; i++) 
 		{
-			if (IsClientInGame(i) && !IsPlayerAlive(i))
+			if (IsValidClient(i) && !IsPlayerAlive(i))
 			{			
 				new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
 				if (SpecMode == 4 || SpecMode == 5)
@@ -237,7 +237,7 @@ public CL_OnEndTimerPress(client)
 	g_record_type[client] = -1;
 	g_sound_type[client] = -1;
 	g_bMapRankToChat[client] = true;
-	if (!IsClientInGame(client))
+	if (!IsValidClient(client))
 		return;	
 	GetClientAuthString(client, szSteamId, 32);
 	GetClientName(client, szName, MAX_NAME_LENGTH);
@@ -326,7 +326,7 @@ public CL_OnEndTimerPress(client)
 	}
 	
 	//NEW GLOBAL RECORD 
-	if (!g_bMapButtons && g_bAntiCheat && g_bglobalValidFilesize && g_BGlobalDBConnected && g_hDbGlobal != INVALID_HANDLE && g_bEnforcer && !g_bAutoBhopWasActive[client]) 
+	if (!g_bAllowCpOnBhopPlattforms && !g_bMapButtons && g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE && g_bEnforcer && g_bAntiCheat && g_bglobalValidFilesize && !g_bAutoTimer && !g_bAutoBhopWasActive[client])	
 	{
 		if (g_tickrate == 64 && g_fFinalTime[client] < g_fRecordTimeGlobal && g_fFinalTime[client] > 20.0)
 		{
@@ -399,7 +399,7 @@ public CL_OnEndTimerPress(client)
 		SetEntityRenderColor(client, 255,255,255,255);		
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsClientInGame(i) && i != client && i != g_iBot && i != g_iBot2)
+			if (IsValidClient(i) && i != client && i != g_iBot && i != g_iBot2)
 			{	
 				GetClientAuthString(i, szSteamIdOpponent, 32);		
 				if (StrEqual(szSteamIdOpponent,g_szCOpponentID[client]))
@@ -410,8 +410,8 @@ public CL_OnEndTimerPress(client)
 					db_insertPlayerChallenge(client);
 					GetClientName(i, szNameOpponent, MAX_NAME_LENGTH);	
 					for (new k = 1; k <= MaxClients; k++)
-							if (1 <= k <= MaxClients && IsClientInGame(k) && IsValidEntity(k))
-								PrintToChat(k, "%t", "ChallengeW", RED,WHITE,MOSSGREEN,szName,WHITE,MOSSGREEN,szNameOpponent,WHITE); 			
+						if (IsValidClient(k))
+							PrintToChat(k, "%t", "ChallengeW", RED,WHITE,MOSSGREEN,szName,WHITE,MOSSGREEN,szNameOpponent,WHITE); 			
 					g_challenge_win_ratio[client]++;	
 					g_challenge_win_ratio[i]--;		
 					if (g_CBet[client]>0)
@@ -424,7 +424,7 @@ public CL_OnEndTimerPress(client)
 						g_pr_showmsg[client] = true;
 						new lostpoints = g_CBet[client] * g_pr_points_finished;
 						for (new j = 1; j <= MaxClients; j++)
-							if (1 <= j <= MaxClients && IsClientInGame(j) && IsValidEntity(j))
+							if (IsValidClient(j))
 								PrintToChat(j, "%t", "ChallengeL", MOSSGREEN, WHITE, PURPLE,szNameOpponent, GRAY, RED, lostpoints,GRAY);			
 					}
 					CreateTimer(0.0, RefreshPoints, client,TIMER_FLAG_NO_MAPCHANGE);
@@ -454,11 +454,11 @@ public CL_OnEndTimerPress(client)
 	}
 	
 	//global db update
-	if (!g_bMapButtons && g_bGlobalDB && g_BGlobalDBConnected && g_hDbGlobal != INVALID_HANDLE && g_bEnforcer && g_bAntiCheat && g_bglobalValidFilesize && !g_bAutoTimer && !g_bAutoBhopWasActive[client])	
+	if (!g_bAllowCpOnBhopPlattforms && !g_bMapButtons && g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE && g_bEnforcer && g_bAntiCheat && g_bglobalValidFilesize && !g_bAutoTimer && !g_bAutoBhopWasActive[client])	
 		db_GlobalRecord(client);
 	else
 	{
-		if (g_hDbGlobal == INVALID_HANDLE || !g_BGlobalDBConnected)
+		if (g_hDbGlobal == INVALID_HANDLE)
 			PrintToConsole(client, "[KZ] Global Records disabled. Reason: No connection to the global database.");
 		else
 			if (g_bMapButtons)
@@ -477,7 +477,10 @@ public CL_OnEndTimerPress(client)
 								PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_auto_timer enabled.");
 							else
 								if (g_bAutoBhopWasActive[client])
-									PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_auto_bhop was enabled during your run.");								
+									PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_auto_bhop was enabled during your run.");			
+								else 
+									if (g_bAllowCpOnBhopPlattforms)
+										PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_checkpoints_on_bhop_plattforms enabled. (0 required)");		
 	}
 	
 	//zipcore anti strafe hack
