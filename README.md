@@ -3,6 +3,7 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
+- Known bug (windows only): Stuck at team picture after selecting a team .. you can bypass that by simply disabling the replay bots).. If anyone knows how to fix that add me in steam (1NutWunDeR)
 
 Changelog
 =======
