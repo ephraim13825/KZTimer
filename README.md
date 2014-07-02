@@ -3,13 +3,29 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
-- Known bugs:
-1. Stuck at team picture after selecting a team  (concerns only windows servers and appears randomly)
---> You can bypass that by simply disabling the replay bots.
-2. The prestrafe method doenst work for a very (very very!) small amount of players.
+- [SDKTOOLS] "FindEntityByClassname" not supported by this mod, falling back to IServerTools method. ERROR
+--> https://forums.alliedmods.net/showthread.php?t=235737
+- Known bug:
+The prestrafe method doenst work for a very (very very!) small amount of players.
 
 Changelog
 =======
+
+v1.42
+- added cfg/sourcemod/kztimer/main.cfg (these server cvars were hard-coded) (don't forget to add this file. very important!)
+- moved the map type configs to cfg/sourcemod/kztimer/map_types/ (u have to update your folder structure!)
+- added server cvar kz_info_bot: provides information about nextmap and timeleft in his player name
+- added server cvar kz_recalc_top100_on_mapstart: on/off - starts a recalculation of top 100 player ranks at map start.
+- added server cvar kz_pro_mode: (!) EXPERIMENTAL (!) on/off - jump penalty, prespeed cap at 300.0, own global top, prestrafe and server settings which feels much more 
+like in 1.6. This makes maps which requires multibhops (> 280 units) impossible. Also only tickrate 102.4 supported
+additional info: Those were the features of the kztimer pro version
+- fixed team selection bug (only windows servers were affected. MAJOR FIX)
+- fixed sm_deleteproreplay command (file access was blocked through a handle)
+- removed target name panel (replaced by weapon_reticle_knife_show)
+- added jumpstats support for scalable ljblocks (func_movelinear entities)
+- fixed a noclip bug (thx 2 AXO) 
+- optimized the ranking system
+- minor optimizations
 
 v1.41
 - fixed a "undo tp" bug which occurs in combination with bunnyhop plattforms (thx 2 skill vs luck)
