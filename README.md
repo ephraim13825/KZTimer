@@ -3,8 +3,8 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - KZ AntiCheat is automatically disabled if kz_auto_bhop is set to 1
-- [SDKTOOLS] "FindEntityByClassname" not supported by this mod, falling back to IServerTools method. ERROR
---> https://forums.alliedmods.net/showthread.php?t=235737
+- Log "error": [SDKTOOLS] "FindEntityByClassname" not supported by this mod, falling back to IServerTools method.
+-> https://forums.alliedmods.net/showthread.php?t=235737
 - Known bug:
 The prestrafe method doenst work for a very (very very!) small amount of players.
 
