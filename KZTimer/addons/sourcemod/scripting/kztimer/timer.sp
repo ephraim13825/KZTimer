@@ -75,70 +75,12 @@ public Action:MainTimer2(Handle:timer)
 	if (g_bRoundEnd)
 		return Plugin_Continue;
 
-	new agent=0;
+	SetInfoBotName(g_InfoBot);	
 	for (new i = 1; i <= MaxClients; i++)
 	{	
-		if (!IsValidClient(i))
+		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;
-			
-		//nextmap & localtime bots
-		if (g_iBot != i && g_iBot2 != i && IsFakeClient(i))
-		{
-			if (agent==0)
-			{		
-				decl String:szBuffer[64];
-				decl String:sNextMap[128];
-				if(g_bMapChooser && EndOfMapVoteEnabled() && !HasEndOfMapVoteFinished())
-					Format(sNextMap, sizeof(sNextMap), "Pending Vote");
-				else
-				{
-					GetNextMap(sNextMap, sizeof(sNextMap));
-					new String:mapPieces[6][128];
-					new lastPiece = ExplodeString(sNextMap, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
-					Format(sNextMap, sizeof(sNextMap), "%s", mapPieces[lastPiece-1]); 			
-				}	
-				
-				new timeleft;
-				GetMapTimeLeft(timeleft);
-				new Float:ftime = float(timeleft);
-				FormatTimeFloat(i,ftime,4);
-				
-				
-				new Handle:hTmp;	
-				hTmp = FindConVar("mp_timelimit");
-				new iTimeLimit = GetConVarInt(hTmp);			
-				if (hTmp != INVALID_HANDLE)
-					CloseHandle(hTmp);	
-				if (g_bMapEnd && iTimeLimit > 0)
-					Format(szBuffer, sizeof(szBuffer), "Nextmap: %s (in %s)",sNextMap, g_szTime[i]);
-				else
-					Format(szBuffer, sizeof(szBuffer), "Nextmap: Pending Vote (no time limit)");
-				CS_SetClientName(i, szBuffer);	
-			}
-			if (agent==1)
-			{
-				decl String:szTime[64];
-				decl String:szTime24[64];
-				decl String:szHours[64];
-				FormatTime(szTime, sizeof(szTime), "%I:%M:%S", GetTime());
-				
-				//am/pm check
-				FormatTime(szTime24, sizeof(szTime24), "%H:%M:%S", GetTime());
-				SplitString(szTime24,":",szHours,64);
-				new hours;
-				hours = StringToInt(szHours);
-
-				if (hours > 12)
-					Format(szTime, sizeof(szTime), "%s pm", szTime);
-				else
-					Format(szTime, sizeof(szTime), "%s am", szTime);
-				decl String:szBuffer2[64];
-				Format(szBuffer2, sizeof(szBuffer2), "Local Time: %s", szTime);		
-				CS_SetClientName(i, szBuffer2);	
-			}
-			agent++;
-		}
-		
+					
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
@@ -271,26 +213,6 @@ public Action:ProReplayTimer(Handle:timer, any:client)
 		SaveRecording(client,0);
 }
 
-public Action:CheckAgents(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && IsFakeClient(client) && client != g_iBot && client != g_iBot2)
-	{
-		Format(g_pr_rankname[client], 16, "BOT");
-		SetEntProp(client, Prop_Send, "m_iAddonBits", 0);
-		SetEntProp(client, Prop_Send, "m_iPrimaryAddon", 0);
-		SetEntProp(client, Prop_Send, "m_iSecondaryAddon", 0); 		
-		decl String:szName[32];	
-		GetClientName(client, szName, 32);
-		decl String:szBuffer[64];
-		Format(szBuffer, sizeof(szBuffer), "Free Agent %s", szName);		
-		CS_SetClientName(client, szBuffer);				
-		SetEntProp(client, Prop_Send, "m_iObserverMode", 1);
-		TeleportEntity(client, Float:{-9999.0,-9999.0,-9999.0},NULL_VECTOR, Float:{0.0,0.0,-100.0});
-		g_bValidAgent[client]=true;
-	}
-}
-
-
 public Action:CheckChallenge(Handle:timer, any:client)
 {
 	new bool:oppenent=false;
@@ -358,11 +280,6 @@ public Action:CheckChallenge(Handle:timer, any:client)
 	return Plugin_Continue;
 }
 
-public Action:KickBotsTimer(Handle:timer)
-{	
-	ServerCommand("bot_quota 0"); 
-}
-
 public Action:LoadReplaysTimer(Handle:timer)
 {
 	if (g_bReplayBot)
@@ -413,10 +330,18 @@ public Action:SetClanTag(Handle:timer, any:client)
 		}
 }
 
+public Action:ResetSlowdownTimer(Handle:timer, any:client)
+{
+	g_bSlowDownCheck[client]=false;	
+}
+
 public Action:SettingsEnforcerTimer(Handle:timer)
 {
-	if (g_bEnforcer)		
+	if (g_bEnforcer && !g_bProMode)		
 		ServerCommand("kz_prespeed_cap 380.0;sv_staminalandcost 0;sv_maxspeed 320; sv_staminajumpcost 0; sv_gravity 800; sv_airaccelerate 100; sv_friction 4.8;sv_accelerate 6.5;sv_maxvelocity 2000;sv_cheats 0"); 	
+	else
+	if (g_bEnforcer && g_bProMode)		
+		ServerCommand("sv_airaccelerate 100;sv_staminalandcost 0.0;sv_staminajumpcost 0.0;sv_stopspeed 75;sv_maxspeed 320; sv_gravity 800; sv_friction 4;sv_accelerate 5;sv_maxvelocity 2000;sv_cheats 0");
 	return Plugin_Continue;
 }
 
@@ -551,4 +476,20 @@ public Action:OpenMapTimes(Handle:timer, any:client)
 		GetClientAuthString(client, szSteamId, 32);		
 		db_viewRecord(client, szSteamId, g_szMapName);
 	}
+}
+
+// [CS:GO] Team Limit Bypass by Zephyrus
+//https://forums.alliedmods.net/showthread.php?t=219812
+public Action:Timer_OnMapStart(Handle:timer, any:data)
+{
+	
+	g_iTSpawns=0;
+	g_iCTSpawns=0;
+
+	new ent = -1;
+	while((ent = FindEntityByClassname(ent, "info_player_counterterrorist")) != -1) ++g_iCTSpawns;
+	ent = -1;
+	while((ent = FindEntityByClassname(ent, "info_player_terrorist")) != -1) ++g_iTSpawns;
+
+	return Plugin_Stop;
 }

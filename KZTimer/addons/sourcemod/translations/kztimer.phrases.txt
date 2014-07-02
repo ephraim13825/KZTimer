@@ -289,10 +289,15 @@
 		"#format"   "{1:c},{2:c},{3:c}"
 		"en"        "[{1}KZ{2}] {3}Recalculation finished!"
 	}
-	"PrUpdateInProgress"
+	"Top100Refreshed"
+	{
+		"#format"   "{1:c},{2:c},{3:c}"
+		"en"        "[{1}KZ{2}] {3}Top 100 Players recalculated!"
+	}
+	"StopRecalculation"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] Recalculation already in progress!"
+		"en"        "[{1}KZ{2}] Recalculation stopped!"
 	}
 	"HelpText"
 	{
@@ -303,6 +308,11 @@
 	{
 		"#format"   "{1:c},{2:c}"
 		"en"        "[{1}KZ{2}] http://steamcommunity.com/groups/kztimer"
+	}
+	"NewGlobalRecord102Pro"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c}"
+		"en"        "[{1}KZ{2}] {3}{4}{5} scored a new {6}GLOBAL RECORD (ProMode)"
 	}	
 	"NewGlobalRecord102"
 	{
@@ -387,7 +397,7 @@
 	"PlayerNotFound2"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] Player {3}not found."
+		"en"        "[{1}KZ{2}] Player {3} not found."
 	}
 	"ConsoleOutput"
 	{
@@ -413,6 +423,11 @@
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
 		"en"        "[{1}KZ{2}] No Global Records (tickrate 102.4) found on {3}"
+	}
+	"NoGlobalRecordsProMode"
+	{
+		"#format"   "{1:c},{2:c},{3:s}"
+		"en"        "[{1}KZ{2}] No Global Records (ProMode) found on {3}"
 	}
 	"NoGlobalRecords128"
 	{

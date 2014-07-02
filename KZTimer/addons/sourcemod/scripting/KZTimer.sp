@@ -15,7 +15,7 @@
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 
-#define VERSION "1.41"
+#define VERSION "1.42"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 
 #define WHITE 0x01
@@ -199,6 +199,20 @@ new g_iButtonOffs_spawnflags = -1;
 new Float:g_fLastJump[MAXPLAYERS+1] = {0.0, ...};
 new Handle:g_hSDK_Touch = INVALID_HANDLE;
 
+
+// [CS:GO] Team Limit Bypass by Zephyrus
+//https://forums.alliedmods.net/showthread.php?t=219812
+enum EJoinTeamReason
+{
+	k_OneTeamChange=0,
+	k_TeamsFull=1,
+	k_TTeamFull=2,
+	k_CTTeamFull=3
+}
+new g_iTSpawns=-1;
+new g_iCTSpawns=-1;
+new g_iSelectedTeam[MAXPLAYERS+1];
+
 //global declarations
 new g_i = 0;
 new g_DbType;
@@ -289,12 +303,16 @@ new bool:g_bAutoBhop;
 new bool:g_bAutoBhop2;
 new Handle:g_hVipClantag = INVALID_HANDLE;
 new bool:g_bVipClantag;
+new Handle:g_hRecalcTop100 = INVALID_HANDLE;
+new bool:g_bRecalcTop100;
 new Handle:g_hAdminClantag = INVALID_HANDLE;
 new bool:g_bAdminClantag;
 new Handle:g_hConnectMsg = INVALID_HANDLE;
 new bool:g_bConnectMsg;
 new Handle:g_hRadioCommands = INVALID_HANDLE;
 new bool:g_bRadioCommands;
+new Handle:g_hInfoBot = INVALID_HANDLE;
+new bool:g_bInfoBot;
 new Handle:g_hGoToServer = INVALID_HANDLE;
 new bool:g_bGoToServer;
 new Handle:g_hAllowCpOnBhopPlattforms = INVALID_HANDLE;
@@ -313,6 +331,8 @@ new Handle:g_hAllowCheckpoints = INVALID_HANDLE;
 new bool:g_bAllowCheckpoints;
 new Handle:g_hcvarNoBlock = INVALID_HANDLE;
 new bool:g_bNoBlock;
+new Handle:g_hProMode = INVALID_HANDLE;
+new bool:g_bProMode;
 new Handle:g_hPointSystem = INVALID_HANDLE;
 new bool:g_bPointSystem;
 new Handle:g_hCleanWeapons = INVALID_HANDLE;
@@ -364,6 +384,7 @@ new Float:g_fPersonalRecordPro[MAXPLAYERS+1];
 new Float:g_fRecordTime=9999999.0;
 new Float:g_fRecordTimePro=9999999.0;
 new Float:g_fRecordTimeGlobal102=9999999.0;
+new Float:g_fRecordTimeGlobal102Pro=9999999.0;
 new Float:g_fRecordTimeGlobal=9999999.0;
 new Float:g_fRecordTimeGlobal128=9999999.0;
 new Float:g_fRunTime[MAXPLAYERS+1];
@@ -421,6 +442,7 @@ new bool:g_bUpdate;
 new bool:g_pr_refreshingDB;
 new bool:g_bAntiCheat;
 new bool:g_bMapChooser;
+new bool:g_bFuncMoveLinear[MAXPLAYERS+1];
 new bool:g_bUndoTimer[MAXPLAYERS+1];
 new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
@@ -440,6 +462,7 @@ new bool:g_bSpectate[MAXPLAYERS+1];
 new bool:g_bTimeractivated[MAXPLAYERS+1];
 new bool:g_bFirstSpawn[MAXPLAYERS+1];
 new bool:g_bFirstSpawn2[MAXPLAYERS+1];
+new bool:g_bTop100Refresh;
 new bool:g_bMissedTpBest[MAXPLAYERS+1];
 new bool:g_bMissedProBest[MAXPLAYERS+1];
 new bool:g_bRestoreC[MAXPLAYERS+1]; 
@@ -500,14 +523,6 @@ new bool:g_borg_CPTextMessage[MAXPLAYERS+1];
 new bool:g_borg_AdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_borg_AutoBhopClient[MAXPLAYERS+1];
 new bool:g_bValidAgent[MAXPLAYERS+1];
-new g_iPlayerManager;
-new g_iConnectedOffset;
-new g_iAliveOffset;
-new g_iTeamOffset;
-new g_iPingOffset;
-new g_iScoreOffset;
-new g_iDeathsOffset;
-new g_iHealthOffset;
 new g_bManualRecalcClientID=-1; 
 new g_unique_FileSize;
 new g_maptimes_pro;
@@ -517,6 +532,7 @@ new g_pr_players2;
 new g_pr_mapcount;
 new g_iBot=-1;
 new g_iBot2=-1;
+new g_InfoBot=-1;
 new ownerOffset;
 new g_pr_rank_Novice; 
 new g_pr_rank_Scrub; 
@@ -593,6 +609,7 @@ new String:g_szMenuTitleRun[MAXPLAYERS+1][255];
 new String:g_szTime[MAXPLAYERS+1][32];
 new String:g_szRecordGlobalPlayer[MAX_NAME_LENGTH];
 new String:g_szRecordGlobalPlayer102[MAX_NAME_LENGTH];
+new String:g_szRecordGlobalPlayer102Pro[MAX_NAME_LENGTH];
 new String:g_szRecordGlobalPlayer128[MAX_NAME_LENGTH];
 new String:g_szRecordPlayerPro[MAX_NAME_LENGTH];
 new String:g_szRecordPlayer[MAX_NAME_LENGTH];
@@ -626,6 +643,12 @@ new const String:LEETJUMP_DOMINATING_RELATIVE_SOUND_PATH[] = "*quake/dominating.
 new const String:PROJUMP_FULL_SOUND_PATH[] = "sound/quake/perfect.mp3";
 new const String:PROJUMP_RELATIVE_SOUND_PATH[] = "*quake/perfect.mp3";
 
+//promode
+new bool:g_bOnGround[MAXPLAYERS+1];
+new bool:g_bGoodBhop[MAXPLAYERS+1];
+new bool:g_bSlowDownCheck[MAXPLAYERS+1];
+new bool:g_bPrestrafeTooHigh[MAXPLAYERS+1];
+
 new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog",
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
@@ -634,8 +657,8 @@ new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "follo
 new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock", "/ljblock", "!flashlight", "/flashlight", "!radio", "/radio",
 	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","/help","/helpmenu","/menu","/menu ","/checkpoint", "!radiooff", "/radiooff",
 	"/gocheck","/unstuck","/stuck","/r","/prev","/undo","/next","/usp","/start","/stop","/pause",
-	"!knife","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", "!disablegoto", "!shownames", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure",
-	"/knife","/adv", "/info", "/colorchat", "/cpmessage", "/sound", "/menusound", "/hide", "/hidespecs", "/showtime", "/disablegoto", "/shownames", "/sync", "/bhop", "/speed", "/showkeys", "/goto", "/measure"};
+	"!knife","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", "!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure",
+	"/knife","/adv", "/info", "/colorchat", "/cpmessage", "/sound", "/menusound", "/hide", "/hidespecs", "/showtime", "/disablegoto", "/sync", "/bhop", "/speed", "/showkeys", "/goto", "/measure"};
 
 new String:EntityList[][] = {"jail_teleport","logic_timer", "team_round_timer", "logic_relay"};
 
@@ -682,14 +705,6 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 public OnPluginStart()
 {
 	g_bUpdate=false;
-	g_iConnectedOffset = FindSendPropOffs("CCSPlayerResource", "m_bConnected");
-	g_iAliveOffset = FindSendPropOffs("CCSPlayerResource", "m_bAlive");
-	g_iTeamOffset = FindSendPropOffs("CCSPlayerResource", "m_iTeam");
-	g_iPingOffset = FindSendPropOffs("CCSPlayerResource", "m_iPing");
-	g_iScoreOffset = FindSendPropOffs("CCSPlayerResource", "m_iScore");
-	g_iDeathsOffset = FindSendPropOffs("CCSPlayerResource", "m_iDeaths");
-	g_iHealthOffset = FindSendPropOffs("CCSPlayerResource", "m_iHealth");
-	
 	new Handle:hGameConf = LoadGameConfigFile("sdkhooks.games")
 
 	//<multibhop>
@@ -726,11 +741,15 @@ public OnPluginStart()
 	else
 		g_tickrate= 64;
 
-	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - shows a connect message with country", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - shows a player connect message with country in chat", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "0", "on/off - allows checkpoints on bunnyhop plattforms", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hRecalcTop100 = CreateConVar("kz_recalc_top100_on_mapstart", "0", "on/off - starts a recalculation of top 100 player ranks at map start. (This takes a lot of hardware performance!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bRecalcTop100     = GetConVarBool(g_hRecalcTop100);
+	HookConVarChange(g_hRecalcTop100, OnSettingChanged);	
+	
+	g_hAllowCpOnBhopPlattforms = CreateConVar("kz_checkpoints_on_bhop_plattforms", "0", "on/off - allows checkpoints on bunnyhop plattforms (global records require 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCpOnBhopPlattforms     = GetConVarBool(g_hAllowCpOnBhopPlattforms);
 	HookConVarChange(g_hAllowCpOnBhopPlattforms, OnSettingChanged);	
 	
@@ -738,27 +757,35 @@ public OnPluginStart()
 	g_bColoredChatRanks     = GetConVarBool(g_hColoredChatRanks);
 	HookConVarChange(g_hColoredChatRanks, OnSettingChanged);	
 	
-	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - maps wont change after the time has run out if disabled. mp_ignore_round_win_conditions is set to 1 and prevents round endings (and also map endings)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - maps wont change after the time has run out if disabled. mp_ignore_round_win_conditions is set to 1 and prevents map/round endings (mp_timelimit must be > 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMapEnd     = GetConVarBool(g_hMapEnd);
 	HookConVarChange(g_hMapEnd, OnSettingChanged);
+
+	g_hProMode = CreateConVar("kz_pro_mode", "0", "jump penalty, prespeed cap at 300.0, own global top, prestrafe and server settings which feels much more like in 1.6. This makes maps which requires multibhops (> 280 units) impossible. Also only tickrate 102.4 supported", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bProMode     = GetConVarBool(g_hProMode);
+	HookConVarChange(g_hProMode, OnSettingChanged);
 	
 	g_hMultiplayerBhop = CreateConVar("kz_multiplayer_bhop", "1", "on/off - allows players to jump across sections of bhops without the blocks being triggered.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMultiplayerBhop     = GetConVarBool(g_hMultiplayerBhop);
 	HookConVarChange(g_hMultiplayerBhop, OnSettingChanged);
 	
-	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
 	
-	g_hPreStrafe = CreateConVar("kz_prestrafe", "0", "on/off - Prestrafe", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hPreStrafe = CreateConVar("kz_prestrafe", "0", "on/off - Prestrafe (always enabled if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPreStrafe     = GetConVarBool(g_hPreStrafe);
 	HookConVarChange(g_hPreStrafe, OnSettingChanged);	
 
+	g_hInfoBot	  = CreateConVar("kz_info_bot", "0", "on/off - provides information about nextmap and timeleft in his player name (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bInfoBot     = GetConVarBool(g_hInfoBot);
+	HookConVarChange(g_hInfoBot, OnSettingChanged);		
+	
 	g_hNoClipS = CreateConVar("kz_noclip", "1", "on/off - Allow players to use noclip when they have finished the map", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bNoClipS     = GetConVarBool(g_hNoClipS);
 	HookConVarChange(g_hNoClipS, OnSettingChanged);	
 	
-	g_hfpsCheck = 	CreateConVar("kz_fps_check", "0", "on/off - Kick players if their fps_max is 0 or bigger than 300", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hfpsCheck = 	CreateConVar("kz_fps_check", "0", "on/off - Kick players if their fps_max is 0 (unlimited) or bigger than 300", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bfpsCheck     = GetConVarBool(g_hfpsCheck);
 	HookConVarChange(g_hfpsCheck, OnSettingChanged);	
 
@@ -770,23 +797,23 @@ public OnPluginStart()
 	g_bAdminClantag     = GetConVarBool(g_hAdminClantag);
 	HookConVarChange(g_hAdminClantag, OnSettingChanged);	
 	
-	g_hGlobalDB = CreateConVar("kz_global_database", "1", "on/off - Global database", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hGlobalDB = CreateConVar("kz_global_database", "1", "on/off - Global database (Sharing of records across kztimer servers. Only kz_, bkz_ and xc_ maps with integrated timers supported)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bGlobalDB     = GetConVarBool(g_hGlobalDB);
 	HookConVarChange(g_hGlobalDB, OnSettingChanged);			
 	
-	g_hAutoTimer = CreateConVar("kz_auto_timer", "0", "on/off - Timer automatically starts when a player joins a team, dies or uses !start/!r (global records are disabled then)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoTimer = CreateConVar("kz_auto_timer", "0", "on/off - Timer automatically starts when a player joins a team, dies or uses !start/!r (global records require 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoTimer     = GetConVarBool(g_hAutoTimer);
 	HookConVarChange(g_hAutoTimer, OnSettingChanged);
 
-	g_hGoToServer = CreateConVar("kz_goto", "1", "on/off - Teleporting to an other player", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hGoToServer = CreateConVar("kz_goto", "1", "on/off - Allows players to use the !goto command", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bGoToServer     = GetConVarBool(g_hGoToServer);
 	HookConVarChange(g_hGoToServer, OnSettingChanged);	
 	
-	g_hcvargodmode = CreateConVar("kz_godmode", "1", "on/off - Players are immortal", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hcvargodmode = CreateConVar("kz_godmode", "1", "on/off - Godmode (immortal)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bgodmode     = GetConVarBool(g_hcvargodmode);
 	HookConVarChange(g_hcvargodmode, OnSettingChanged);
 
-	g_hPauseServerside    = CreateConVar("kz_pause", "1", "on/off - Allows players to use a pause function while climbing", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hPauseServerside    = CreateConVar("kz_pause", "1", "on/off - Allows players to use the !pause command", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPauseServerside    = GetConVarBool(g_hPauseServerside);
 	HookConVarChange(g_hPauseServerside, OnSettingChanged);
 
@@ -802,7 +829,7 @@ public OnPluginStart()
 	g_bAllowCheckpoints     = GetConVarBool(g_hAllowCheckpoints);
 	HookConVarChange(g_hAllowCheckpoints, OnSettingChanged);	
 	
-	g_hEnforcer = CreateConVar("kz_settings_enforcer", "1", "on/off - KZ settings enforcer (global records are disabled if disabled)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hEnforcer = CreateConVar("kz_settings_enforcer", "1", "on/off - KZ settings enforcer (global records require 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bEnforcer     = GetConVarBool(g_hEnforcer);
 	HookConVarChange(g_hEnforcer, OnSettingChanged);
 	
@@ -818,11 +845,11 @@ public OnPluginStart()
 	g_Autohealing_Hp     = GetConVarInt(g_hAutohealing_Hp);
 	HookConVarChange(g_hAutohealing_Hp, OnSettingChanged);	
 	
-	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Removing of player weapons", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Removing of weapons on player spawn and on ground", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bCleanWeapons     = GetConVarBool(g_hCleanWeapons);
 	HookConVarChange(g_hCleanWeapons, OnSettingChanged);
 
-	g_hJumpStats 	= CreateConVar("kz_jumpstats", "1", "on/off - Measuring of jump distances (lj,wj,bhop,dropbhop and multibhop)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hJumpStats 	= CreateConVar("kz_jumpstats", "1", "on/off - Measuring of jump distances (longjump,weirdjump, bhop,dropbhop and multibhop)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bJumpStats     = GetConVarBool(g_hJumpStats);
 	HookConVarChange(g_hJumpStats, OnSettingChanged);	
 	
@@ -834,7 +861,7 @@ public OnPluginStart()
 	g_bAutoBhop     = GetConVarBool(g_hAutoBhop);
 	HookConVarChange(g_hAutoBhop, OnSettingChanged);
 
-	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
+	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed (inactive if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
 	
@@ -878,7 +905,7 @@ public OnPluginStart()
 	GetConVarString(g_hReplayBotTpColor,szTpColor,256);
 	GetRGBColor(1,szTpColor);
 	
-	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "0", "on/off - auto-ban (bhop hack and strafe hack) including deletion of all player records - Info: There's always an anticheat log (sourcemod/logs) even if this function is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "0", "on/off - auto-ban (bhop hack and strafe hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even if this function is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoBan     = GetConVarBool(g_hAutoBan);
 	HookConVarChange(g_hAutoBan, OnSettingChanged);	
 	
@@ -888,7 +915,7 @@ public OnPluginStart()
 	{
 		g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "325.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 		g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-		g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "243.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+		g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "245.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
 		g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "248.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 		g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "250.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "265.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1050,7 +1077,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_showsettings", Client_Showsettings,"[KZTimer] shows kztimer server settings");
 	RegConsoleCmd("sm_latest", Client_Latest,"[KZTimer] shows latest map records");
 	RegConsoleCmd("sm_showtime", Client_Showtime,"[KZTimer] on/off - timer text in panel/menu");	
-	RegConsoleCmd("sm_shownames", Client_Shownames, "[KZTimer] on/off target name center panel");
+	//RegConsoleCmd("sm_shownames", Client_Shownames, "[KZTimer] on/off target name center panel");
 	RegConsoleCmd("sm_hide", Client_Hide, "[KZTimer] on/off - hides other players"); 
 	RegConsoleCmd("+noclip", NoClip, "[KZTimer] Player noclip on");
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
@@ -1113,6 +1140,7 @@ public OnPluginStart()
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
 	HookEvent("player_team", Event_OnPlayerTeamPre, EventHookMode_Pre);
 	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
+	HookEvent("jointeam_failed", Event_JoinTeamFailed, EventHookMode_Pre);
 	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_multiple", "OnStartTouch", Teleport_OnStartTouch);	
 	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
@@ -1149,6 +1177,10 @@ public OnPluginStart()
 	g_iOffs_vecMaxs = FindSendPropInfo("CBaseEntity","m_vecMaxs");
 	if(g_bLateLoaded) 
 		OnPluginPauseChange(false);	
+	
+	// [CS:GO] Team Limit Bypass by Zephyrus
+	//https://forums.alliedmods.net/showthread.php?t=219812
+	
 }
 
 public OnLibraryAdded(const String:name[])
@@ -1178,6 +1210,16 @@ public OnAllPluginsLoaded()
 
 public OnMapStart()
 {	
+	if (g_tickrate != 102 && g_bProMode)
+		ServerCommand("kz_pro_mode 0");
+	
+	// [CS:GO] Team Limit Bypass by Zephyrus
+	//https://forums.alliedmods.net/showthread.php?t=219812
+	g_iTSpawns=-1;
+	g_iCTSpawns=-1;
+	CreateTimer(0.1, Timer_OnMapStart);
+	
+	
 	//zipcore anti strafe hack
 	for (new i = 1; i <= MaxClients; i++)
 	{
@@ -1190,6 +1232,7 @@ public OnMapStart()
 	g_fRecordTimePro=9999999.0;
 	g_fRecordTimeGlobal = 9999999.0;
 	g_fRecordTimeGlobal102 = 9999999.0;
+	g_fRecordTimeGlobal102Pro = 9999999.0;
 	g_fRecordTimeGlobal128 = 9999999.0;	
 	g_fStartButtonPos = Float:{-999999.9,-999999.9,-999999.9};
 	g_fEndButtonPos = Float:{-999999.9,-999999.9,-999999.9};
@@ -1197,6 +1240,7 @@ public OnMapStart()
 	g_maptimes_tp = 0;
 	g_iBot = -1;
 	g_iBot2 = -1;
+	g_InfoBot = -1
 	g_bAntiCheat = false;
 	g_bAutoBhop2=false;
 	g_bRoundEnd=false;
@@ -1237,16 +1281,10 @@ public OnMapStart()
 	CreateTimer(5.0, SecretTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(2.0, SpawnButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
 	CreateTimer(1.0, CheckRemainingTime, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-	
-	new String:tmp[64];
-	
+		
 	CheatFlag("bot_zombie", false, true);	
 	
 	//srv settings
-	ServerCommand("mp_match_restart_delay 10;mp_spectators_max 30;mp_limitteams 0;sv_deadtalk 1;sv_full_alltalk 1;sv_max_queries_sec 6;bot_quota 0;host_players_show 2;mp_autoteambalance 0;mp_playerid 0;mp_ignore_round_win_conditions 1;mp_do_warmup_period 0;mp_free_armor 1;sv_alltalk 1;bot_chatter off;bot_join_after_player 0;bot_zombie 1;mp_endmatch_votenextmap 0;mp_endmatch_votenextleveltime 10;mp_maxrounds 1;mp_match_end_changelevel 1;mp_match_can_clinch 0;mp_halftime 0;mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_t 3.0;mp_respawnwavetime_ct 3.0");
-	Format(tmp,64, "bot_quota_mode %cnormal%c",QUOTE,QUOTE);
-	ServerCommand(tmp);
-	
 	if (g_bEnforcer)
 		ServerCommand("sm_cvar sv_enablebunnyhopping 1");		
 		
@@ -1261,10 +1299,9 @@ public OnMapStart()
 		if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bkz"))
 			dbCheckFileSize();
 	}
-	//g_bglobalValidFilesize=true;
-	//db_GetMapRecord_Global();
-	
+
 	//BotMimic2
+	LoadInfoBot();
 	LoadReplays();
 	
 	//AutoBhop?
@@ -1286,13 +1323,15 @@ public OnMapStart()
 	//Skillgroups
 	SetSkillGroups();
 	
-	//hide agents from scoreboard
-	g_iPlayerManager = FindEntityByClassname(-1, "cs_player_manager");
-	if(g_iPlayerManager != -1)
-	{
-			SDKHook(g_iPlayerManager, SDKHook_ThinkPost, Hook_PMThink);
-	}
+	//main cfg
+	ServerCommand("exec sourcemod/kztimer/main.cfg");	
 	
+	g_bTop100Refresh=false;
+	if (g_bRecalcTop100)
+	{
+		g_bTop100Refresh=true;
+		RefreshPlayerRankTable(100);
+	}
 }
 
 public OnMapEnd()
@@ -1302,7 +1341,7 @@ public OnMapEnd()
 	g_iBhopDoorCount = 0;
 	g_iBot = -1;
 	g_iBot2 = -1;
-	g_iBhopButtonCount = 0;
+	g_iBhopButtonCount = 0;  
 }
 
 public OnConfigsExecuted()
@@ -1337,21 +1376,29 @@ public OnConfigsExecuted()
 	}	
 			
 	//Map Points	
-	g_pr_dyn_maxpoints = RoundToCeil((g_pr_mapcount*1.0)*300+(((g_pr_mapcount*1.0)*300)*0.3));
+	new mc;
+	if (g_pr_mapcount < 1)
+		mc = 1;
+	else
+		mc = g_pr_mapcount;
+	g_pr_dyn_maxpoints = RoundToCeil((mc*1.3*500)/2);
 	g_pr_rank_Novice = RoundToCeil(g_pr_dyn_maxpoints * 0.001);  
 	g_pr_rank_Scrub = RoundToCeil(g_pr_dyn_maxpoints * 0.1); 
 	g_pr_rank_Rookie = RoundToCeil(g_pr_dyn_maxpoints * 0.3);  
 	g_pr_rank_Skilled = RoundToCeil(g_pr_dyn_maxpoints * 0.65);  
 	g_pr_rank_Expert = RoundToCeil(g_pr_dyn_maxpoints * 1.2);  
-	g_pr_rank_Pro = RoundToCeil(g_pr_dyn_maxpoints * 1.5);  
-	g_pr_rank_Elite = RoundToCeil(g_pr_dyn_maxpoints * 1.85); 
-	g_pr_rank_Master = RoundToCeil(g_pr_dyn_maxpoints * 2.2); 
+	g_pr_rank_Pro = RoundToCeil(g_pr_dyn_maxpoints * 1.6);  
+	g_pr_rank_Elite = RoundToCeil(g_pr_dyn_maxpoints * 2.0); 
+	g_pr_rank_Master = RoundToCeil(g_pr_dyn_maxpoints * 2.4); 
 	g_pr_points_finished = g_pr_rank_Novice;
 
 	//map config
 	decl String:szPath[256];
-	Format(szPath, sizeof(szPath), "sourcemod/kztimer/%s_.cfg",g_szMapTag[0]);
+	Format(szPath, sizeof(szPath), "sourcemod/kztimer/map_types/%s_.cfg",g_szMapTag[0]);
 	ServerCommand("exec %s", szPath);
+	
+	//main config
+	ServerCommand("exec sourcemod/kztimer/main.cfg");
 	
 	//add kztimer tag
 	SetServerTags();
@@ -1381,6 +1428,13 @@ public OnPluginEnd()
 	AlterBhopBlocks(true);
 	g_iBhopDoorCount = 0;
 	g_iBhopButtonCount = 0;
+}
+
+public OnClientConnected(client)
+{
+	// [CS:GO] Team Limit Bypass by Zephyrus
+	//https://forums.alliedmods.net/showthread.php?t=219812
+	g_iSelectedTeam[client]=0;
 }
 
 public OnClientPutInServer(client)
@@ -1479,6 +1533,7 @@ public OnClientPostAdminCheck(client)
 	g_bRestartCords[client] = false;
 	g_bPlayerJumped[client] = false;
 	g_brc_PlayerRank[client] = false;
+	g_bPrestrafeTooHigh[client] = false;
 	g_bValidAgent[client]= false;
 	g_PrestrafeFrameCounter[client] = 0;
 	g_PrestrafeVelocity[client] = 1.0;
@@ -1502,6 +1557,7 @@ public OnClientPostAdminCheck(client)
 	g_OptionMenuLastPage[client] = 0;	
 	g_bChallenge[client] = false;
 	g_bOverlay[client]=false;
+	g_bFuncMoveLinear[client] = false;
 	g_bChallengeRequest[client] = false;
 	g_fLastTimeButtonSound[client] = 9999.9;
 	g_bMapRankToChat[client] = false;
@@ -1681,17 +1737,22 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 				if (i == g_iBot2 || i == g_iBot)
 				{
 					StopPlayerMimic(i);
+					KickClient(i);					
 				}
 				else 
 				{
 					if(g_hRecording[i] != INVALID_HANDLE)
 						StopRecording(i);
-				}
+				}				
 			}
+			if (g_bInfoBot)
+				ServerCommand("bot_quota 1");
+			else
+				ServerCommand("bot_quota 0");
 			g_bReplayBot = false;	
-			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
 		}
-	}	
+	}
+			
 	if(convar == g_hGlobalDB)
 	{
 		if(newValue[0] == '1')
@@ -1920,8 +1981,33 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bJumpStats = true;
 		else
 			g_bJumpStats = false;
+	}	
+	if(convar == g_hRecalcTop100)
+	{
+		if(newValue[0] == '1')		
+			g_bRecalcTop100 = true;
+		else
+			g_bRecalcTop100 = false;
+	}	
+	if(convar == g_hProMode)
+	{
+		if(newValue[0] == '1')		
+		{
+			if (g_tickrate != 102)
+			{
+				ServerCommand("kz_pro_mode 0");
+				PrintToChatAll("kz_pro_mode: Only tickrate 102.4 supported.");
+				return;
+			}
+			g_bProMode = true;
+			GetGlobalRecord();		
+		}
+		else
+		{
+			g_bProMode = false;
+			GetGlobalRecord();		
+		}
 	}		
-	
 	if(convar == g_hAutoBhop)
 	{
 		if(newValue[0] == '1')		
@@ -2038,6 +2124,36 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		}
 	}
 	
+	if(convar == g_hInfoBot)
+	{
+		if(newValue[0] == '1')		
+		{
+			g_bInfoBot = true;
+			LoadInfoBot();
+		}
+		else
+		{
+			g_bInfoBot = false;
+			for (new i = 1; i <= MaxClients; i++)
+			if (IsValidClient(i) && IsFakeClient(i))	
+			{
+				if (i == g_InfoBot)
+				{
+					new count = 0;
+					g_InfoBot = -1;
+					KickClient(i);		
+					decl String:szBuffer[64];
+					if(g_bProReplay)
+						count++;
+					if(g_bTpReplay)
+						count++;
+					Format(szBuffer, sizeof(szBuffer), "bot_quota %i", count); 	
+					ServerCommand(szBuffer);							
+				}
+			}
+		}
+	}	
+	
 	if(convar == g_hReplayBotPlayerModel)
 	{
 		Format(g_sReplayBotPlayerModel,256,"%s", newValue[0]);
@@ -2149,38 +2265,7 @@ public OnGameFrame()
 		}
 		iTickCount2++;
 	}
-	for(new i=1;i<=MaxClients;i++)
-	{
-		if(IsValidClient(i) && IsFakeClient(i) && g_bValidAgent[i]  && i != g_iBot2 && i != g_iBot)
-		{
-			SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
-			SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);
-			SetEntData(g_iPlayerManager, g_iTeamOffset + (i * 4), 0, 4, true);
-			SetEntData(g_iPlayerManager, g_iPingOffset + (i * 4), 0, 4, true);
-			SetEntData(g_iPlayerManager, g_iScoreOffset + (i * 4), 0, 4, true);
-			SetEntData(g_iPlayerManager, g_iDeathsOffset + (i * 4), 0, 4, true);
-			SetEntData(g_iPlayerManager, g_iHealthOffset + (i * 4), 0, 4, true);
-		}
-	}
 }
-
-public Hook_PMThink(entity)
-{
-        for(new i=1;i<=MaxClients;i++)
-        {
-                if(IsValidClient(i) && IsFakeClient(i) && g_bValidAgent[i] && i != g_iBot2 && i != g_iBot)
-                {
-					SetEntData(g_iPlayerManager, g_iAliveOffset + (i * 4), false, 4, true);
-					SetEntData(g_iPlayerManager, g_iConnectedOffset + (i * 4), false, 4, true);
-					SetEntData(g_iPlayerManager, g_iTeamOffset + (i * 4), 0, 4, true);
-					SetEntData(g_iPlayerManager, g_iPingOffset + (i * 4), 0, 4, true);
-					SetEntData(g_iPlayerManager, g_iScoreOffset + (i * 4), 0, 4, true);
-					SetEntData(g_iPlayerManager, g_iDeathsOffset + (i * 4), 0, 4, true);
-					SetEntData(g_iPlayerManager, g_iHealthOffset + (i * 4), 0, 4, true);
-                }
-        }
-}
- 
 
 public Plugin:myinfo =
 {

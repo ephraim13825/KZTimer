@@ -8,7 +8,9 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		{	
 			g_fStartCommandUsed_LastTime[client] = GetEngineTime();
 			g_bPlayerJumped[client] = false;
+			g_bSlowDownCheck[client] = false;
 			g_SpecTarget[client] = -1;	
+			g_bOnGround[client] = true;
 			
 			//remove weapons
 			if (g_bCleanWeapons && (GetClientTeam(client) > 1))
@@ -35,8 +37,10 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			
 			if (IsFakeClient(client))	
 			{
-				CS_SetClientClanTag(client, "LOCALHOST"); 	
-				CreateTimer(5.0, CheckAgents, client,TIMER_FLAG_NO_MAPCHANGE);	
+				if (client==g_InfoBot)
+					CS_SetClientClanTag(client, ""); 	
+				else
+					CS_SetClientClanTag(client, "LOCALHOST"); 	
 				return Plugin_Continue;
 			}
 			
@@ -336,6 +340,9 @@ public Action:Hook_SetTransmit(entity, client)
 		else
 			if (g_bHide[client] && entity != g_SpecTarget[client])
 				return Plugin_Handled; 
+			else
+				if (entity == g_InfoBot && entity != g_SpecTarget[client])
+					return Plugin_Handled;
 	}	
     return Plugin_Continue; 
 }  
@@ -513,9 +520,16 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		//movement modifications
+		if (!g_bProMode && !IsFakeClient(client))	
+			SpeedCap(client);	
+		else
+		{
+			ProMode_Slowdown(client);
+			ProMode_SpeeCap(client);
+		}
 		AutoBhopFunction(client, buttons);
 		Prestrafe(client,mouse[0], buttons);
-		SpeedCap(client);	
+		
 		//jumpstats/timer
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
@@ -526,7 +540,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		CalcJumpMaxSpeed(client, speed);
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
-		CalcLastJumpHeight(client, buttons, origin);				
+		CalcLastJumpHeight(client, buttons, origin);		
 		//anticheat
 		BhopHackAntiCheat(client, buttons);
 		StrafeHackAntiCheat(client, ang, buttons);
@@ -581,7 +595,12 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-	new Float:time = GetGameTime();
+	new Float:time = GetEngineTime();	
+	//noclip check
+	new Float:last = time - g_fLastTimeNoClipUsed[client];
+	if (last < 4.0)
+		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, Float:{0.0,0.0,-100.0});
+	
 	g_fLastJump[client] = time;
 	new bool:touchwall = WallCheck(client);	
 	if (g_bJumpStats && !touchwall)
@@ -606,10 +625,16 @@ public OnTouch(client, other)
 {
 	if (IsValidClient(client) && IsPlayerAlive(client))
 	{
-		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
+		new String:classname[32];
+		if (IsValidEdict(other))
+			GetEntityClassname(other, classname, 32);		
+		if (StrEqual(classname,"func_movelinear"))
 		{
-			ResetJump(client);	
+			g_bFuncMoveLinear[client] = true;
+			return;
 		}
+		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
+			ResetJump(client);	
 	}
 }  
 
@@ -796,7 +821,9 @@ public Action:Touch_Wall(ent,client)
 			GetGroundOrigin(client, origin);
 			GetClientAbsOrigin(client, temp);
 			if(temp[2] - origin[2] <= 0.2)
+			{
 				ResetJump(client);
+			}
 		}
 	}
 	return Plugin_Continue;
@@ -813,6 +840,50 @@ HookTrigger()
 public Action:Push_Touch(ent,client)
 {
 	if(IsValidClient(client) && g_bPlayerJumped[client])
+	{
 		ResetJump(client);
+	}
 	return Plugin_Continue;
+}
+
+// [CS:GO] Team Limit Bypass by Zephyrus
+//https://forums.alliedmods.net/showthread.php?t=219812
+public Action:Event_JoinTeamFailed(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	if(!client || !IsClientInGame(client))
+		return Plugin_Continue;
+	new EJoinTeamReason:m_eReason = EJoinTeamReason:GetEventInt(event, "reason");
+	new m_iTs = GetTeamClientCount(CS_TEAM_T);
+	new m_iCTs = GetTeamClientCount(CS_TEAM_CT);
+	switch(m_eReason)
+	{
+		case k_OneTeamChange:
+		{
+			return Plugin_Continue;
+		}
+
+		case k_TeamsFull:
+		{
+			if(m_iCTs == g_iCTSpawns && m_iTs == g_iTSpawns)
+				return Plugin_Continue;
+		}
+		case k_TTeamFull:
+		{
+			if(m_iTs == g_iTSpawns)
+				return Plugin_Continue;
+		}
+		case k_CTTeamFull:
+		{
+			if(m_iCTs == g_iCTSpawns)
+				return Plugin_Continue;
+		}
+		default:
+		{
+			return Plugin_Continue;
+		}
+	}
+	ChangeClientTeam(client, g_iSelectedTeam[client]);
+
+	return Plugin_Handled;
 }

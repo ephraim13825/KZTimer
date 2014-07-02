@@ -150,7 +150,14 @@ new String:sqlglobal_selectPlayers128[] 			= "SELECT runtime, steamid, mapname F
 new String:sqlglobal_deletePlayer128[] 			= "DELETE FROM player128 WHERE steamid = '%s' AND mapname = '%s'"; 
 new String:sqlglobal_insertPlayer128[] 			= "INSERT INTO player128 (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
 new String:sqlglobal_updatePlayer128[] 			= "UPDATE player128 SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';";
-
+//tickrate 102 promode
+new String:sqlglobal_selectGlobalRecord102Pro[] 	= "SELECT name, runtime, teleports FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalTop102Pro[] 		= "SELECT name, runtime, teleports, steamid FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectTop5Players102Pro[] 	= "SELECT runtime, steamid FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectPlayers102Pro[] 		= "SELECT runtime, steamid, mapname FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC";
+new String:sqlglobal_deletePlayer102Pro[] 			= "DELETE FROM player102pro WHERE steamid = '%s' AND mapname = '%s'"; 
+new String:sqlglobal_insertPlayer102Pro[] 			= "INSERT INTO player102pro (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
+new String:sqlglobal_updatePlayer102Pro[] 			= "UPDATE player102pro SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';";
 // ADMIN 
 new String:sqlite_dropMap[] 					= "DROP TABLE MapButtons; VACCUM";
 new String:sql_dropMap[] 						= "DROP TABLE MapButtons;";
@@ -404,12 +411,17 @@ public db_deleteInvalidGlobalEntries()
 {
 	if (g_hDbGlobal == INVALID_HANDLE) return;		
 	decl String:szQuery[255];      
-	if (g_tickrate==64)
-		Format(szQuery, 255, sqlglobal_selectPlayers, g_szMapName); 
-	if (g_tickrate==102)
-		Format(szQuery, 255, sqlglobal_selectPlayers102, g_szMapName); 
-	if (g_tickrate==128)
-		Format(szQuery, 255, sqlglobal_selectPlayers128, g_szMapName); 
+	if (!g_bProMode)
+	{
+		if (g_tickrate==64)
+			Format(szQuery, 255, sqlglobal_selectPlayers, g_szMapName); 
+		if (g_tickrate==102)
+			Format(szQuery, 255, sqlglobal_selectPlayers102, g_szMapName); 
+		if (g_tickrate==128)
+			Format(szQuery, 255, sqlglobal_selectPlayers128, g_szMapName); 
+	}
+	else
+		Format(szQuery, 255, sqlglobal_selectPlayers102Pro, g_szMapName); 
 	SQL_TQuery(g_hDbGlobal, sqlglobal_selectPlayers2Callback, szQuery);	
 }
 
@@ -427,12 +439,17 @@ public sqlglobal_selectPlayers2Callback(Handle:owner, Handle:hndl, const String:
 			{
 				SQL_FetchString(hndl, 1, szSteamid, 32);
 				SQL_FetchString(hndl, 2, szMapname, 64);
-				if (g_tickrate==64)
-					Format(szQuery, 255, sqlglobal_deletePlayer, szSteamid,szMapname);      
-				if (g_tickrate==128)
-					Format(szQuery, 255, sqlglobal_deletePlayer128, szSteamid,szMapname); 
-				if (g_tickrate==102)
-					Format(szQuery, 255, sqlglobal_deletePlayer102, szSteamid,szMapname); 
+				if (!g_bProMode)
+				{
+					if (g_tickrate==64)
+						Format(szQuery, 255, sqlglobal_deletePlayer, szSteamid,szMapname);      
+					if (g_tickrate==128)
+						Format(szQuery, 255, sqlglobal_deletePlayer128, szSteamid,szMapname); 
+					if (g_tickrate==102)
+						Format(szQuery, 255, sqlglobal_deletePlayer102, szSteamid,szMapname); 
+				}
+				else
+					Format(szQuery, 255, sqlglobal_deletePlayer102Pro, szSteamid,szMapname); 
 				SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery);	
 			}
 			i++;
@@ -458,8 +475,16 @@ public db_GetMapRecord_Global()
 		}
 		else
 		{		
-			Format(szQuery, 255, sqlglobal_selectGlobalRecord102, g_szMapName);
-			SQL_TQuery(g_hDbGlobal, sqlglobal_selectGlobalRecord102Callback, szQuery);	
+			if (!g_bProMode)
+			{
+				Format(szQuery, 255, sqlglobal_selectGlobalRecord102, g_szMapName);
+				SQL_TQuery(g_hDbGlobal, sqlglobal_selectGlobalRecord102Callback, szQuery);	
+			}
+			else
+			{
+				Format(szQuery, 255, sqlglobal_selectGlobalRecord102Pro, g_szMapName);
+				SQL_TQuery(g_hDbGlobal, sqlglobal_selectGlobalRecord102ProCallback, szQuery);					
+			}
 		}
 	}
 }
@@ -502,6 +527,25 @@ public sqlglobal_selectGlobalRecord102Callback(Handle:owner, Handle:hndl, const 
 	}	
 }
 
+public sqlglobal_selectGlobalRecord102ProCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	if (hndl != INVALID_HANDLE)
+	{
+		if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+		{
+			if (SQL_FetchFloat(hndl, 0) > -1.0)
+			{		
+				SQL_FetchString(hndl, 0, g_szRecordGlobalPlayer102Pro, MAX_NAME_LENGTH);
+				g_fRecordTimeGlobal102Pro = SQL_FetchFloat(hndl, 1);		
+			}
+			else
+				g_fRecordTimeGlobal102Pro = 9999999.0;	
+		}
+		else
+			g_fRecordTimeGlobal102Pro = 9999999.0;		
+	}	
+}
+
 public sql_selectMapRecordGlobal128Callback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	if (hndl != INVALID_HANDLE)
@@ -528,6 +572,61 @@ public db_selectGlobalTopClimbers(client)
 	Format(szQuery, 1024, sqlglobal_selectGlobalTop, g_szMapName);   
 	if (g_hDbGlobal != INVALID_HANDLE)
 	SQL_TQuery(g_hDbGlobal, sql_selectGlobalTopClimbers, szQuery, client);
+}
+
+public db_selectGlobalTopProClimbers(client)
+{
+	if (g_hDbGlobal == INVALID_HANDLE) return;
+	decl String:szQuery[1024];       
+	Format(szQuery, 1024, sqlglobal_selectGlobalTop102Pro, g_szMapName);   
+	if (g_hDbGlobal != INVALID_HANDLE)
+		SQL_TQuery(g_hDbGlobal, sql_selectGlobalTopClimbers102Pro, szQuery, client);
+}
+
+public sql_selectGlobalTopClimbers102Pro(Handle:owner, Handle:hndl, const String:error[], any:data)
+{   
+	if (g_hDbGlobal == INVALID_HANDLE) return;
+	new client = data;   
+	if (hndl != INVALID_HANDLE)
+		if(SQL_HasResultSet(hndl))
+		{		
+			decl String:szValue[128];
+			decl String:szName[MAX_NAME_LENGTH];
+			decl String:szSteamid[32];
+			decl String:szTeleports[32];
+			new Float:time;
+			new teleports;
+			new Handle:menu = CreateMenu(GlobalMapMenuHandler);	
+			SetMenuPagination(menu, 5);
+			SetMenuTitle(menu, "Top 5 Global Times Pro Mode\n       Time            TP's        Player");    
+			new i=1;
+			while (SQL_FetchRow(hndl))
+			{
+				SQL_FetchString(hndl, 0, szName, MAX_NAME_LENGTH);
+				time = SQL_FetchFloat(hndl, 1); 
+				teleports = SQL_FetchInt(hndl, 2);	
+				SQL_FetchString(hndl, 3, szSteamid, 32);
+				if (teleports < 10)
+					Format(szTeleports, 32, "    %i",teleports);
+					else
+				if (teleports < 100)
+					Format(szTeleports, 32, "  %i",teleports);
+				else
+					Format(szTeleports, 32, "%i",teleports);
+			
+				FormatTimeFloat(client, time, 3);		
+				if (time<3600.0)
+					Format(g_szTime[client], 32, "   %s", g_szTime[client]);				
+				Format(szValue, 128, "%s  |  %s    » %s (%s)", g_szTime[client], szTeleports, szName, szSteamid);
+						
+				AddMenuItem(menu, szValue, szValue, ITEMDRAW_DEFAULT);
+				i++;
+			}
+			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
+			DisplayMenu(menu, client, MENU_TIME_FOREVER);
+			if (i == 1 && IsValidClient(client))
+				PrintToChat(client, "%t", "NoGlobalRecordsProMode", MOSSGREEN,WHITE, g_szMapName);
+		}	
 }
 
 public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -704,12 +803,17 @@ public db_insertGlobalRecord(client)
 	
 	if (g_OverallTp[client]<0)
 		g_OverallTp[client]=0;
-	if (g_tickrate==64)
-		Format(szQuery, 255, sqlglobal_insertPlayer, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
-	if (g_tickrate==128)
-		Format(szQuery, 255, sqlglobal_insertPlayer128, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
-	if (g_tickrate==102)
-		Format(szQuery, 255, sqlglobal_insertPlayer102, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+	if (!g_bProMode)
+	{
+		if (g_tickrate==64)
+			Format(szQuery, 255, sqlglobal_insertPlayer, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+		if (g_tickrate==128)
+			Format(szQuery, 255, sqlglobal_insertPlayer128, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+		if (g_tickrate==102)
+			Format(szQuery, 255, sqlglobal_insertPlayer102, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+	}
+	else
+		Format(szQuery, 255, sqlglobal_insertPlayer102Pro, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
 	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
 }
 
@@ -736,12 +840,17 @@ public db_updateGlobalRecord(client)
 	if (g_OverallTp[client]<0)
 		g_OverallTp[client]=0;
 		
-	if (g_tickrate==64)
-		Format(szQuery, 255, sqlglobal_updatePlayer, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
-	if (g_tickrate==128)
-		Format(szQuery, 255, sqlglobal_updatePlayer128, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
-	if (g_tickrate==102)
-		Format(szQuery, 255, sqlglobal_updatePlayer102, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+	if (!g_bProMode)
+	{
+		if (g_tickrate==64)
+			Format(szQuery, 255, sqlglobal_updatePlayer, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+		if (g_tickrate==128)
+			Format(szQuery, 255, sqlglobal_updatePlayer128, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+		if (g_tickrate==102)
+			Format(szQuery, 255, sqlglobal_updatePlayer102, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+	}
+	else
+		Format(szQuery, 255, sqlglobal_updatePlayer102Pro, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
 	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
 }
 
@@ -750,12 +859,17 @@ public db_GlobalRecord(client)
 	if (g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE)
 	{
 		decl String:szQuery[255];
-		if (g_tickrate==64)
-			Format(szQuery, 255, sqlglobal_selectTop5Players, g_szMapName);
-		if (g_tickrate==128)
-			Format(szQuery, 255, sqlglobal_selectTop5Players128, g_szMapName);
-		if (g_tickrate==102)
-			Format(szQuery, 255, sqlglobal_selectTop5Players102, g_szMapName);
+		if (!g_bProMode)
+		{
+			if (g_tickrate==64)
+				Format(szQuery, 255, sqlglobal_selectTop5Players, g_szMapName);
+			if (g_tickrate==128)
+				Format(szQuery, 255, sqlglobal_selectTop5Players128, g_szMapName);
+			if (g_tickrate==102)
+				Format(szQuery, 255, sqlglobal_selectTop5Players102, g_szMapName);
+		}
+		else
+			Format(szQuery, 255, sqlglobal_selectTop5Players102Pro, g_szMapName);
 		SQL_TQuery(g_hDbGlobal, SQL_SelectGlobalPlayersCallback, szQuery, client);	
 	}
 }
@@ -892,9 +1006,13 @@ public SQL_InsertPlayerCallback(Handle:owner, Handle:hndl, const String:error[],
 {
 }	
 	
-public db_deleteTmp(client, String:szSteamId[32])
+public db_deleteTmp(client)
 {
 	decl String:szQuery[256];
+	decl String:szSteamId[32];
+	if (!IsValidClient(client))
+		return;
+	GetClientAuthString(client, szSteamId, 32);	
 	Format(szQuery, 256, sql_deletePlayerTmp, szSteamId); 
 	SQL_TQuery(g_hDb, sql_deletePlayerCheckCallback, szQuery, client,DBPrio_Low);
 }
@@ -1110,7 +1228,7 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 				AddMenuItem(menu, szVr, szVr);	
 				ljtrue=true;
 			}	
-			if (ljtrue && !g_bPreStrafe)
+			if (ljtrue && !g_bPreStrafe && !g_bProMode)
 				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %c*%c = TakeOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW,WHITE);	
 			SetMenuPagination(menu, 5);	
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
@@ -4650,28 +4768,42 @@ public db_viewPlayerPointsCallback(Handle:owner, Handle:hndl, const String:error
 ///////////////////////////////////////////////////////////START/
 /////////////////////////////////////////////////////////////////
 
-public RefreshPlayerRankTable()
+public RefreshPlayerRankTable(max)
 {
 	g_i=1;
 	g_pr_refreshingDB=true;
 	decl String:szQuery[255];
 	Format(szQuery, 255, sql_selectRankedPlayers);      
-	SQL_TQuery(g_hDb, sql_selectRankedPlayersCallback, szQuery);
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, max);
+	SQL_TQuery(g_hDb, sql_selectRankedPlayersCallback, szQuery, pack);
 }
 
 public sql_selectRankedPlayersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
+	new Handle:pack = data;
+	ResetPack(pack);
+	new maxplayers = ReadPackCell(pack);
+	CloseHandle(pack);
 	if(SQL_HasResultSet(hndl))
 	{	
 		new i = 66;
+		new x;
 		g_pr_rowcount = SQL_GetRowCount(hndl);
+		if (MAX_PR_PLAYERS != maxplayers && g_pr_rowcount > maxplayers)
+			x = 66 + maxplayers;
+		else
+			x = 66 + g_pr_rowcount;
+
 		while (SQL_FetchRow(hndl))
-		{			
-			g_pr_points[i] = 0;
-			SQL_FetchString(hndl, 0, g_pr_szSteamID[i], 32);
-			SQL_FetchString(hndl, 1, g_pr_szName[i], 64);
-			i++;
-			new x = 66 + g_pr_rowcount;
+		{		
+			if (i <= x)
+			{
+				g_pr_points[i] = 0;
+				SQL_FetchString(hndl, 0, g_pr_szSteamID[i], 32);
+				SQL_FetchString(hndl, 1, g_pr_szName[i], 64);		
+				i++;	
+			}
 			if (i == x)
 			{
 				db_viewPersonalBhopRecord(66,g_pr_szSteamID[66]);
@@ -4694,6 +4826,8 @@ public CalculatePlayerRank(client)
 				
 	if (client>MAXPLAYERS)
 	{
+		if (!g_pr_refreshingDB)
+			return;
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 	}
 	else
@@ -4711,7 +4845,11 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 	new client = data;
 	decl String:szSteamId[32];
 	if (client>MAXPLAYERS)
+	{
+		if (!g_pr_refreshingDB)
+			return;
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
+	}
 	else
 	{
 		if (IsValidClient(client))
@@ -4775,7 +4913,11 @@ public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:e
 	new finished_TP=0;
 	
 	if (client>MAXPLAYERS)
+	{
+		if (!g_pr_refreshingDB)
+			return;
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
+	}
 	else
 	{
 		if (IsValidClient(client))
@@ -4818,7 +4960,11 @@ public sql_CountFinishedMapsProCallback(Handle:owner, Handle:hndl, const String:
 	new finished_Pro=0;
 	
 	if (client>MAXPLAYERS)
+	{
+		if (!g_pr_refreshingDB)
+			return;
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
+	}
 	else
 	{
 		if (IsValidClient(client))
@@ -4864,7 +5010,11 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 	new client = data;
 	decl String:szSteamId[32];
 	if (client>MAXPLAYERS)
+	{
+		if (!g_pr_refreshingDB)
+			return;
 		Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
+	}
 	else
 	{
 		if (IsValidClient(client))
@@ -4973,7 +5123,9 @@ public sql_selectPlayerRankCallback2(Handle:owner, Handle:hndl, const String:err
 			if (StrEqual(szMapName2, szMap, false))
 			{	
 				new max = RoundToCeil(g_pr_dyn_maxpoints * 0.0001);
-				new Float:rankperc = 100 * (1.0 - (float (rank) / float (count)));			
+				new Float:rankperc = 100 * (1.0 - (float (rank) / float (count)));
+				if (rank== 1)
+					rankperc = 100.0;			
 				if (teleports > 0)
 				{
 					if (rank==1)
@@ -5052,7 +5204,7 @@ public db_updatePoints(client)
 	decl String:szQuery[512];
 	decl String:szName[MAX_NAME_LENGTH];	
 	decl String:szSteamId[32];	
-	if (client>MAXPLAYERS)
+	if (client>MAXPLAYERS && g_pr_refreshingDB)
 	{
 		Format(szQuery, 512, sql_updatePlayerRankPoints, g_pr_szName[client], g_pr_points[client], g_pr_finishedmaps_tp[client],g_pr_finishedmaps_pro[client], g_pr_szSteamID[client]); 
 		SQL_TQuery(g_hDb, sql_updatePlayerRankPointsCallback, szQuery, client, DBPrio_Low);
@@ -5124,39 +5276,39 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 {
 	
 	new client = data;
-	if (client>MAXPLAYERS)
+	if (client>MAXPLAYERS &&  g_pr_refreshingDB)
 	{		
-		/*if (g_brc_PlayerRank[g_trueClient[client]])
-		{
-			ProfileMenu(g_trueClient[client], -1);
-			PrintToChat(g_trueClient[client], "%t", "Rc_PlayerRankFinished", MOSSGREEN,WHITE,GRAY,PURPLE,g_pr_points[client],GRAY);	
-			g_brc_PlayerRank[g_trueClient[client]]=false;
-		}
-		else*/
 		//console info
-		if (g_bManualRecalc && IsValidEntity(g_bManualRecalcClientID) && IsValidClient(g_bManualRecalcClientID))
-		{
+		if (IsValidClient(g_bManualRecalcClientID) && g_bManualRecalc)
 			PrintToConsole(g_bManualRecalcClientID, "%i/%i",g_i,g_pr_rowcount); 
-			new x = 66+g_i;
-			if(StrContains(g_pr_szSteamID[x],"STEAM",false)!=-1)  
-			{				
-				db_viewPersonalBhopRecord(x,g_pr_szSteamID[x]);
-				db_viewPersonalMultiBhopRecord(x,g_pr_szSteamID[x]);
-				db_viewPersonalWeirdRecord(x,g_pr_szSteamID[x]);
-				db_viewPersonalDropBhopRecord(x,g_pr_szSteamID[x]); 
-				db_viewPersonalLJRecord(x,g_pr_szSteamID[x]);
-				db_viewPersonalLJBlockRecord(x,g_pr_szSteamID[x]);
-			}
-			else
+		new x = 66+g_i;
+		if(StrContains(g_pr_szSteamID[x],"STEAM",false)!=-1)  
+		{				
+			db_viewPersonalBhopRecord(x,g_pr_szSteamID[x]);
+			db_viewPersonalMultiBhopRecord(x,g_pr_szSteamID[x]);
+			db_viewPersonalWeirdRecord(x,g_pr_szSteamID[x]);
+			db_viewPersonalDropBhopRecord(x,g_pr_szSteamID[x]); 
+			db_viewPersonalLJRecord(x,g_pr_szSteamID[x]);
+			db_viewPersonalLJBlockRecord(x,g_pr_szSteamID[x]);
+		}
+		else
+		{
+			for (new i = 1; i <= MaxClients; i++)
+			if (1 <= i <= MaxClients && IsValidEntity(i) && IsValidClient(i))
 			{
-				for (new i = 1; i <= MaxClients; i++)
-				if (1 <= i <= MaxClients && IsValidEntity(i) && IsValidClient(i))
+				if (g_bManualRecalc)
 					PrintToChat(i, "%t", "PrUpdateFinished", MOSSGREEN, WHITE, LIMEGREEN);
-				g_bManualRecalc=false;
-				g_pr_refreshingDB=false;
+				if (g_bTop100Refresh)
+					PrintToChat(i, "%t", "Top100Refreshed", MOSSGREEN, WHITE, LIMEGREEN);
 			}
-			g_i++;	
-		}		
+			g_bTop100Refresh = false;
+			g_bManualRecalc = false;
+			g_pr_refreshingDB = false;
+			
+			if (IsValidClient(g_bManualRecalcClientID))
+				CreateTimer(0.1, RefreshAdminMenu, g_bManualRecalcClientID,TIMER_FLAG_NO_MAPCHANGE);
+		}
+		g_i++;			
 	}
 	else
 	{
@@ -5195,7 +5347,6 @@ public db_updateStat(client)
 	SQL_TQuery(g_hDb, SQL_UpdateStatCallback, szQuery, client, DBPrio_Low);
 	
 }
-
 
 public db_selectRankedPlayer(String:szSteamId[32], bet)
 {

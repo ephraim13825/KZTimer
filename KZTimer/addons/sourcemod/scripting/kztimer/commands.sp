@@ -136,17 +136,17 @@ public ChallengeMenuHandler1(Handle:menu, MenuAction:action, param1,param2)
 		AddMenuItem(menu2, "0", "No bet");			
 		if (g_bPointSystem)
 		{
-			Format(tmp, 64, "%i", g_pr_points_finished*3);
-			if (g_pr_points_finished*3  <= g_pr_points[param1])
+			Format(tmp, 64, "%i", g_pr_points_finished*5);
+			if (g_pr_points_finished*5  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);	
-			Format(tmp, 64, "%i", (g_pr_points_finished*6));
-			if ((g_pr_points_finished*6)  <= g_pr_points[param1])
+			Format(tmp, 64, "%i", (g_pr_points_finished*10));
+			if ((g_pr_points_finished*10)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);		
-			Format(tmp, 64, "%i", (g_pr_points_finished*12));
-			if ((g_pr_points_finished*12)  <= g_pr_points[param1])
+			Format(tmp, 64, "%i", (g_pr_points_finished*25));
+			if ((g_pr_points_finished*25)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);		
-			Format(tmp, 64, "%i", (g_pr_points_finished*36));
-			if ((g_pr_points_finished*36)  <= g_pr_points[param1])
+			Format(tmp, 64, "%i", (g_pr_points_finished*50));
+			if ((g_pr_points_finished*50)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);	
 		}
 		SetMenuOptionFlags(menu2, MENUFLAG_BUTTON_EXIT);
@@ -170,17 +170,17 @@ public ChallengeMenuHandler2(Handle:menu, MenuAction:action, param1,param2)
 		decl String:info[32];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		new value = StringToInt(info);
-		if (value == g_pr_points_finished*3)		
-			g_CBet[param1] = 3;
+		if (value == g_pr_points_finished*5)		
+			g_CBet[param1] = 5;
 		else
-			if (value == (g_pr_points_finished*6))	
-				g_CBet[param1] = 6;
+			if (value == (g_pr_points_finished*10))	
+				g_CBet[param1] = 10;
 			else
-				if (value == (g_pr_points_finished*12))	
-					g_CBet[param1] = 12;		
+				if (value == (g_pr_points_finished*25))	
+					g_CBet[param1] = 25;		
 				else
-					if (value == (g_pr_points_finished*36))	
-						g_CBet[param1] = 36;		
+					if (value == (g_pr_points_finished*50))	
+						g_CBet[param1] = 50;		
 					else
 						g_CBet[param1] = 0;		
 		decl String:szPlayerName[MAX_NAME_LENGTH];	
@@ -468,12 +468,26 @@ public StopClimbersMenu(client)
 
 public Action:Command_JoinTeam(client, const String:command[], argc) 
 { 
-	if (!client) return Plugin_Continue; 
-	decl String:g_szTeam[4]; 
-	GetCmdArgString(g_szTeam, sizeof(g_szTeam)); 
-	new team = StringToInt(g_szTeam); 
-	if (1 <= team <= 3) 
+	if(!argc || !client || !IsValidClient(client))
+		return Plugin_Handled;
+
+	if (IsFakeClient(client))
+		return Plugin_Continue;
+		
+	decl String:m_szTeam[8];
+	GetCmdArg(1, m_szTeam, sizeof(m_szTeam));
+	new m_iTeam = StringToInt(m_szTeam);
+
+	
+	if(CS_TEAM_SPECTATOR<=m_iTeam<=CS_TEAM_CT)
+		g_iSelectedTeam[client]=m_iTeam;
+
+	if (1 < m_iTeam <= 3) 
 	{ 
+		if (g_iTSpawns==0 && m_iTeam == 2)
+			return Plugin_Continue;
+		if (g_iCTSpawns==0 && m_iTeam == 3)
+			return Plugin_Continue;
 		if(g_bSpectate[client])
 		{
 			if(g_fStartTime[client] != -1.0 && g_bTimeractivated[client] == true)
@@ -482,11 +496,13 @@ public Action:Command_JoinTeam(client, const String:command[], argc)
 			}
 			g_bSpectate[client] = false;
 		}	
-		if (IsValidClient(client))
-			ChangeClientTeam(client, team); 
-		return Plugin_Handled; 
+		CS_SwitchTeam(client, m_iTeam); 	
+		CS_RespawnPlayer(client);	
+		return Plugin_Handled;
 	}
-	return Plugin_Continue;
+	if (m_iTeam == 1)
+		ChangeClientTeam(client, m_iTeam);
+	return Plugin_Handled;
 }  
 
 public Action:Client_OptionMenu(client, args)
@@ -1509,7 +1525,7 @@ public InfoPanel(client)
 		g_bInfoPanel[client] = true;	
 	}
 }
-public Action:Client_Shownames(client, args) 
+/*public Action:Client_Shownames(client, args) 
 {
 	ShowNames(client);
 	if (g_bShowNames[client])
@@ -1525,7 +1541,7 @@ public ShowNames(client)
 		g_bShowNames[client] = false;
 	else
 		g_bShowNames[client] = true;		
-}
+}*/
 
 public Action:Client_Colorchat(client, args) 
 {
@@ -2004,9 +2020,14 @@ public MapTopMenu(client)
 	}
 	if (!g_bAllowCpOnBhopPlattforms && !g_bMapButtons && g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE && g_bglobalValidFilesize && g_bAntiCheat && !g_bAutoTimer && !g_bAutoBhop2)
 	{
-		AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 64)");
-		AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 102)");
-		AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 128)");		
+		if (!g_bProMode)
+		{
+			AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 64)");
+			AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 102)");
+			AddMenuItem(topmenu2, "!globaltop", "Top 5 Global (tickrate 128)");	
+		}
+		else
+			AddMenuItem(topmenu2, "!globaltop", "Top 5 Global Pro Mode");
 	}	
 	SetMenuOptionFlags(topmenu2, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(topmenu2, client, MENU_TIME_FOREVER);
@@ -2021,7 +2042,13 @@ public MapTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 0: db_selectTopClimbers(param1,g_szMapName);
 			case 1: db_selectProClimbers(param1);
 			case 2: db_selectTPClimbers(param1);
-			case 3: db_selectGlobalTopClimbers(param1);
+			case 3: 
+			{
+				if (!g_bProMode)
+					db_selectGlobalTopClimbers(param1);
+				else
+					db_selectGlobalTopProClimbers(param1);
+			}
 			case 4: db_selectGlobalTopClimbers102(param1);
 			case 5: db_selectGlobalTopClimbers128(param1);
 		}
@@ -2085,7 +2112,7 @@ public HelpPanel(client)
 	g_bClimbersMenuOpen[client]=false;
 	new Handle:panel = CreatePanel();
 	decl String:title[64];
-	Format(title, 64, "KZ Timer Help (1/3) - v%s",VERSION);
+	Format(title, 64, "KZ Timer Help (1/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, title);
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!helpmenu - opens this menu");
@@ -2122,7 +2149,7 @@ public HelpPanel2(client)
 {
 	new Handle:panel = CreatePanel();
 	decl String:szTmp[64];
-	Format(szTmp, 64, "KZ Timer Help (2/3) - v%s",VERSION);
+	Format(szTmp, 64, "KZ Timer Help (2/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ")	
 	DrawPanelText(panel, "!start/!r - go back to start");
@@ -2162,7 +2189,7 @@ public HelpPanel3(client)
 {
 	new Handle:panel = CreatePanel();
 	decl String:szTmp[64];
-	Format(szTmp, 64, "KZ Timer Help (3/3) - v%s",VERSION);
+	Format(szTmp, 64, "KZ Timer Help (3/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ");	
 	DrawPanelText(panel, "!maptop <mapname> - displays map top for a given map");
@@ -2233,6 +2260,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_global_database %b", g_bGlobalDB);	
 	PrintToConsole(client, "kz_godmode %b", g_bgodmode);
 	PrintToConsole(client, "kz_goto %b", g_bGoToServer);
+	PrintToConsole(client, "kz_info_bot %b", g_bInfoBot);
 	PrintToConsole(client, "kz_jumpstats %b", g_bJumpStats);
 	PrintToConsole(client, "kz_noclip %b", g_bNoClipS);
 	PrintToConsole(client, "kz_prespeed_cap %.1f (speed-limiter)", g_fBhopSpeedCap);
@@ -2243,6 +2271,8 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_pause %b", g_bPauseServerside);
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
+	PrintToConsole(client, "kz_pro_mode %b", g_bProMode);
+	PrintToConsole(client, "kz_recalc_top100_on_mapstart %b", g_bRecalcTop100);	
 	PrintToConsole(client, "kz_replay_bot %b", g_bReplayBot);
 	PrintToConsole(client, "kz_restore %b", g_bRestore);
 	PrintToConsole(client, "kz_settings_enforcer %b", g_bEnforcer);
@@ -2343,10 +2373,10 @@ public OptionMenu(client)
 	else
 		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");	
 	//10
-	if (g_bShowNames[client])
+	/*if (g_bShowNames[client])
 		AddMenuItem(optionmenu, "Target Name Panel  -  Enabled", "Target name panel  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Target Name Panel  -  Disabled", "Target name panel  -  Disabled");	
+		AddMenuItem(optionmenu, "Target Name Panel  -  Disabled", "Target name panel  -  Disabled");	*/
 	//11
 	if (g_bGoToClient[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
@@ -2389,9 +2419,9 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 7: ShowTime(param1);
 			case 8: HideSpecs(param1);
 			case 9: InfoPanel(param1);
-			case 10: ShowNames(param1);
-			case 11: DisableGoTo(param1);
-			case 12: AutoBhop(param1);		
+			//case 10: ShowNames(param1);
+			case 10: DisableGoTo(param1);
+			case 11: AutoBhop(param1);		
 		}
 		g_OptionMenuLastPage[param1] = param2;
 		OptionMenu(param1);					

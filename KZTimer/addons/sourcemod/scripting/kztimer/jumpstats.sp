@@ -4,7 +4,16 @@ public Function_BlockJump(client)
 	decl Float:pos[3], Float:origin[3];
 	GetAimOrigin(client, pos);
 	TraceClientGroundOrigin(client, origin, 100.0);
-	if(FloatAbs(pos[2] - origin[2]) <= 0.002)
+	new bool:funclinear;
+	//get aim target
+	new String:classname[32];
+	new target = TraceClientViewEntity(client);
+	if (IsValidEdict(target))
+		GetEntityClassname(target, classname, 32);	
+	if (StrEqual(classname,"func_movelinear"))
+		funclinear=true;
+	
+	if((FloatAbs(pos[2] - origin[2]) <= 0.002) || (funclinear && FloatAbs(pos[2] - origin[2]) <= 0.6))
 	{
 		GetBoxFromPoint(origin, g_OriginBlock[client]);
 		GetBoxFromPoint(pos, g_DestBlock[client]);
@@ -395,6 +404,7 @@ public Prethink (client, Float:pos[3], Float:vel)
 	g_bPlayerJumped[client] = true;
 	g_strafing_aw[client] = false;
 	g_strafing_sd[client] = false;
+	g_bFuncMoveLinear[client] = false;
 	g_fMaxHeight[client] = -99999.0;				
 	g_fLastJumpTime[client] = GetEngineTime();
 
@@ -437,6 +447,7 @@ public Postthink(client)
 {	
 	if (!IsValidClient(client))
 		return;
+	
 	new ground_frames = g_ground_frames[client];
 	new strafes = g_strafecount[client];
 	g_ground_frames[client] = 0;	
@@ -460,7 +471,10 @@ public Postthink(client)
 	new Float: fJump_Height;
 	if (fGroundDiff > -0.1 && fGroundDiff < 0.1)
 		fGroundDiff = 0.0;
-	
+	//workaround
+	if (g_bFuncMoveLinear[client] && fGroundDiff < 0.6 && fGroundDiff > -0.6)
+		fGroundDiff = 0.0;
+		
 	//GetHeight
 	if (FloatAbs(g_fJump_Initial[client][2]) > FloatAbs(g_fMaxHeight[client]))
 		fJump_Height =  FloatAbs(g_fJump_Initial[client][2]) - FloatAbs(g_fMaxHeight[client]);
@@ -549,7 +563,6 @@ public Postthink(client)
 		PostThinkPost(client, ground_frames);
 		return;
 	}
-	
 	//change BotName (szName) for jumpstats output
 	if (client == g_iBot)
 		Format(szName,sizeof(szName), "%s (Pro Replay)", g_szReplayName);		
@@ -561,7 +574,7 @@ public Postthink(client)
 	if (ground_frames > 11 && fGroundDiff == 0.0 && 200.0 < g_fPreStrafe[client] < 278.0 && fJump_Height <= 67.0 && g_fJump_Distance[client] < 300.0 && g_fMaxSpeed2[client] > 200.0) 
 	{	
 		//strafe hack block
-		if (g_bPreStrafe)
+		if (g_bPreStrafe || g_bProMode)
 		{
 			if ((g_tickrate == 64 && strafes < 4 && g_fJump_Distance[client] > 265.0) || (g_tickrate == 102 && strafes < 4 && g_fJump_Distance[client] > 270.0) || (g_tickrate == 128 && strafes < 4 && g_fJump_Distance[client] > 275.0)) 
 			{
@@ -595,7 +608,7 @@ public Postthink(client)
 		
 		//check if kz_prestrafe is enabled
 		decl String:szVr[16];	
-		if (!g_bPreStrafe)	
+		if (!g_bPreStrafe && !g_bProMode)	
 		{
 			g_fPreStrafe[client] = g_fTakeOffSpeed[client];
 			Format(szVr, 16, "TakeOff");
@@ -1106,7 +1119,7 @@ public Postthink(client)
 	if (ground_frames < 11 && g_last_ground_frames[client] > 10 && fGroundDiff == 0.0 && fJump_Height <= 67.0 && !g_bDropJump[client] && g_fPreStrafe[client] > 200.0)
 	{
 			//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
-			if (((IsFakeClient(client) && g_fJump_Distance[client] > (g_dist_leet_bhop * 1.05)) || g_fJump_Distance[client] > 400.0) || strafes > 20)
+			if (((IsFakeClient(client) && g_fJump_Distance[client] > (g_dist_leet_bhop * 1.025)) || g_fJump_Distance[client] > 400.0) || strafes > 20)
 			{
 				PostThinkPost(client, ground_frames);
 				return;

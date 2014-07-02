@@ -1,6 +1,6 @@
 
 //
-// Botmimic2 - modified by abckrieger
+// Botmimic2 - modified by 1NutWunDeR
 // http://forums.alliedmods.net/showthread.php?t=164148
 //
 
@@ -156,20 +156,7 @@ public LoadReplays()
 {
 	if (!g_bReplayBot)
 		return;
-		
-	//TEAM JOIN OVERLAY BUG
-	new bool:player_joined=false;
-	for(new client = 1; client <= MaxClients; client++) 
-	{					
-		if (IsValidClient(client) && !IsFakeClient(client) && (IsPlayerAlive(client) || g_bSpectate[client]))
-			player_joined=true;		
-	}	
-	if (!player_joined)
-	{
-		CreateTimer(3.0,LoadReplaysTimer,_,TIMER_FLAG_NO_MAPCHANGE);
-		return;
-	}
-	
+			
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
 	decl String:sPath1[256]; 
@@ -180,18 +167,20 @@ public LoadReplays()
 	BuildPath(Path_SM, sPath2, sizeof(sPath2), "%s%s_tp.rec", KZ_REPLAY_PATH,g_szMapName);		
 	g_bProReplay=false;
 	g_bTpReplay=false;
+	
 	new Handle:hFilex = OpenFile(sPath1, "r");
 	if(hFilex != INVALID_HANDLE)
+	{
 		g_bProReplay=true;
+		CloseHandle(hFilex);		
+	}
 	
-	hFilex = OpenFile(sPath2, "r");
-	if(hFilex != INVALID_HANDLE)
+	new Handle:hFilex2 = OpenFile(sPath2, "r");
+	if(hFilex2 != INVALID_HANDLE)
+	{
 		g_bTpReplay=true;
-	
-	if(hFilex != INVALID_HANDLE)
-		CloseHandle(hFilex);	
-		
-
+		CloseHandle(hFilex2);	
+	}	
 	g_iBot = -1;
 	g_iBot2 = -1;
 	if (g_bProReplay)
@@ -341,7 +330,7 @@ public LoadReplayPro()
 	g_iBot = -1;
 	for(new i = 1; i <= MaxClients; i++)
 	{
-		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot2)
+		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot2 || i == g_InfoBot)
 			continue;
 		if(!IsPlayerAlive(i))
 		{
@@ -369,25 +358,18 @@ public LoadReplayPro()
 	}
 	else
 	{
-		//bot_quota > 2 team selection bug .. ??!?!?!?? CSGO VOLVO WTF?
-		if(g_bTpReplay)
-		{
-			ServerCommand("bot_quota 3");
-		}
-		else
-			if(g_bProReplay)
-				ServerCommand("bot_quota 3");		
-			else
-			{
-				ServerCommand("bot_quota 0");	
-				return;
-			}
-		for(new i = 1; i <= MaxClients; i++)
-		{
-			g_iBot = i;
-			g_fRunTime[g_iBot] = 0.0;
-			break;
-		}
+		new count = 0;
+		if (g_bTpReplay)
+			count++;
+		if (g_bProReplay)
+			count++;
+		if (g_bInfoBot)
+			count++;
+		if (count==0)
+			return;
+		decl String:szBuffer[64];
+		Format(szBuffer, sizeof(szBuffer), "bot_quota %i", count); 	
+		ServerCommand(szBuffer);				
 		CreateTimer(1.0, RefreshBot,TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
@@ -397,7 +379,7 @@ public LoadReplayTp()
 	g_iBot2 = -1;
 	for(new i = 1; i <= MaxClients; i++)
 	{
-		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot)
+		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot  || i == g_InfoBot)
 			continue;
 		if(!IsPlayerAlive(i))
 		{
@@ -425,17 +407,18 @@ public LoadReplayTp()
 	}
 	else
 	{
-		//bot_quota > 2 team selection bug .. ??!?!?!?? CSGO VOLVO WTF?
-		if(g_bProReplay)
-			ServerCommand("bot_quota 3");
-		else
-			if(g_bTpReplay)
-				ServerCommand("bot_quota 3");		
-			else
-			{
-				ServerCommand("bot_quota 0");	
-				return;
-			}
+		new count = 0;
+		if (g_bTpReplay)
+			count++;
+		if (g_bProReplay)
+			count++;
+		if (g_bInfoBot)
+			count++;
+		if (count==0)
+			return;
+		decl String:szBuffer[64];
+		Format(szBuffer, sizeof(szBuffer), "bot_quota %i", count); 	
+		ServerCommand(szBuffer);	
 		CreateTimer(3.0, RefreshBotTp,TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
@@ -463,25 +446,56 @@ public IsPlayerMimicing(client)
 
 public DeleteReplay(client, type, String:map[])
 {
-	decl String:sPath[256]; 
+	decl String:sPath[PLATFORM_MAX_PATH + 1]; 
 	if (type==1)
 		Format(sPath, sizeof(sPath), "%s%s_tp.rec",KZ_REPLAY_PATH,map);
-	else
+	if (type==0)
 		Format(sPath, sizeof(sPath), "%s%s.rec",KZ_REPLAY_PATH,map);
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", sPath);
 	
 	// Delete the file
 	if(FileExists(sPath))
 	{
-		DeleteFile(sPath);
+		if (!DeleteFile(sPath))
+		{
+			PrintToConsole(client, "<ERROR> Failed to delete %s - Please try it manually!", sPath);
+			return;
+		}
+		
 		if (type==1)
-			PrintToConsole(client, "Tp Replay %s_tp.rec successfully deleted", map);
+		{
+			g_bTpReplay = false;
+			PrintToConsole(client, "TP Replay %s_tp.rec deleted.", map);
+		}
 		else
-			PrintToConsole(client, "Pro Replay %s.rec successfully deleted", map);
+		{
+			g_bProReplay = false;
+			PrintToConsole(client, "PRO Replay %s.rec deleted.", map);
+		}
 		if (StrEqual(map,g_szMapName))
 		{
-			CreateTimer(0.0,KickBotsTimer,_,TIMER_FLAG_NO_MAPCHANGE);
-			CreateTimer(2.0,LoadReplaysTimer,_,TIMER_FLAG_NO_MAPCHANGE);
+			if (type == 1 && IsValidClient(g_iBot2))
+			{
+				KickClient(g_iBot2);
+				if (g_bInfoBot && g_bProReplay)
+					ServerCommand("bot_quota 2");
+				else
+				if (g_bInfoBot || g_bProReplay)
+					ServerCommand("bot_quota 1");		
+				else
+					ServerCommand("bot_quota 0");
+			}
+			if (type == 0 && IsValidClient(g_iBot))
+			{
+				KickClient(g_iBot);
+				if (g_bInfoBot && g_bTpReplay)
+					ServerCommand("bot_quota 2");
+				else
+				if (g_bInfoBot || g_bTpReplay)
+					ServerCommand("bot_quota 1");		
+				else
+					ServerCommand("bot_quota 0");
+			}
 		}
 	}
 	else
@@ -504,7 +518,14 @@ public RecordReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:
 		iFrame[newWeapon] = CSWeapon_NONE;
 		iFrame[playerSubtype] = subtype;
 		iFrame[playerSeed] = seed;	
-		if(g_iOriginSnapshotInterval[client] > ORIGIN_SNAPSHOT_INTERVAL)
+		if(GetArraySize(g_hRecordingAdditionalTeleport[client]) > g_iCurrentAdditionalTeleportIndex[client])
+		{
+			new iAT[AT_SIZE];
+			GetArrayArray(g_hRecordingAdditionalTeleport[client], g_iCurrentAdditionalTeleportIndex[client], iAT, AT_SIZE);
+			iFrame[additionalFields] |= iAT[_:atFlags];
+			g_iCurrentAdditionalTeleportIndex[client]++;
+		}
+		if(g_iOriginSnapshotInterval[client] > ORIGIN_SNAPSHOT_INTERVAL || GetArraySize(g_hRecordingAdditionalTeleport[client]) > g_iCurrentAdditionalTeleportIndex[client])
 		{
 			new Float:origin2[3], iAT[AT_SIZE];
 			GetClientAbsOrigin(client, origin2);
@@ -513,15 +534,7 @@ public RecordReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:
 			PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT, AT_SIZE);
 			g_iOriginSnapshotInterval[client] = 0;
 		}			
-		g_iOriginSnapshotInterval[client]++;
-		if(GetArraySize(g_hRecordingAdditionalTeleport[client]) > g_iCurrentAdditionalTeleportIndex[client])
-		{
-			new iAT[AT_SIZE];
-			GetArrayArray(g_hRecordingAdditionalTeleport[client], g_iCurrentAdditionalTeleportIndex[client], iAT, AT_SIZE);
-			iFrame[additionalFields] |= iAT[_:atFlags];
-			g_iCurrentAdditionalTeleportIndex[client]++;
-		}
-		
+		g_iOriginSnapshotInterval[client]++;		
 		if (g_bPause[client])
 			iFrame[pause] = 1;
 		else
@@ -627,20 +640,19 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 					else
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
-							TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
+						TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
 					}
-				}			
+				}
 				g_iCurrentAdditionalTeleportIndex[client]++;
 			}
 		}
-		new pausex
-		pausex = iFrame[pause];
-		if (pausex == 1 && !g_bPause[client])
+		new iBotPause = iFrame[pause];
+		if (iBotPause == 1 && !g_bPause[client])
 			PauseMethod(client);
 		else
 		{
-			if (pausex == 0 && g_bPause[client])
-			PauseMethod(client);
+			if (iBotPause == 0 && g_bPause[client])
+				PauseMethod(client);
 		}
 		if(g_iBotMimicTick[client] == 0)
 		{
@@ -678,5 +690,5 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 			}
 		}		
 		g_iBotMimicTick[client]++;		
-	}	
+	}
 }

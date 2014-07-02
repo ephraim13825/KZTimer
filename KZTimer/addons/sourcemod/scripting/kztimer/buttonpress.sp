@@ -2,7 +2,8 @@
 public ButtonPress(const String:name[], caller, activator, Float:delay)
 {
 	if(!IsValidEntity(caller) || !IsValidEntity(activator))
-		return;
+		return;	
+	g_bLJBlock[activator] = false;
 	decl String:targetname[128];
 	GetEdictClassname(activator,targetname, sizeof(targetname));
 	if(!StrEqual(targetname,"player"))
@@ -328,31 +329,44 @@ public CL_OnEndTimerPress(client)
 	//NEW GLOBAL RECORD 
 	if (!g_bAllowCpOnBhopPlattforms && !g_bMapButtons && g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE && g_bEnforcer && g_bAntiCheat && g_bglobalValidFilesize && !g_bAutoTimer && !g_bAutoBhopWasActive[client])	
 	{
-		if (g_tickrate == 64 && g_fFinalTime[client] < g_fRecordTimeGlobal && g_fFinalTime[client] > 20.0)
+		if (!g_bProMode)
 		{
-			g_fRecordTimeGlobal = g_fFinalTime[client];
-			Format(g_szRecordGlobalPlayer, MAX_NAME_LENGTH, "%s", szName);	
-			g_record_type[client] = 3;
-			g_sound_type[client] = 1;	
-		}
-		else
-		{
-			if (g_tickrate == 128 && g_fFinalTime[client] < g_fRecordTimeGlobal128 && g_fFinalTime[client] > 20.0)
+			if (g_tickrate == 64 && g_fFinalTime[client] < g_fRecordTimeGlobal && g_fFinalTime[client] > 20.0)
 			{
-				g_fRecordTimeGlobal128 = g_fFinalTime[client];
-				Format(g_szRecordGlobalPlayer128, MAX_NAME_LENGTH, "%s", szName);	
-				g_record_type[client] = 4;
+				g_fRecordTimeGlobal = g_fFinalTime[client];
+				Format(g_szRecordGlobalPlayer, MAX_NAME_LENGTH, "%s", szName);	
+				g_record_type[client] = 3;
 				g_sound_type[client] = 1;	
 			}
 			else
-				if (g_tickrate == 102 && g_fFinalTime[client] < g_fRecordTimeGlobal102 && g_fFinalTime[client] > 20.0)
+			{
+				if (g_tickrate == 128 && g_fFinalTime[client] < g_fRecordTimeGlobal128 && g_fFinalTime[client] > 20.0)
 				{
-					g_fRecordTimeGlobal102 = g_fFinalTime[client];
-					Format(g_szRecordGlobalPlayer102, MAX_NAME_LENGTH, "%s", szName);	
-					g_record_type[client] = 5;
+					g_fRecordTimeGlobal128 = g_fFinalTime[client];
+					Format(g_szRecordGlobalPlayer128, MAX_NAME_LENGTH, "%s", szName);	
+					g_record_type[client] = 4;
 					g_sound_type[client] = 1;	
 				}
-		}	
+				else
+					if (g_tickrate == 102 && g_fFinalTime[client] < g_fRecordTimeGlobal102 && g_fFinalTime[client] > 20.0)
+					{
+						g_fRecordTimeGlobal102 = g_fFinalTime[client];
+						Format(g_szRecordGlobalPlayer102, MAX_NAME_LENGTH, "%s", szName);	
+						g_record_type[client] = 5;
+						g_sound_type[client] = 1;	
+					}
+			}
+		}
+		else
+		{
+			if (g_tickrate == 102 && g_fFinalTime[client] < g_fRecordTimeGlobal102Pro && g_fFinalTime[client] > 20.0)
+			{
+				g_fRecordTimeGlobal102Pro = g_fFinalTime[client];
+				Format(g_szRecordGlobalPlayer102Pro, MAX_NAME_LENGTH, "%s", szName);	
+				g_record_type[client] = 6;
+				g_sound_type[client] = 1;	
+			}			
+		}
 	}
 	
 	//NEW PRO RECORD
@@ -482,6 +496,8 @@ public CL_OnEndTimerPress(client)
 									if (g_bAllowCpOnBhopPlattforms)
 										PrintToConsole(client, "[KZ] Global Records disabled. Reason: kz_checkpoints_on_bhop_plattforms enabled. (0 required)");		
 	}
+	//delete tmp
+	db_deleteTmp(client);
 	
 	//zipcore anti strafe hack
 	if(g_PlayerStates[client][bOn])

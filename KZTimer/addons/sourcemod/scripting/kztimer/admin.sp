@@ -50,7 +50,12 @@ public KzAdminMenu(client)
 	if (MAX_PR_PLAYERS <  g_pr_players2)
 		AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Recalculate player rankings",ITEMDRAW_DISABLED);
 	else
-		AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Recalculate player rankings");
+	{	
+		if (!g_pr_refreshingDB)
+			AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Recalculate player rankings");
+		else
+			AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Stop the recalculation");
+	}
 	AddMenuItem(adminmenu, "", "-------------------------------------",ITEMDRAW_DISABLED);		
 	AddMenuItem(adminmenu, "[3.] Set start button", "[3.] Set start button");
 	AddMenuItem(adminmenu, "[4.] Set stop button", "[4.] Set stop button");
@@ -198,8 +203,18 @@ public KzAdminMenu(client)
 	if (g_bAllowCpOnBhopPlattforms)
 		Format(szTmp, sizeof(szTmp), "[34.] Checkpoints on bhop plattforms  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[34.] Checkpoints on bhop plattforms  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);		
+		Format(szTmp, sizeof(szTmp), "[34.] Checkpoints on bhop plattforms  -  Disabled"); 			
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bInfoBot)
+		Format(szTmp, sizeof(szTmp), "[35.] Info bot  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[35.] Info bot  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bProMode)
+		Format(szTmp, sizeof(szTmp), "[36.] Pro Mode  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[36.] Pro Mode  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);			
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
 	if (g_AdminMenuLastPage[client] < 6)
@@ -218,7 +233,10 @@ public KzAdminMenu(client)
 						DisplayMenuAtItem(adminmenu, client, 24, MENU_TIME_FOREVER);				
 					else
 						if (g_AdminMenuLastPage[client] < 36)
-							DisplayMenuAtItem(adminmenu, client, 30, MENU_TIME_FOREVER);		
+							DisplayMenuAtItem(adminmenu, client, 30, MENU_TIME_FOREVER);	
+						else
+							if (g_AdminMenuLastPage[client] < 42)
+								DisplayMenuAtItem(adminmenu, client, 36, MENU_TIME_FOREVER);								
 }
 
 
@@ -233,11 +251,14 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				PrintToChat(param1, "%t", "PrUpdateStarted", MOSSGREEN,WHITE);
 				g_bManualRecalc=true;
 				g_bManualRecalcClientID=param1;
-				RefreshPlayerRankTable();
+				RefreshPlayerRankTable(MAX_PR_PLAYERS);
 			}
 			else
 			{
-				PrintToChat(param1, "%t", "PrUpdateInProgress", MOSSGREEN,WHITE);
+				g_bTop100Refresh = false;
+				g_bManualRecalc = false;
+				g_pr_refreshingDB = false;
+				PrintToChat(param1, "%t", "StopRecalculation", MOSSGREEN,WHITE);
 			}
 		}
 		if(param2 == 2)
@@ -457,6 +478,20 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				ServerCommand("kz_checkpoints_on_bhop_plattforms 1");
 			else
 				ServerCommand("kz_checkpoints_on_bhop_plattforms 0");
+		}
+		if(param2 == 34)
+		{
+			if (!g_bInfoBot)
+				ServerCommand("kz_info_bot 1");
+			else
+				ServerCommand("kz_info_bot 0");
+		}	
+		if(param2 == 35)
+		{
+			if (!g_bProMode)
+				ServerCommand("kz_pro_mode 1");
+			else
+				ServerCommand("kz_pro_mode 0");
 		}
 		g_AdminMenuLastPage[param1]=param2;
 		if (menu != INVALID_HANDLE)

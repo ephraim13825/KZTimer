@@ -12,7 +12,10 @@ public SetServerTags()
 	CvarHandle = FindConVar("sv_tags");
 	decl String:szServerTags[1024];
 	GetConVarString(CvarHandle, szServerTags, 1024);
-	Format(szServerTags, 1024, "%s, kztimer %s, tickrate %i",szServerTags,VERSION,g_tickrate);
+	if (g_bProMode)
+		Format(szServerTags, 1024, "%s, kztimer %s, ProMode",szServerTags,VERSION);
+	else
+		Format(szServerTags, 1024, "%s, kztimer %s, tickrate %i",szServerTags,VERSION,g_tickrate);
 	SetConVarString(CvarHandle, szServerTags);
 	if (CvarHandle != INVALID_HANDLE)
 		CloseHandle(CvarHandle);
@@ -35,16 +38,17 @@ public PrintConsoleInfo(client)
 		//PrintToConsole(client, "KZTimer %s outdated. New version available (https://forums.alliedmods.net/showthread.php?t=223274)", VERSION);
 	}
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
-	PrintToConsole(client, "This server is running KZTimer v%s - Tickrate: %i", VERSION, RoundToNearest(fltickrate));
+	PrintToConsole(client, "This server is running KZTimer v%s - Author: 1NuTWunDeR <STEAM_0:1:73507922> - Server tickrate: %i", VERSION, RoundToNearest(fltickrate));
+	PrintToConsole(client, "KZTimer steam group: http://steamcommunity.com/groups/KZTIMER");
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !usp, !challenge, !surrender, !goto, !spec,");
-	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks");
+	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
-	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !shownames, !sync, !bhop, !flashlight)");
+	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop)");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Live scoreboard:");
 	PrintToConsole(client, "Kills: Time in seconds");
@@ -577,21 +581,29 @@ public bool:TRDontHitSelf(entity, mask, any:data)
 
 public PrintMapRecords(client)
 {
-	if (g_fRecordTimeGlobal102 != 9999999.0)
+	if (!g_bProMode)
 	{
-		FormatTimeFloat(client, g_fRecordTimeGlobal102, 3);
-		PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (102)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer102); 
-	}	
-	if (g_fRecordTimeGlobal != 9999999.0)
+		if (g_fRecordTimeGlobal102 != 9999999.0)
+		{
+			FormatTimeFloat(client, g_fRecordTimeGlobal102, 3);
+			PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (102)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer102); 
+		}	
+		if (g_fRecordTimeGlobal != 9999999.0)
+		{
+			FormatTimeFloat(client, g_fRecordTimeGlobal, 3);
+			PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (64)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer); 
+		}	
+		if (g_fRecordTimeGlobal128 != 9999999.0)
+		{
+			FormatTimeFloat(client, g_fRecordTimeGlobal128, 3);
+			PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (128)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer128); 
+		}	
+	}
+	else
 	{
-		FormatTimeFloat(client, g_fRecordTimeGlobal, 3);
-		PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (64)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer); 
-	}	
-	if (g_fRecordTimeGlobal128 != 9999999.0)
-	{
-		FormatTimeFloat(client, g_fRecordTimeGlobal128, 3);
-		PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (128)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer128); 
-	}	
+			FormatTimeFloat(client, g_fRecordTimeGlobal102Pro, 3);
+			PrintToChat(client, "[%cKZ%c] %cGLOBAL RECORD (ProMode)%c: %s (%s)",MOSSGREEN,WHITE,RED,WHITE, g_szTime[client], g_szRecordGlobalPlayer102Pro); 		
+	}
 	if (g_fRecordTimePro != 9999999.0)
 	{
 		FormatTimeFloat(client, g_fRecordTimePro, 3);
@@ -665,35 +677,41 @@ public MapFinishedMsgs(client, type)
 									PrintToConsole(i, "%s finished with a pro time of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
 								}
 				//new record msg
-				if (g_record_type[client] == 5)				
+				if (g_record_type[client] == 6)				
 				{
-					PrintToChat(i, "%t", "NewGlobalRecord102",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-					PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (102)",szName); 		
+					PrintToChat(i, "%t", "NewGlobalRecord102Pro",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+					PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (ProMode)",szName); 		
 				}
 				else
-					if (g_record_type[client] == 4)				
+					if (g_record_type[client] == 5)				
 					{
-						PrintToChat(i, "%t", "NewGlobalRecord128",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-						PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (128)",szName); 		
+						PrintToChat(i, "%t", "NewGlobalRecord102",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+						PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (102)",szName); 		
 					}
 					else
-						if (g_record_type[client] == 3)				
+						if (g_record_type[client] == 4)				
 						{
-							PrintToChat(i, "%t", "NewGlobalRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-							PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD",szName); 		
+							PrintToChat(i, "%t", "NewGlobalRecord128",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+							PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (128)",szName); 		
 						}
 						else
-							if (g_record_type[client] == 2)				
+							if (g_record_type[client] == 3)				
 							{
-								PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE);  
-								PrintToConsole(i, "[KZ] %s scored a new PRO RECORD",szName); 	
-							}		
+								PrintToChat(i, "%t", "NewGlobalRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
+								PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD",szName); 		
+							}
 							else
-								if (g_record_type[client] == 1)				
+								if (g_record_type[client] == 2)				
 								{
-									PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
-									PrintToConsole(i, "[KZ] %s scored a new TP RECORD",szName); 	
-								}					
+									PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE);  
+									PrintToConsole(i, "[KZ] %s scored a new PRO RECORD",szName); 	
+								}		
+								else
+									if (g_record_type[client] == 1)				
+									{
+										PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
+										PrintToConsole(i, "[KZ] %s scored a new TP RECORD",szName); 	
+									}					
 			}
 		
 		if (rank==99999 && IsValidClient(client))
@@ -1200,7 +1218,7 @@ public GiveUsp(client)
 		return;		
 	g_UspDrops[client]++;
 	GivePlayerItem(client, "weapon_usp_silencer");
-	if (!g_bPreStrafe)
+	if (!g_bPreStrafe && !g_bProMode)
 		PrintToChat(client, "%t", "Usp1", MOSSGREEN,WHITE);
 	PrintToChat(client, "%t", "Usp2", MOSSGREEN,WHITE);
 }
@@ -1248,7 +1266,7 @@ public bool:WallCheck(client)
 
 public Prestrafe(client, mouse_ang, &buttons)
 {
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || !g_bPreStrafe)
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || (!g_bPreStrafe && !g_bProMode) || (g_bSlowDownCheck[client]))
 		return;
 	decl String:classname[64];
 	GetClientWeapon(client, classname, 64);
@@ -1853,10 +1871,23 @@ public DeadMainTimer(client)
 	decl String:sSpecs[512];
 	Format(sSpecs, 512, "");
 	new SpecMode;			
+	ObservedUser = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");	
 	SpecMode = GetEntProp(client, Prop_Send, "m_iObserverMode");	
+	/*if (g_bInfoBot && g_InfoBot != -1 && g_InfoBot == ObservedUser)
+	{	
+		for(new z = ObservedUser; z <= MaxClients; z++) 				
+			if (IsValidClient(z) && IsPlayerAlive(z) && z != g_InfoBot)
+			{
+				SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", z);  
+				SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+				SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);	
+				g_SpecTarget[client] = z;				
+				return;
+			}
+	}
+	else*/
 	if (SpecMode == 4 || SpecMode == 5)
 	{
-		ObservedUser = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");	
 		g_SpecTarget[client] = ObservedUser;
 		new count=0;
 		//Speclist
@@ -2018,7 +2049,7 @@ public DeadMainTimer(client)
 									
 			if (g_bJumpStats)
 			{
-				if (g_bPlayerJumped[ObservedUser] && g_bPreStrafe)
+				if (g_bPlayerJumped[ObservedUser] && (g_bPreStrafe || g_bProMode))
 				{
 					if (ObservedUser == g_iBot || ObservedUser == g_iBot2)
 						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
@@ -2098,10 +2129,9 @@ public AliveMainTimer(client)
 	}
 	
 	//center name / info panel
-	new target = TraceClientViewEntity(client);		
+	/*new target = TraceClientViewEntity(client);		
 	decl String:classname[64];
 	GetClientWeapon(client, classname, 64);
-	//NAME PANEL
 	if (IsValidEdict(target) && !g_bHide[client] && g_bShowNames[client] && target > 0 && target <= MaxClients)
 	{
 		new clientteam = GetClientTeam(client);
@@ -2124,51 +2154,51 @@ public AliveMainTimer(client)
 				PrintHintText(client, " \n%s | %s (%d HP)", g_pr_rankname[target], clientName, GetClientHealth(target));   
 			}
 		}
-	}
-	//INFOPANEL
-	else	
-		if (g_bInfoPanel[client])
+	}*/
+	
+	//INFOPANEL	
+	if (g_bInfoPanel[client])
+	{
+		decl String:sResult[256];	
+		new Buttons;
+		Buttons = g_LastButton[client];			
+		if (Buttons & IN_MOVELEFT)
+			Format(sResult, sizeof(sResult), "Keys: A");
+		else
+			Format(sResult, sizeof(sResult), "Keys: _");
+		if (Buttons & IN_FORWARD)
+			Format(sResult, sizeof(sResult), "%s W", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_BACK)
+			Format(sResult, sizeof(sResult), "%s S", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_MOVERIGHT)
+			Format(sResult, sizeof(sResult), "%s D", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_DUCK)
+			Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s - _", sResult);			
+		if (Buttons & IN_JUMP)
+			Format(sResult, sizeof(sResult), "%s JUMP", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
 		{
-			decl String:sResult[256];	
-			new Buttons;
-			Buttons = g_LastButton[client];			
-			if (Buttons & IN_MOVELEFT)
-				Format(sResult, sizeof(sResult), "Keys: A");
-			else
-				Format(sResult, sizeof(sResult), "Keys: _");
-			if (Buttons & IN_FORWARD)
-				Format(sResult, sizeof(sResult), "%s W", sResult);
-			else
-				Format(sResult, sizeof(sResult), "%s _", sResult);	
-			if (Buttons & IN_BACK)
-				Format(sResult, sizeof(sResult), "%s S", sResult);
-			else
-				Format(sResult, sizeof(sResult), "%s _", sResult);	
-			if (Buttons & IN_MOVERIGHT)
-				Format(sResult, sizeof(sResult), "%s D", sResult);
-			else
-				Format(sResult, sizeof(sResult), "%s _", sResult);	
-			if (Buttons & IN_DUCK)
-				Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
-			else
-				Format(sResult, sizeof(sResult), "%s - _", sResult);			
-			if (Buttons & IN_JUMP)
-				Format(sResult, sizeof(sResult), "%s JUMP", sResult);
-			else
-				Format(sResult, sizeof(sResult), "%s _", sResult);	
-			if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
-			{
-				if (g_bJumpStats)
-				{		
-					if (g_bPlayerJumped[client] && g_bPreStrafe)
-						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
-					else
-						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[client],g_fSpeed[client],sResult);
-				}
+			if (g_bJumpStats)
+			{		
+				if (g_bPlayerJumped[client] && (g_bPreStrafe || g_bProMode))
+					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
 				else
-					PrintHintText(client,"Speed: %.1f u/s\nVelocity: %.1f u/s\n%s",g_fSpeed[client],GetVelocity(client),sResult);			
+					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[client],g_fSpeed[client],sResult);
 			}
-		}	
+			else
+				PrintHintText(client,"Speed: %.1f u/s\nVelocity: %.1f u/s\n%s",g_fSpeed[client],GetVelocity(client),sResult);			
+		}
+	}	
 		
 	//Spec list for players
 	Format(g_szPlayerPanelText[client], 512, "");
@@ -2968,4 +2998,145 @@ stock ResetStrafes(client)
 		g_PlayerStates[client][bStrafeAngleGain][i] = false;
 		g_PlayerStates[client][fStrafeDelay][i] = 0.0;
 	}
+}
+
+public LoadInfoBot()
+{
+	if (!g_bInfoBot)
+		return;
+	g_InfoBot = -1;
+	for(new i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i) || !IsFakeClient(i) || i == g_iBot2 || i == g_iBot)
+			continue;
+		g_InfoBot = i;
+		break;
+	}
+	if(IsValidClient(g_InfoBot))
+	{	
+		Format(g_pr_rankname[g_InfoBot], 16, "BOT");
+		CS_SetClientClanTag(g_InfoBot, "");
+		SetEntProp(g_InfoBot, Prop_Send, "m_iAddonBits", 0);
+		SetEntProp(g_InfoBot, Prop_Send, "m_iPrimaryAddon", 0);
+		SetEntProp(g_InfoBot, Prop_Send, "m_iSecondaryAddon", 0); 		
+		SetEntProp(g_InfoBot, Prop_Send, "m_iObserverMode", 1);
+		SetInfoBotName(g_InfoBot);	
+	}
+	else
+	{
+		new count = 0;
+		if (g_bTpReplay)
+			count++;
+		if (g_bProReplay)
+			count++;
+		if (g_bInfoBot)
+			count++;
+		if (count==0)
+			return;
+		decl String:szBuffer2[64];
+		Format(szBuffer2, sizeof(szBuffer2), "bot_quota %i", count); 	
+		ServerCommand(szBuffer2);		
+		CreateTimer(0.5, RefreshInfoBot,TIMER_FLAG_NO_MAPCHANGE);
+	}
+}
+
+public Action:RefreshInfoBot(Handle:timer)
+{
+	LoadInfoBot();
+}
+
+public ProMode_Slowdown(client)
+{
+	if (!g_bProMode || !IsValidClient(client))
+		return;
+	if (!(GetEntityFlags(client) & FL_ONGROUND) && g_bOnGround[client])	
+	g_bOnGround[client]=false;
+	if ((GetEntityFlags(client) & FL_ONGROUND) && !g_bOnGround[client])	
+	{
+		g_bOnGround[client]=true;		
+		if (!g_bGoodBhop[client])
+		{
+			g_bSlowDownCheck[client]=true;
+			CreateTimer(0.2, ResetSlowdownTimer, client, TIMER_FLAG_NO_MAPCHANGE);
+			SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", 0.65);
+			g_bGoodBhop[client]=false;
+		}
+	}
+}		
+public ProMode_SpeeCap(client)
+{
+	static bool:IsOnGround[MAXPLAYERS + 1]; 
+	if (IsValidClient(client) && IsPlayerAlive(client))
+	{
+		new ClientFlags = GetEntityFlags(client);
+		if (ClientFlags & FL_ONGROUND)
+		{
+			if (!IsOnGround[client])
+			{
+				IsOnGround[client] = true;    
+				new Float:CurVelVec[3];
+				GetEntPropVector(client, Prop_Data, "m_vecVelocity", CurVelVec);
+				new Float:speed = GetSpeed(client);
+				if (speed > 300.0)
+				{
+					g_bPrestrafeTooHigh[client] = true;    
+					NormalizeVector(CurVelVec, CurVelVec);
+					ScaleVector(CurVelVec, 250.0);
+					TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, CurVelVec);
+				}
+			}
+		}
+		else
+			IsOnGround[client] = false;
+	}
+}	
+
+public GetGlobalRecord()
+{
+	decl String:mapPath[256];
+	new bool: fileFound;
+	GetCurrentMap(g_szMapName, MAX_MAP_LENGTH);
+	Format(mapPath, sizeof(mapPath), "maps/%s.bsp", g_szMapName); 	
+	fileFound = FileExists(mapPath);
+	//valid timestamp? [global db]
+	if (fileFound && g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
+	{	
+		g_unique_FileSize =  FileSize(mapPath);
+		//supported map tags 
+		if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bkz"))
+			dbCheckFileSize();
+	}
+}
+	
+public SetInfoBotName(ent)
+{
+	decl String:szBuffer[64];
+	decl String:sNextMap[128];	
+	if (!IsValidClient(g_InfoBot) || !g_bInfoBot)
+		return;
+	if(g_bMapChooser && EndOfMapVoteEnabled() && !HasEndOfMapVoteFinished())
+		Format(sNextMap, sizeof(sNextMap), "Pending Vote");
+	else
+	{
+		GetNextMap(sNextMap, sizeof(sNextMap));
+		new String:mapPieces[6][128];
+		new lastPiece = ExplodeString(sNextMap, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
+		Format(sNextMap, sizeof(sNextMap), "%s", mapPieces[lastPiece-1]); 			
+	}			
+	new timeleft;
+	GetMapTimeLeft(timeleft);
+	new Float:ftime = float(timeleft);
+	FormatTimeFloat(g_InfoBot,ftime,4);
+	new Handle:hTmp;	
+	hTmp = FindConVar("mp_timelimit");
+	new iTimeLimit = GetConVarInt(hTmp);			
+	if (hTmp != INVALID_HANDLE)
+		CloseHandle(hTmp);	
+	if (g_bMapEnd && iTimeLimit > 0)
+		Format(szBuffer, sizeof(szBuffer), "%s (in %s)",sNextMap, g_szTime[g_InfoBot]);
+	else
+		Format(szBuffer, sizeof(szBuffer), "Pending Vote (no time limit)");
+	CS_SetClientName(g_InfoBot, szBuffer);
+	Client_SetScore(g_InfoBot,9999);
+	CS_SetClientClanTag(g_InfoBot, "NEXTMAP");
 }
