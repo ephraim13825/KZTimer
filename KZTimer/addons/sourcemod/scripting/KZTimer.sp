@@ -1,3 +1,10 @@
+/*
+v1.43
+- added utf-8 support (global database)
+- divided kz_replay_bot_skin in kz_replay_tpbot_skin and kz_replay_probot_skin
+- divided kz_replay_bot_arm_skin in kz_replay_tpbot_arm_skin and kz_replay_probot_arm_skin
+- added colors tags in all center/hint messages
+*/
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -1300,6 +1307,9 @@ public OnMapStart()
 	if (g_bCleanWeapons)
 		ServerCommand("sv_infinite_ammo 0");
 
+	if (g_bAutoRespawn)
+		ServerCommand("mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0");
+
 	//valid timestamp? [global db]
 	if (fileFound && g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 	{	
@@ -1824,9 +1834,15 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 	if(convar == g_hAutoRespawn)
 	{
 		if(newValue[0] == '1')
+		{
+			ServerCommand("mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0");
 			g_bAutoRespawn = true;
+		}
 		else
+		{
+			ServerCommand("mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0");
 			g_bAutoRespawn = false;
+		}
 	}	
 	if(convar == g_hAllowCheckpoints)
 	{

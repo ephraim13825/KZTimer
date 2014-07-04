@@ -94,9 +94,15 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 					else
 						if (g_bAutoTimer)
 							CL_OnStartTimerPress(client);
-				
+						else
+						{
+							g_bTimeractivated[client] = false;	
+							g_fStartTime[client] = -1.0;
+							g_fRunTime[client] = -1.0;	
+						}			
 				CreateTimer(0.0, ClimbersMenuTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 			}
+	
 			
 			//hide radar
 			CreateTimer(0.0, HideRadar, client,TIMER_FLAG_NO_MAPCHANGE);
@@ -354,7 +360,7 @@ public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBr
 	if (IsValidClient(client))
 	{
 		if (!IsFakeClient(client))
-		{
+		{			
 			if(g_hRecording[client] != INVALID_HANDLE)
 				StopRecording(client);			
 			CreateTimer(2.0, RemoveRagdoll, client);

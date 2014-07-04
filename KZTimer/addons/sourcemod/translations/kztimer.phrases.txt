@@ -593,7 +593,7 @@
 	"PositionRestored"
 	{
 		"#format"   ""
-		"en"        " \n   Time and position restored\n            (no checkpoints)"
+		"en"        " \n   <font size='23'><b>Time and position restored</b></font>\n"
 	}
 	"RadioCommandsDisabled"
 	{
