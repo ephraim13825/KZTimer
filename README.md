@@ -11,6 +11,12 @@ The prestrafe method doenst work for a very (very very!) small amount of players
 Changelog
 =======
 
+v1.43
+- added utf-8 support (global database)
+- divided kz_replay_bot_skin in kz_replay_tpbot_skin and kz_replay_probot_skin
+- divided kz_replay_bot_arm_skin in kz_replay_tpbot_arm_skin and kz_replay_probot_arm_skin
+- added colors tags in all center/hint messages
+
 v1.42
 - added cfg/sourcemod/kztimer/main.cfg (these server cvars were hard-coded) (don't forget to add this file. very important!)
 - moved the map type configs to cfg/sourcemod/kztimer/map_types/ (u have to update your folder structure!)
