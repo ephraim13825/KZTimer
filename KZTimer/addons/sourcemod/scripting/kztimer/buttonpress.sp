@@ -131,6 +131,7 @@ public CL_OnStartTimerPress(client)
 		g_bMissedProBest[client] = false;		
 		g_bMissedTpBest[client] = true;
 		g_bMissedProBest[client] = true;
+		new bool: act = g_bTimeractivated[client];
 		g_bTimeractivated[client] = true;		
 		if(g_PlayerStates[client][bOn])
 		{
@@ -170,13 +171,12 @@ public CL_OnStartTimerPress(client)
 				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
 				Format(szProTime, 32, "%s (#%i/%i)", g_szTime[client],g_maprank_pro[client],g_maptimes_pro);
 			}
-			
 			CreateTimer(2.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 			g_bOverlay[client]=true;
-			if (g_bTimeractivated[client] == true)
-					PrintHintText(client,"Timer restarted\nPro: %s\nTP: %s", szProTime,szTpTime);
+			if (act)
+					PrintHintText(client,"<b>Timer restarted</b>\n<font color='#AB79DC'><b>Pro</b></font>: %s\n<font color='#D3CE6D'><b>TP</b></font>: %s", szProTime,szTpTime);
 			else
-				PrintHintText(client,"Timer started\nPro: %s\nTP: %s", szProTime,szTpTime);	
+				PrintHintText(client,"<b>Timer started</b>\n<font color='#AB79DC'><b>Pro</b></font>: %s\n<font color='#D3CE6D'><b>TP</b></font>: %s", szProTime,szTpTime);			
 		}	
 	}
 }
@@ -184,6 +184,8 @@ public CL_OnStartTimerPress(client)
 // - Climb Button OnEndPress -
 public CL_OnEndTimerPress(client)
 {
+	g_bOverlay[client]=true;
+	CreateTimer(4.0, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -248,10 +250,7 @@ public CL_OnEndTimerPress(client)
 	FormatTimeFloat(client, g_fFinalTime[client], 3);
 	Format(g_szNewTime[client], 32, "%s", g_szTime[client]);	
 	
-	//Info msg: Chat msg can be a bit delayed if too many db requests
-	CreateTimer(2.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-	g_bOverlay[client]=true;
-	PrintHintText(client,"Timer stopped.\nYou finished the map in: %s!\nCongratulations.", g_szNewTime[client]);
+	PrintHintText(client,"<b>Timer stopped.</b>\nYou finished the map in: <font color='#86D53B'>%s</font>\n<font size='22'>Congratulations!</font>", g_szNewTime[client]);
 	
 	//calc difference
 	if (g_newTp[client]==0)

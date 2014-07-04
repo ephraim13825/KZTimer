@@ -14,10 +14,8 @@
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
-
-#define VERSION "1.42"
+#define VERSION "1.43"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
-
 #define WHITE 0x01
 #define DARKRED 0x02
 #define PURPLE 0x03
@@ -33,7 +31,6 @@
 #define LIGHTBLUE 0x0D
 #define PINK 0x0E
 #define LIGHTRED 0x0F
-
 #define QUOTE 0x22
 #define PERCENT 0x25
 #define CPLIMIT 30 
@@ -246,6 +243,10 @@ new Handle:g_hReplayBotPlayerModel = INVALID_HANDLE;
 new String:g_sReplayBotPlayerModel[256];  
 new Handle:g_hReplayBotArmModel = INVALID_HANDLE;
 new String:g_sReplayBotArmModel[256];  
+new Handle:g_hReplayBotPlayerModel2 = INVALID_HANDLE;
+new String:g_sReplayBotPlayerModel2[256];  
+new Handle:g_hReplayBotArmModel2 = INVALID_HANDLE;
+new String:g_sReplayBotArmModel2[256];  
 new Handle:g_hPlayerModel = INVALID_HANDLE;
 new String:g_sPlayerModel[256];  
 new Handle:g_hArmModel = INVALID_HANDLE;
@@ -413,7 +414,6 @@ new Float:g_fLastUndo[MAXPLAYERS +1];
 new Float:g_flastHeight[MAXPLAYERS +1];
 new Float:g_fMaxHeight[MAXPLAYERS+1];
 new Float:g_fLastJumpTime[MAXPLAYERS+1];
-new Float:g_fLastJumpDistance[MAXPLAYERS+1];
 new Float:g_fPersonalWjRecord[MAX_PR_PLAYERS]=-1.0;
 new Float:g_fPersonalDropBhopRecord[MAX_PR_PLAYERS]=-1.0;
 new Float:g_fPersonalBhopRecord[MAX_PR_PLAYERS]=-1.0;
@@ -616,6 +616,7 @@ new String:g_szRecordPlayer[MAX_NAME_LENGTH];
 new String:g_szProfileName[MAXPLAYERS+1][MAX_NAME_LENGTH];
 new String:g_szPlayerPanelText[MAXPLAYERS+1][512];
 new String:g_szProfileSteamId[MAXPLAYERS+1][32];
+new String:g_szLastJumpDistance[MAXPLAYERS+1][256];
 new String:g_szCountry[MAXPLAYERS+1][100];
 new String:g_szCountryCode[MAXPLAYERS+1][16]; 
 new String:g_pr_chat_coloredrank[MAXPLAYERS+1][32];
@@ -781,7 +782,7 @@ public OnPluginStart()
 	g_bInfoBot     = GetConVarBool(g_hInfoBot);
 	HookConVarChange(g_hInfoBot, OnSettingChanged);		
 	
-	g_hNoClipS = CreateConVar("kz_noclip", "1", "on/off - Allow players to use noclip when they have finished the map", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hNoClipS = CreateConVar("kz_noclip", "1", "on/off - Allows players to use noclip when they have finished the map", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bNoClipS     = GetConVarBool(g_hNoClipS);
 	HookConVarChange(g_hNoClipS, OnSettingChanged);	
 	
@@ -825,7 +826,7 @@ public OnPluginStart()
 	g_bNoBlock        = GetConVarBool(g_hcvarNoBlock);
 	HookConVarChange(g_hcvarNoBlock, OnSettingChanged);
 	
-	g_hAllowCheckpoints = CreateConVar("kz_checkpoints", "1", "on/off - Checkpoints", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAllowCheckpoints = CreateConVar("kz_checkpoints", "1", "on/off - Allows Checkpoints creation", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCheckpoints     = GetConVarBool(g_hAllowCheckpoints);
 	HookConVarChange(g_hAllowCheckpoints, OnSettingChanged);	
 	
@@ -872,12 +873,20 @@ public OnPluginStart()
 	g_hPlayerSkinChange 	= CreateConVar("kz_custom_models", "1", "on/off - Allows kztimer to change the player and bot models", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPlayerSkinChange     = GetConVarBool(g_hPlayerSkinChange);
 	HookConVarChange(g_hPlayerSkinChange, OnSettingChanged);
+
+	g_hReplayBotPlayerModel2   = CreateConVar("kz_replay_tpbot_skin", "models/player/tm_professional_var1.mdl", "Replay tp bot skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	GetConVarString(g_hReplayBotPlayerModel2,g_sReplayBotPlayerModel2,256);
+	HookConVarChange(g_hReplayBotPlayerModel2, OnSettingChanged);	
 	
-	g_hReplayBotPlayerModel   = CreateConVar("kz_replay_bot_skin", "models/player/tm_professional_var1.mdl", "Replay bot skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hReplayBotArmModel2   = CreateConVar("kz_replay_tpbot_arm_skin", "models/weapons/t_arms_professional.mdl", "Replay tp bot arm skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	GetConVarString(g_hReplayBotArmModel2,g_sReplayBotArmModel2,256);
+	HookConVarChange(g_hReplayBotArmModel2, OnSettingChanged);	
+	
+	g_hReplayBotPlayerModel   = CreateConVar("kz_replay_probot_skin", "models/player/tm_professional_var1.mdl", "Replay pro bot skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hReplayBotPlayerModel,g_sReplayBotPlayerModel,256);
 	HookConVarChange(g_hReplayBotPlayerModel, OnSettingChanged);	
 	
-	g_hReplayBotArmModel   = CreateConVar("kz_replay_bot_arm_skin", "models/weapons/t_arms_professional.mdl", "Replay bot arm skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hReplayBotArmModel   = CreateConVar("kz_replay_probot_arm_skin", "models/weapons/t_arms_professional.mdl", "Replay pro bot arm skin", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hReplayBotArmModel,g_sReplayBotArmModel,256);
 	HookConVarChange(g_hReplayBotArmModel, OnSettingChanged);	
 	
@@ -1563,14 +1572,13 @@ public OnClientPostAdminCheck(client)
 	g_bMapRankToChat[client] = false;
 	g_bOnBhopPlattform[client] = false;
 	g_fJump_InitialLastHeight[client] = -1.012345;
-	g_fLastJumpDistance[client] = 0.0;		
+	Format(g_szLastJumpDistance[client], 256, "<font color='#948d8d'>0.0 units</font>");
 	g_good_sync[client] = 0.0;
 	g_fLastTimeNoClipUsed[client] = -1.0;
 	g_sync_frames[client] = 0.0;
 	g_maprank_tp[client] = 99999;
 	g_maprank_pro[client] = 99999;
 	g_fLastTime_DBQuery[client] = GetEngineTime();
-		
 	//options
 	g_bInfoPanel[client]=false;
 	g_bClimbersMenuSounds[client]=true;
@@ -1883,10 +1891,24 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			g_bPlayerSkinChange = true;
 			for (new i = 1; i <= MaxClients; i++)
-				if (IsValidClient(i) && i != g_iBot2 && i != g_iBot)	
+				if (IsValidClient(i))	
 				{
-					SetEntPropString(i, Prop_Send, "m_szArmsModel", g_sArmModel);
-					SetEntityModel(i,  g_sPlayerModel);
+					if (i == g_iBot2)
+					{
+						SetEntPropString(i, Prop_Send, "m_szArmsModel", g_sReplayBotArmModel2);
+						SetEntityModel(i,  g_sReplayBotPlayerModel2);
+					}					
+					else
+						if (i == g_iBot)
+						{
+							SetEntPropString(i, Prop_Send, "m_szArmsModel", g_sReplayBotPlayerModel);
+							SetEntityModel(i,  g_sReplayBotPlayerModel);
+						}
+						else
+						{
+							SetEntPropString(i, Prop_Send, "m_szArmsModel", g_sArmModel);
+							SetEntityModel(i,  g_sPlayerModel);
+						}
 				}
 		}
 		else
@@ -2159,8 +2181,6 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		Format(g_sReplayBotPlayerModel,256,"%s", newValue[0]);
 		PrecacheModel(newValue[0],true);
 		AddFileToDownloadsTable(g_sReplayBotPlayerModel);
-		if (g_iBot2 != -1)
-			SetEntityModel(g_iBot2,  newValue[0]);
 		if (g_iBot != -1)
 			SetEntityModel(g_iBot,  newValue[0]);	
 	}
@@ -2170,11 +2190,29 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		Format(g_sReplayBotArmModel,256,"%s", newValue[0]);
 		PrecacheModel(newValue[0],true);		
 		AddFileToDownloadsTable(g_sReplayBotArmModel);
-		if (g_iBot2 != -1)
-				SetEntPropString(g_iBot2, Prop_Send, "m_szArmsModel", newValue[0]);
 		if (g_iBot != -1)
 				SetEntPropString(g_iBot, Prop_Send, "m_szArmsModel", newValue[0]);	
 	}
+	
+	if(convar == g_hReplayBotPlayerModel2)
+	{
+		Format(g_sReplayBotPlayerModel2,256,"%s", newValue[0]);
+		PrecacheModel(newValue[0],true);
+		AddFileToDownloadsTable(g_sReplayBotPlayerModel2);
+		if (g_iBot2 != -1)
+			SetEntityModel(g_iBot2,  newValue[0]);
+	}
+
+	if(convar == g_hReplayBotArmModel2)
+	{
+		Format(g_sReplayBotArmModel2,256,"%s", newValue[0]);
+		PrecacheModel(newValue[0],true);		
+		AddFileToDownloadsTable(g_sReplayBotArmModel2);
+		if (g_iBot2 != -1)
+				SetEntPropString(g_iBot2, Prop_Send, "m_szArmsModel", newValue[0]);
+	}
+	
+
 	
 	if(convar == g_hPlayerModel)
 	{

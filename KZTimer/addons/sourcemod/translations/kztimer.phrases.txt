@@ -122,8 +122,9 @@
 	}
 	"TimerStartReminder"
 	{
+	
 		"#format"   ""
-		"en"        " \nDon't forget to start your timer!"
+		"en"        " \n<font color='#c73030' size='24'><b> Don't forget to start the timer!</b></font>"
 	}
 	"noJumpRecords"
 	{

@@ -540,6 +540,8 @@ public InitPrecache()
 	AddFileToDownloadsTable(g_sPlayerModel);
 	AddFileToDownloadsTable(g_sReplayBotArmModel);
 	AddFileToDownloadsTable(g_sReplayBotPlayerModel);
+	AddFileToDownloadsTable(g_sReplayBotArmModel2);
+	AddFileToDownloadsTable(g_sReplayBotPlayerModel2);
 	g_iGlowSprite = PrecacheModel("materials/sprites/bluelaser1.vmt",true);
 	PrecacheModel("materials/models/props/startkztimer.vmt",true);
 	PrecacheModel("materials/models/props/stopkztimer.vmt",true);
@@ -548,6 +550,8 @@ public InitPrecache()
 	g_Beam[1] = PrecacheModel("materials/sprites/halo01.vmt");
 	PrecacheModel(g_sReplayBotArmModel,true);
 	PrecacheModel(g_sReplayBotPlayerModel,true);
+	PrecacheModel(g_sReplayBotArmModel2,true);
+	PrecacheModel(g_sReplayBotPlayerModel2,true);
 	PrecacheModel(g_sArmModel,true);
 	PrecacheModel(g_sPlayerModel,true);
 }
@@ -2023,9 +2027,9 @@ public DeadMainTimer(client)
 		{
 			Buttons = g_LastButton[ObservedUser];					
 			if (Buttons & IN_MOVELEFT)
-				Format(sResult, sizeof(sResult), "Keys: A");
+				Format(sResult, sizeof(sResult), "<b>Keys</b>: A");
 			else
-				Format(sResult, sizeof(sResult), "Keys: _");
+				Format(sResult, sizeof(sResult), "<b>Keys</b>: _");
 			if (Buttons & IN_FORWARD)
 				Format(sResult, sizeof(sResult), "%s W", sResult);
 			else
@@ -2052,20 +2056,21 @@ public DeadMainTimer(client)
 				if (g_bPlayerJumped[ObservedUser] && (g_bPreStrafe || g_bProMode))
 				{
 					if (ObservedUser == g_iBot || ObservedUser == g_iBot2)
-						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
+						PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_szLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
 					else
-						PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],g_fPreStrafe[ObservedUser],sResult);
+						PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_szLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],g_fPreStrafe[ObservedUser],sResult);
 				}
 				else
-					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
+					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_szLastJumpDistance[ObservedUser],g_fSpeed[ObservedUser],sResult);
 				
 			}
 			else
-				PrintHintText(client,"Speed: %.1f u/s\nVelocity: %.1f u/s\n%s",g_fSpeed[ObservedUser],GetVelocity(ObservedUser),sResult);
+				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fSpeed[ObservedUser],GetVelocity(ObservedUser),sResult);
 		}	
 	}	
 	else
 		g_SpecTarget[client] = -1;
+
 }
 
 public AliveMainTimer(client)
@@ -2151,7 +2156,7 @@ public AliveMainTimer(client)
 			{
 				new String:clientName[32];
 				GetClientName(target, clientName, sizeof(clientName));
-				PrintHintText(client, " \n%s | %s (%d HP)", g_pr_rankname[target], clientName, GetClientHealth(target));   
+				PrintHintText(client, " \n%s | %s (%d HP)", <font size='22'[target], clientName, GetClientHealth(target));   
 			}
 		}
 	}*/
@@ -2163,9 +2168,9 @@ public AliveMainTimer(client)
 		new Buttons;
 		Buttons = g_LastButton[client];			
 		if (Buttons & IN_MOVELEFT)
-			Format(sResult, sizeof(sResult), "Keys: A");
+			Format(sResult, sizeof(sResult), "<b>Keys</b>: A");
 		else
-			Format(sResult, sizeof(sResult), "Keys: _");
+			Format(sResult, sizeof(sResult), "<b>Keys</b>: _");
 		if (Buttons & IN_FORWARD)
 			Format(sResult, sizeof(sResult), "%s W", sResult);
 		else
@@ -2191,12 +2196,12 @@ public AliveMainTimer(client)
 			if (g_bJumpStats)
 			{		
 				if (g_bPlayerJumped[client] && (g_bPreStrafe || g_bProMode))
-					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s (%.0f)\n%s",g_fLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
+					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
 				else
-					PrintHintText(client,"Last Jump: %.1f units\nSpeed: %.1f u/s\n%s",g_fLastJumpDistance[client],g_fSpeed[client],sResult);
+					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],sResult);
 			}
 			else
-				PrintHintText(client,"Speed: %.1f u/s\nVelocity: %.1f u/s\n%s",g_fSpeed[client],GetVelocity(client),sResult);			
+				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fSpeed[client],GetVelocity(client),sResult);			
 		}
 	}	
 		

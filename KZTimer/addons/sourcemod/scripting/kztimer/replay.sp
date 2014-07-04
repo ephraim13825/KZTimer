@@ -346,14 +346,10 @@ public LoadReplayPro()
 	{		
 		PlayRecord(g_iBot,0);
 		SetEntityRenderColor(g_iBot, g_ReplayBotProColor[0], g_ReplayBotProColor[1], g_ReplayBotProColor[2], 50);
-		decl String:szSkin[256];
-		decl String:szArm[256];
-		Format(szSkin, 256, g_sReplayBotPlayerModel);
-		Format(szArm, 256, g_sReplayBotArmModel);
 		if (g_bPlayerSkinChange)
 		{
-			SetEntityModel(g_iBot, szSkin);
-			SetEntPropString(g_iBot, Prop_Send, "m_szArmsModel", szArm);
+			SetEntityModel(g_iBot, g_sReplayBotPlayerModel);
+			SetEntPropString(g_iBot, Prop_Send, "m_szArmsModel", g_sReplayBotArmModel);
 		}
 	}
 	else
@@ -395,14 +391,10 @@ public LoadReplayTp()
 	{		
 		PlayRecord(g_iBot2,1);
 		SetEntityRenderColor(g_iBot2, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
-		decl String:szSkin[256];
-		decl String:szArm[256];
-		Format(szSkin, 256, g_sReplayBotPlayerModel);
-		Format(szArm, 256, g_sReplayBotArmModel);
 		if (g_bPlayerSkinChange)
 		{
-			SetEntityModel(g_iBot2, szSkin);
-			SetEntPropString(g_iBot2, Prop_Send, "m_szArmsModel", szArm);
+			SetEntityModel(g_iBot2, g_sReplayBotPlayerModel2);
+			SetEntPropString(g_iBot2, Prop_Send, "m_szArmsModel", g_sReplayBotArmModel2);
 		}
 	}
 	else
