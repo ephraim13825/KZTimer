@@ -5,6 +5,14 @@ Info:
 - KZ AntiCheat is automatically disabled when kz_auto_bhop is set to 1
 - Log "error": [SDKTOOLS] "FindEntityByClassname" not supported by this mod, falling back to IServerTools method.
 -> https://forums.alliedmods.net/showthread.php?t=235737
+- tickrate 102.4 is optimal for kreedzing (start parameter: -tickrate 102.4)
+- globalconnections.sp doenst contain the correct login data
+- The point system is based on the mapcycle.txt of cs:go. That is why you should keep your mapcycle always up to date!
+- keep also your database clean and delete player times from maps which are not longer in your mapcycle because map records on those maps are still counted in the top pro/tp climbers list (!resetmaptimes <map>)
+- Global map record requirements (Global record top5 appears on all servers which are using KZ Timer):
+--> settings enforcer must be enabled
+--> only maps with integrated climb buttons are supported (e.g kz_giantbean)
+
 - Known bug:
 The prestrafe method doenst work for a very (very very!) small amount of players.
 
