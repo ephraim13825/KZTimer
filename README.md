@@ -20,6 +20,10 @@ The prestrafe method doenst work for a very (very very!) small amount of players
 Changelog
 =======
 
+v1.44
+- changed global database login (new host ip)
+- database admin commands requires root flag now
+
 v1.43
 - added <"SET NAMES  'utf8'"> (global database)
 - divided kz_replay_bot_skin in kz_replay_tpbot_skin and kz_replay_probot_skin
