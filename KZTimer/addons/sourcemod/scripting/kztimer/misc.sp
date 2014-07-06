@@ -134,6 +134,44 @@ public StringToUpper(String:input[])
 	}
 }
 
+public GetServerInfo()
+{
+	new pieces[4];
+	decl String:code2[3];
+	decl String:NetIP[256];
+	new longip = GetConVarInt(FindConVar("hostip"));
+	new port = GetConVarInt( FindConVar( "hostport" ));
+	pieces[0] = (longip >> 24) & 0x000000FF;
+	pieces[1] = (longip >> 16) & 0x000000FF;
+	pieces[2] = (longip >> 8) & 0x000000FF;
+	pieces[3] = longip & 0x000000FF;
+	Format(NetIP, sizeof(NetIP), "%d.%d.%d.%d", pieces[0], pieces[1], pieces[2], pieces[3]);
+	GeoipCountry(NetIP, g_szServerCountry, 100);
+
+	if(!strcmp(g_szServerCountry, NULL_STRING))
+		Format( g_szServerCountry, 100, "Unknown", g_szServerCountry );
+	else				
+		if( StrContains( g_szServerCountry, "United", false ) != -1 || 
+			StrContains( g_szServerCountry, "Republic", false ) != -1 || 
+			StrContains( g_szServerCountry, "Federation", false ) != -1 || 
+			StrContains( g_szServerCountry, "Island", false ) != -1 || 
+			StrContains( g_szServerCountry, "Netherlands", false ) != -1 || 
+			StrContains( g_szServerCountry, "Isle", false ) != -1 || 
+			StrContains( g_szServerCountry, "Bahamas", false ) != -1 || 
+			StrContains( g_szServerCountry, "Maldives", false ) != -1 || 
+			StrContains( g_szServerCountry, "Philippines", false ) != -1 || 
+			StrContains( g_szServerCountry, "Vatican", false ) != -1 )
+		{
+			Format( g_szServerCountry, 100, "The %s", g_szServerCountry );
+		}	
+	if(GeoipCode2(NetIP, code2))
+		Format(g_szServerCountryCode, 16, "%s",code2);
+	else
+		Format(g_szServerCountryCode, 16, "??",code2);
+	Format(g_szServerIp, sizeof(g_szServerIp), "%s:%i",NetIP,port);
+	GetConVarString(FindConVar("hostname"),g_szServerName,sizeof(g_szServerName));
+}
+
 public GetCountry(client)
 {
 	if(client != 0)

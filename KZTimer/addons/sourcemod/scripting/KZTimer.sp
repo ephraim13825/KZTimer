@@ -1,9 +1,6 @@
 /*
-v1.43
-- added utf-8 support (global database)
-- divided kz_replay_bot_skin in kz_replay_tpbot_skin and kz_replay_probot_skin
-- divided kz_replay_bot_arm_skin in kz_replay_tpbot_arm_skin and kz_replay_probot_arm_skin
-- added colors tags in all center/hint messages
+- changed global database login (new host ip)
+- database admin commands requires root flag now
 */
 #include <sourcemod>
 #include <sdktools>
@@ -21,8 +18,9 @@ v1.43
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
-#define VERSION "1.43"
+#define VERSION "1.44"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
+#define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
 #define DARKRED 0x02
 #define PURPLE 0x03
@@ -633,6 +631,10 @@ new String:g_pr_szrank[MAXPLAYERS+1][512];
 new String:g_pr_szName[MAX_PR_PLAYERS][64];  
 new String:g_pr_szSteamID[MAX_PR_PLAYERS][32]; 
 new String:g_szSkillGroups[9][32];
+new String:g_szServerName[100];  
+new String:g_szServerIp[32];  
+new String:g_szServerCountry[100]; 
+new String:g_szServerCountryCode[32];  
 new const String:SKILL_GROUPS_PATH[] = "configs/kztimer/skill_groups.txt";
 new const String:KZ_REPLAY_PATH[] = "data/kz_replays/";
 new const String:ANTICHEAT_LOG_PATH[] = "logs/kztimer_anticheat.log";
@@ -801,7 +803,7 @@ public OnPluginStart()
 	g_bVipClantag     = GetConVarBool(g_hVipClantag);
 	HookConVarChange(g_hVipClantag, OnSettingChanged);	
 	
-	g_hAdminClantag = 	CreateConVar("kz_admin_clantag", "1", "on/off - Admin clan tag (necessary flag: b or z)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAdminClantag = 	CreateConVar("kz_admin_clantag", "1", "on/off - Admin clan tag (necessary flag: b - z)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAdminClantag     = GetConVarBool(g_hAdminClantag);
 	HookConVarChange(g_hAdminClantag, OnSettingChanged);	
 	
@@ -1099,30 +1101,30 @@ public OnPluginStart()
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
 	RegConsoleCmd("sm_bhopcheck", Command_Stats, "[KZTimer] checks bhop stats for a given player");
 	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kz admin panel");
-	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL, "[KZTimer] Resets player times (drops table playertimes)");
-	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL, "[KZTimer] Resets the player point system (drops table playerrank)");
-	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMIN_LEVEL, "[KZTimer] Resets player times for given map");
-	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL, "[KZTimer] Resets tp & pro map times for given steamid with or without given map");
-	RegAdminCmd("sm_resetplayertptime", Admin_ResetRecordTp, ADMIN_LEVEL, "[KZTimer] Resets tp map time for given steamid and map");
-	RegAdminCmd("sm_resetplayerprotime", Admin_ResetRecordPro, ADMIN_LEVEL, "[KZTimer] Resets pro map time for given steamid and map");
-	RegAdminCmd("sm_resetjumpstats", Admin_DropPlayerJump, ADMIN_LEVEL, "[KZTimer] Resets jump stats (drops table playerjumpstats)");	
-	RegAdminCmd("sm_resetallljrecords", Admin_ResetAllLjRecords, ADMIN_LEVEL, "[KZTimer] Resets all lj records");
-	RegAdminCmd("sm_resetallljblockrecords", Admin_ResetAllLjBlockRecords, ADMIN_LEVEL, "[KZTimer] Resets all lj block records");
-	RegAdminCmd("sm_resetallwjrecords", Admin_ResetAllWjRecords, ADMIN_LEVEL, "[KZTimer] Resets all wj records");
-	RegAdminCmd("sm_resetallbhoprecords", Admin_ResetAllBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets all bhop records");
-	RegAdminCmd("sm_resetalldropbhopecords", Admin_ResetAllDropBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets all drop bjop records");
-	RegAdminCmd("sm_resetallmultibhoprecords", Admin_ResetAllMultiBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets all multi bhop records");
-	RegAdminCmd("sm_resetljrecord", Admin_ResetLjRecords, ADMIN_LEVEL, "[KZTimer] Resets lj record for given steamid");
-	RegAdminCmd("sm_resetljblockrecord", Admin_ResetLjBlockRecords, ADMIN_LEVEL, "[KZTimer] Resets lj block record for given steamid");
-	RegAdminCmd("sm_resetbhoprecord", Admin_ResetBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets bhop record for given steamid");	
-	RegAdminCmd("sm_resetdropbhoprecord", Admin_ResetDropBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets drop bhop record for given steamid");
-	RegAdminCmd("sm_resetwjrecord", Admin_ResetWjRecords, ADMIN_LEVEL, "[KZTimer] Resets wj record for given steamid");	
-	RegAdminCmd("sm_resetmultibhoprecord", Admin_ResetMultiBhopRecords, ADMIN_LEVEL, "[KZTimer] Resets multi bhop record for given steamid");
-	RegAdminCmd("sm_resetplayerjumpstats", Admin_ResetPlayerJumpstats, ADMIN_LEVEL, "[KZTimer] Resets jump stats for given steamid");
-	RegAdminCmd("sm_deleteproreplay", Admin_DeleteProReplay, ADMIN_LEVEL, "[KZTimer] Deletes pro replay for a given map");
-	RegAdminCmd("sm_deletetpreplay", Admin_DeleteTpReplay, ADMIN_LEVEL, "[KZTimer] Deletes tp replay for a given map");	
-	RegAdminCmd("sm_getmultiplier", Admin_GetMulitplier, ADMIN_LEVEL, "[KZTimer] Gets the dynamic multiplier for given player (points)");
-	RegAdminCmd("sm_setmultiplier", Admin_SetMulitplier, ADMIN_LEVEL, "[KZTimer] Sets the dynamic multiplier for given player and mutliplier value (points)");	
+	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times (drops table playertimes) - requires z flag");
+	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL2, "[KZTimer] Resets the player point system (drops table playerrank - requires z flag)");
+	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times for given map - requires z flag");
+	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL2, "[KZTimer] Resets tp & pro map times for given steamid with or without given map - requires z flag");
+	RegAdminCmd("sm_resetplayertptime", Admin_ResetRecordTp, ADMIN_LEVEL2, "[KZTimer] Resets tp map time for given steamid and map - requires z flag");
+	RegAdminCmd("sm_resetplayerprotime", Admin_ResetRecordPro, ADMIN_LEVEL2, "[KZTimer] Resets pro map time for given steamid and map - requires z flag");
+	RegAdminCmd("sm_resetjumpstats", Admin_DropPlayerJump, ADMIN_LEVEL2, "[KZTimer] Resets jump stats (drops table playerjumpstats) - requires z flag");	
+	RegAdminCmd("sm_resetallljrecords", Admin_ResetAllLjRecords, ADMIN_LEVEL2, "[KZTimer] Resets all lj records - requires z flag");
+	RegAdminCmd("sm_resetallljblockrecords", Admin_ResetAllLjBlockRecords, ADMIN_LEVEL2, "[KZTimer] Resets all lj block records - requires z flag");
+	RegAdminCmd("sm_resetallwjrecords", Admin_ResetAllWjRecords, ADMIN_LEVEL2, "[KZTimer] Resets all wj records - requires z flag");
+	RegAdminCmd("sm_resetallbhoprecords", Admin_ResetAllBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all bhop records - requires z flag");
+	RegAdminCmd("sm_resetalldropbhopecords", Admin_ResetAllDropBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all drop bjop records - requires z flag");
+	RegAdminCmd("sm_resetallmultibhoprecords", Admin_ResetAllMultiBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all multi bhop records - requires z flag");
+	RegAdminCmd("sm_resetljrecord", Admin_ResetLjRecords, ADMIN_LEVEL2, "[KZTimer] Resets lj record for given steamid - requires z flag");
+	RegAdminCmd("sm_resetljblockrecord", Admin_ResetLjBlockRecords, ADMIN_LEVEL2, "[KZTimer] Resets lj block record for given steamid - requires z flag");
+	RegAdminCmd("sm_resetbhoprecord", Admin_ResetBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets bhop record for given steamid - requires z flag");	
+	RegAdminCmd("sm_resetdropbhoprecord", Admin_ResetDropBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets drop bhop record for given steamid - requires z flag");
+	RegAdminCmd("sm_resetwjrecord", Admin_ResetWjRecords, ADMIN_LEVEL2, "[KZTimer] Resets wj record for given steamid - requires z flag");	
+	RegAdminCmd("sm_resetmultibhoprecord", Admin_ResetMultiBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets multi bhop record for given steamid - requires z flag");
+	RegAdminCmd("sm_resetplayerjumpstats", Admin_ResetPlayerJumpstats, ADMIN_LEVEL2, "[KZTimer] Resets jump stats for given steamid - requires z flag");
+	RegAdminCmd("sm_deleteproreplay", Admin_DeleteProReplay, ADMIN_LEVEL2, "[KZTimer] Deletes pro replay for a given map - requires z flag");
+	RegAdminCmd("sm_deletetpreplay", Admin_DeleteTpReplay, ADMIN_LEVEL2, "[KZTimer] Deletes tp replay for a given map - requires z flag");	
+	RegAdminCmd("sm_getmultiplier", Admin_GetMulitplier, ADMIN_LEVEL2, "[KZTimer] Gets the dynamic multiplier for given player (points) - requires z flag");
+	RegAdminCmd("sm_setmultiplier", Admin_SetMulitplier, ADMIN_LEVEL2, "[KZTimer] Sets the dynamic multiplier for given player and mutliplier value (points) - requires z flag");	
 	RegConsoleCmd("say", Say_Hook);
 	RegConsoleCmd("say_team", Say_Hook);
 	AutoExecConfig(true, "kztimer");
@@ -1351,6 +1353,9 @@ public OnMapStart()
 		g_bTop100Refresh=true;
 		RefreshPlayerRankTable(100);
 	}
+	
+	//server infos
+	GetServerInfo();
 }
 
 public OnMapEnd()
@@ -1463,9 +1468,7 @@ public OnClientPutInServer(client)
 	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
 	SDKHook(client, SDKHook_PostThink, Hook_Radar);
 	bFlagged[client] = false;
-	if (g_bCountry)
-		GetCountry(client);
-		
+	GetCountry(client);		
 	ResetStrafes(client);
 	g_PlayerStates[client][bOn] = false;
 }

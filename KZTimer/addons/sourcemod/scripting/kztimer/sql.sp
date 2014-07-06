@@ -122,42 +122,45 @@ new String:sql_updateMapButtonsEnd[]			= "UPDATE MapButtons SET cords1End ='%f',
 // GLOBAL TABLE
 new String:sqlglobal_selectFilesize[] 			= "SELECT filesize FROM maplist where mapname = '%s'";
 new String:sqlglobal_insertFilesize[] 			= "INSERT INTO maplist (mapname, filesize) VALUES('%s', '%i');";
-new String:sqlglobal_insertBan[] 				= "INSERT INTO banlist (steamid, player) VALUES('%s', '%s');";
-new String:sqlglobal_deleteban1[] 				= "DELETE FROM player WHERE steamid = '%s'"; 
+new String:sqlglobal_insertBan[] 				= "INSERT INTO banlist (steamid, player64) VALUES('%s', '%s');";
+new String:sqlglobal_deleteban1[] 				= "DELETE FROM player64 WHERE steamid = '%s'"; 
 new String:sqlglobal_deleteban2[] 				= "DELETE FROM player128 WHERE steamid = '%s'"; 
 new String:sqlglobal_deleteban3[] 				= "DELETE FROM player102 WHERE steamid = '%s'"; 
 //tickrate64
-new String:sqlglobal_selectGlobalRecord[] 		= "SELECT name, runtime, teleports FROM player WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectGlobalTop[] 			= "SELECT name, runtime, teleports, steamid FROM player WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectTop5Players[] 		= "SELECT runtime, steamid FROM player WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectPlayers[] 			= "SELECT runtime, steamid, mapname FROM player WHERE mapname = '%s' ORDER BY runtime ASC";
-new String:sqlglobal_deletePlayer[] 			= "DELETE FROM player WHERE steamid = '%s' AND mapname = '%s'"; 
-new String:sqlglobal_insertPlayer[] 			= "INSERT INTO player (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
-new String:sqlglobal_updatePlayer[] 			= "UPDATE player SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';"; 
+new String:sqlglobal_selectGlobalRecord[] 		= "SELECT player, runtime, teleports FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalTop[] 			= "SELECT player, runtime, teleports, steamid,playercountrycode FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectTop5Players[] 		= "SELECT runtime, steamid FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectPlayers[] 			= "SELECT runtime, steamid, mapname FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC";
+new String:sqlglobal_deletePlayer[] 			= "DELETE FROM player64 WHERE steamid = '%s' AND mapname = '%s'"; 
+new String:sqlglobal_insertPlayer[] 			= "INSERT INTO player64 (steamid, mapname, player, runtime, teleports, playercountry, playercountrycode,serverip,servername,servercountry,servercountrycode,date) VALUES('%s', '%s', '%s', '%f', '%i', '%s', '%s', '%s', '%s', '%s', '%s', CURRENT_TIMESTAMP);";
+new String:sqlglobal_updatePlayer[] 			= "UPDATE player64 SET date = CURRENT_TIMESTAMP, player = '%s', runtime = '%f', teleports = '%i', playercountry = '%s', playercountrycode = '%s', serverip = '%s', servername = '%s', servercountry  = '%s', servercountrycode = '%s' WHERE steamid = '%s' AND mapname = '%s';"; 
+
 //tickrate102
-new String:sqlglobal_selectGlobalRecord102[] 	= "SELECT name, runtime, teleports FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectGlobalTop102[] 		= "SELECT name, runtime, teleports, steamid FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalRecord102[] 	= "SELECT player, runtime, teleports FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalTop102[] 		= "SELECT player, runtime, teleports, steamid,playercountrycode FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectTop5Players102[] 	= "SELECT runtime, steamid FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectPlayers102[] 		= "SELECT runtime, steamid, mapname FROM player102 WHERE mapname = '%s' ORDER BY runtime ASC";
 new String:sqlglobal_deletePlayer102[] 			= "DELETE FROM player102 WHERE steamid = '%s' AND mapname = '%s'"; 
-new String:sqlglobal_insertPlayer102[] 			= "INSERT INTO player102 (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
-new String:sqlglobal_updatePlayer102[] 			= "UPDATE player102 SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';";
+new String:sqlglobal_insertPlayer102[] 			= "INSERT INTO player102 (steamid, mapname, player, runtime, teleports, playercountry, playercountrycode,serverip,servername,servercountry,servercountrycode,date) VALUES('%s', '%s', '%s', '%f', '%i', '%s', '%s', '%s', '%s', '%s', '%s', CURRENT_TIMESTAMP);";
+new String:sqlglobal_updatePlayer102[] 			= "UPDATE player102 SET date = CURRENT_TIMESTAMP, player = '%s', runtime = '%f', teleports = '%i', playercountry = '%s', playercountrycode = '%s', serverip = '%s', servername = '%s', servercountry  = '%s', servercountrycode = '%s' WHERE steamid = '%s' AND mapname = '%s';"; 
+
 //tickrate128
-new String:sqlglobal_selectGlobalRecord128[] 	= "SELECT name, runtime, teleports FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectGlobalTop128[] 		= "SELECT name, runtime, teleports, steamid FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalRecord128[] 	= "SELECT player, runtime, teleports FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalTop128[] 		= "SELECT player, runtime, teleports, steamid,playercountrycode FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectTop5Players128[] 	= "SELECT runtime, steamid FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectPlayers128[] 			= "SELECT runtime, steamid, mapname FROM player128 WHERE mapname = '%s' ORDER BY runtime ASC";
 new String:sqlglobal_deletePlayer128[] 			= "DELETE FROM player128 WHERE steamid = '%s' AND mapname = '%s'"; 
-new String:sqlglobal_insertPlayer128[] 			= "INSERT INTO player128 (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
-new String:sqlglobal_updatePlayer128[] 			= "UPDATE player128 SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';";
+new String:sqlglobal_insertPlayer128[] 			= "INSERT INTO player128 (steamid, mapname, player, runtime, teleports, playercountry, playercountrycode,serverip,servername,servercountry,servercountrycode,date) VALUES('%s', '%s', '%s', '%f', '%i', '%s', '%s', '%s', '%s', '%s', '%s', CURRENT_TIMESTAMP);";
+new String:sqlglobal_updatePlayer128[] 			= "UPDATE player128 SET date = CURRENT_TIMESTAMP, player = '%s', runtime = '%f', teleports = '%i', playercountry = '%s', playercountrycode = '%s', serverip = '%s', servername = '%s', servercountry  = '%s', servercountrycode = '%s' WHERE steamid = '%s' AND mapname = '%s';"; 
 //tickrate 102 promode
-new String:sqlglobal_selectGlobalRecord102Pro[] 	= "SELECT name, runtime, teleports FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
-new String:sqlglobal_selectGlobalTop102Pro[] 		= "SELECT name, runtime, teleports, steamid FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalRecord102Pro[] 	= "SELECT player, runtime, teleports FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
+new String:sqlglobal_selectGlobalTop102Pro[] 		= "SELECT player, runtime, teleports, steamid,playercountrycode FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectTop5Players102Pro[] 	= "SELECT runtime, steamid FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectPlayers102Pro[] 		= "SELECT runtime, steamid, mapname FROM player102pro WHERE mapname = '%s' ORDER BY runtime ASC";
 new String:sqlglobal_deletePlayer102Pro[] 			= "DELETE FROM player102pro WHERE steamid = '%s' AND mapname = '%s'"; 
-new String:sqlglobal_insertPlayer102Pro[] 			= "INSERT INTO player102pro (steamid, mapname, name, runtime, teleports) VALUES('%s', '%s', '%s', '%f', '%i');";
-new String:sqlglobal_updatePlayer102Pro[] 			= "UPDATE player102pro SET name = '%s', runtime = '%f', teleports = '%i' WHERE steamid = '%s' AND mapname = '%s';";
+new String:sqlglobal_insertPlayer102Pro[] 			= "INSERT INTO player102pro (steamid, mapname, player, runtime, teleports, playercountry, playercountrycode,serverip,servername,servercountry,servercountrycode,date) VALUES('%s', '%s', '%s', '%f', '%i', '%s', '%s', '%s', '%s', '%s', '%s', CURRENT_TIMESTAMP);";
+new String:sqlglobal_updatePlayer102Pro[] 			= "UPDATE player102pro SET date = CURRENT_TIMESTAMP, player = '%s', runtime = '%f', teleports = '%i', playercountry = '%s', playercountrycode = '%s', serverip = '%s', servername = '%s', servercountry  = '%s', servercountrycode = '%s' WHERE steamid = '%s' AND mapname = '%s';"; 
+
 // ADMIN 
 new String:sqlite_dropMap[] 					= "DROP TABLE MapButtons; VACCUM";
 new String:sql_dropMap[] 						= "DROP TABLE MapButtons;";
@@ -593,6 +596,7 @@ public sql_selectGlobalTopClimbers102Pro(Handle:owner, Handle:hndl, const String
 			decl String:szValue[128];
 			decl String:szName[MAX_NAME_LENGTH];
 			decl String:szSteamid[32];
+			decl String:szCountry[64];
 			decl String:szTeleports[32];
 			new Float:time;
 			new teleports;
@@ -606,6 +610,7 @@ public sql_selectGlobalTopClimbers102Pro(Handle:owner, Handle:hndl, const String
 				time = SQL_FetchFloat(hndl, 1); 
 				teleports = SQL_FetchInt(hndl, 2);	
 				SQL_FetchString(hndl, 3, szSteamid, 32);
+				SQL_FetchString(hndl, 4, szCountry, 64);	
 				if (teleports < 10)
 					Format(szTeleports, 32, "    %i",teleports);
 					else
@@ -617,7 +622,7 @@ public sql_selectGlobalTopClimbers102Pro(Handle:owner, Handle:hndl, const String
 				FormatTimeFloat(client, time, 3);		
 				if (time<3600.0)
 					Format(g_szTime[client], 32, "   %s", g_szTime[client]);				
-				Format(szValue, 128, "%s  |  %s    » %s (%s)", g_szTime[client], szTeleports, szName, szSteamid);
+				Format(szValue, 128, "%s  |  %s    » %s (%s,%s)", g_szTime[client], szTeleports, szName, szCountry,szSteamid);
 						
 				AddMenuItem(menu, szValue, szValue, ITEMDRAW_DEFAULT);
 				i++;
@@ -639,6 +644,7 @@ public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error
 			decl String:szValue[128];
 			decl String:szName[MAX_NAME_LENGTH];
 			decl String:szSteamid[32];
+			decl String:szCountry[64];
 			decl String:szTeleports[32];
 			new Float:time;
 			new teleports;
@@ -652,6 +658,7 @@ public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error
 				time = SQL_FetchFloat(hndl, 1); 
 				teleports = SQL_FetchInt(hndl, 2);	
 				SQL_FetchString(hndl, 3, szSteamid, 32);
+				SQL_FetchString(hndl, 4, szCountry, 64);	
 				if (teleports < 10)
 					Format(szTeleports, 32, "    %i",teleports);
 					else
@@ -663,7 +670,7 @@ public sql_selectGlobalTopClimbers(Handle:owner, Handle:hndl, const String:error
 				FormatTimeFloat(client, time, 3);		
 				if (time<3600.0)
 					Format(g_szTime[client], 32, "   %s", g_szTime[client]);				
-				Format(szValue, 128, "%s  |  %s    » %s (%s)", g_szTime[client], szTeleports, szName, szSteamid);
+				Format(szValue, 128, "%s  |  %s    » %s (%s, %s)", g_szTime[client], szTeleports, szName, szCountry,szSteamid);
 						
 				AddMenuItem(menu, szValue, szValue, ITEMDRAW_DEFAULT);
 				i++;
@@ -694,6 +701,7 @@ public sql_selectGlobalTopClimbers128(Handle:owner, Handle:hndl, const String:er
 			decl String:szName[MAX_NAME_LENGTH];
 			decl String:szTeleports[32];
 			decl String:szSteamid[32];
+			decl String:szCountry[64];
 			new Float:time;
 			new teleports;
 			new Handle:menu = CreateMenu(GlobalMapMenuHandler);	
@@ -706,6 +714,7 @@ public sql_selectGlobalTopClimbers128(Handle:owner, Handle:hndl, const String:er
 				time = SQL_FetchFloat(hndl, 1); 
 				teleports = SQL_FetchInt(hndl, 2);
 				SQL_FetchString(hndl, 3, szSteamid, 32);	
+				SQL_FetchString(hndl, 4, szCountry, 64);	
 				if (teleports < 10)
 					Format(szTeleports, 32, "    %i",teleports);
 					else
@@ -717,7 +726,7 @@ public sql_selectGlobalTopClimbers128(Handle:owner, Handle:hndl, const String:er
 				FormatTimeFloat(client, time, 3);		
 				if (time<3600.0)
 					Format(g_szTime[client], 32, "   %s", g_szTime[client]);				
-				Format(szValue, 128, "%s  |  %s    » %s (%s)", g_szTime[client], szTeleports, szName, szSteamid);
+				Format(szValue, 128, "%s  |  %s    » %s (%s, %s)", g_szTime[client], szTeleports, szName, szCountry,szSteamid);
 						
 				AddMenuItem(menu, szValue, szValue, ITEMDRAW_DEFAULT);
 				i++;
@@ -749,6 +758,7 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 			decl String:szName[MAX_NAME_LENGTH];
 			decl String:szTeleports[32];
 			decl String:szSteamid[32];
+			decl String:szCountry[64];
 			new Float:time;
 			new teleports;
 			new Handle:menu = CreateMenu(GlobalMapMenuHandler);	
@@ -761,6 +771,7 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 				time = SQL_FetchFloat(hndl, 1); 
 				teleports = SQL_FetchInt(hndl, 2);	
 				SQL_FetchString(hndl, 3, szSteamid, 32);
+				SQL_FetchString(hndl, 4, szCountry, 64);	
 				if (teleports < 10)
 					Format(szTeleports, 32, "    %i",teleports);
 					else
@@ -772,7 +783,7 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 				FormatTimeFloat(client, time, 3);		
 				if (time<3600.0)
 					Format(g_szTime[client], 32, "   %s", g_szTime[client]);				
-				Format(szValue, 128, "%s  |  %s    » %s (%s)", g_szTime[client], szTeleports, szName,szSteamid);
+				Format(szValue, 128, "%s  |  %s    » %s (%s, %s)", g_szTime[client], szTeleports, szName,szCountry,szSteamid);
 						
 				AddMenuItem(menu, szValue, szValue, ITEMDRAW_DEFAULT);
 				i++;
@@ -788,7 +799,7 @@ public sql_selectGlobalTopClimbers102(Handle:owner, Handle:hndl, const String:er
 public db_insertGlobalRecord(client)
 {
 	if (g_hDbGlobal == INVALID_HANDLE) return;
-	decl String:szQuery[255];
+	decl String:szQuery[1024];
 	decl String:szSteamId[32];
 	decl String:szUName[MAX_NAME_LENGTH];
 	if (IsValidClient(client))
@@ -806,14 +817,14 @@ public db_insertGlobalRecord(client)
 	if (!g_bProMode)
 	{
 		if (g_tickrate==64)
-			Format(szQuery, 255, sqlglobal_insertPlayer, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+			Format(szQuery, 1024, sqlglobal_insertPlayer, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode);
 		if (g_tickrate==128)
-			Format(szQuery, 255, sqlglobal_insertPlayer128, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+			Format(szQuery, 1024, sqlglobal_insertPlayer128, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode);
 		if (g_tickrate==102)
-			Format(szQuery, 255, sqlglobal_insertPlayer102, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+			Format(szQuery, 1024, sqlglobal_insertPlayer102, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode);
 	}
 	else
-		Format(szQuery, 255, sqlglobal_insertPlayer102Pro, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client]);
+		Format(szQuery, 1024, sqlglobal_insertPlayer102Pro, szSteamId, g_szMapName, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode);
 	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
 }
 
@@ -825,7 +836,7 @@ public SQL_GlobalCallback(Handle:owner, Handle:hndl, const String:error[], any:d
 public db_updateGlobalRecord(client)
 {
 	if (g_hDbGlobal == INVALID_HANDLE) return;
-	decl String:szQuery[255];
+	decl String:szQuery[1024];
 	decl String:szSteamId[32];
 	decl String:szUName[MAX_NAME_LENGTH];
 	if (IsValidClient(client))
@@ -843,14 +854,14 @@ public db_updateGlobalRecord(client)
 	if (!g_bProMode)
 	{
 		if (g_tickrate==64)
-			Format(szQuery, 255, sqlglobal_updatePlayer, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+			Format(szQuery, 1024, sqlglobal_updatePlayer, szName,g_fFinalTime[client],g_OverallTp[client],g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode, szSteamId, g_szMapName); 
 		if (g_tickrate==128)
-			Format(szQuery, 255, sqlglobal_updatePlayer128, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+			Format(szQuery, 1024, sqlglobal_updatePlayer128, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode,szSteamId, g_szMapName); 
 		if (g_tickrate==102)
-			Format(szQuery, 255, sqlglobal_updatePlayer102, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+			Format(szQuery, 1024, sqlglobal_updatePlayer102, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode,szSteamId, g_szMapName); 
 	}
 	else
-		Format(szQuery, 255, sqlglobal_updatePlayer102Pro, szName,g_fFinalTime[client],g_OverallTp[client], szSteamId, g_szMapName); 
+		Format(szQuery, 1024, sqlglobal_updatePlayer102Pro, szName,g_fFinalTime[client],g_OverallTp[client], g_szCountry[client],g_szCountryCode[client],g_szServerIp,g_szServerName,g_szServerCountry,g_szServerCountryCode,szSteamId, g_szMapName); 
 	SQL_TQuery(g_hDbGlobal, SQL_GlobalCallback, szQuery,DBPrio_Low);
 }
 
@@ -858,18 +869,18 @@ public db_GlobalRecord(client)
 {
 	if (g_bGlobalDB && g_hDbGlobal != INVALID_HANDLE)
 	{
-		decl String:szQuery[255];
+		decl String:szQuery[1024];
 		if (!g_bProMode)
 		{
 			if (g_tickrate==64)
-				Format(szQuery, 255, sqlglobal_selectTop5Players, g_szMapName);
+				Format(szQuery, 1024, sqlglobal_selectTop5Players, g_szMapName);
 			if (g_tickrate==128)
-				Format(szQuery, 255, sqlglobal_selectTop5Players128, g_szMapName);
+				Format(szQuery, 1024, sqlglobal_selectTop5Players128, g_szMapName);
 			if (g_tickrate==102)
-				Format(szQuery, 255, sqlglobal_selectTop5Players102, g_szMapName);
+				Format(szQuery, 1024, sqlglobal_selectTop5Players102, g_szMapName);
 		}
 		else
-			Format(szQuery, 255, sqlglobal_selectTop5Players102Pro, g_szMapName);
+			Format(szQuery, 1024, sqlglobal_selectTop5Players102Pro, g_szMapName);
 		SQL_TQuery(g_hDbGlobal, SQL_SelectGlobalPlayersCallback, szQuery, client);	
 	}
 }

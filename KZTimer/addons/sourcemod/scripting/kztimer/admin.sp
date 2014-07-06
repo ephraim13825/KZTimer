@@ -26,12 +26,17 @@ public Action:Admin_KzPanel(client, args)
 	PrintToConsole(client," rcon kz_dist_pro_bhop - Minimum distance for bhops to be considered pro\n rcon kz_dist_leet_bhop - Minimum distance for bhops to be considered leet\n rcon kz_dist_min_wj - Minimum distance for weirdjumps to be considered good\n rcon kz_dist_min_lj - Minimum distance for longjumps to be considered good");
 	PrintToConsole(client," rcon kz_dist_pro_lj - Minimum distance for longjumps to be considered pro\n rcon kz_dist_leet_lj - Minimum distance for longjumps to be considered leet\n rcon kz_dist_pro_wj - Minimum distance for weirdjumps to be considered pro\n rcon kz_dist_leet_wj - Minimum distance for weirdjumps to be considered leet");
 	PrintToConsole(client," rcon kz_dist_min_dropbhop - Minimum distance for dropbhop to be considered good\n rcon kz_dist_pro_dropbhop - Minimum distance for dropbhop to be considered pro\n rcon kz_dist_leet_dropbhop - Minimum distance for dropbhop to be considered leet\n rcon kz_dist_min_multibhop - Minimum distance for multibhop to be considered good");
-	PrintToConsole(client," rcon kz_dist_pro_multibhop - Minimum distance for multibhop to be considered pro\n rcon kz_dist_leet_multibhop - Minimum distance for multibhop to be considered leet\n\nAdmin commands:\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
-	PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_getmultiplier <steamid> (Gets the dynamic points multiplier for given steamid)\n sm_setmultiplier <steamid> <multiplier> (Sets the dynamic points multiplier for given steamid)\n [players have to refresh their profile afterwards]");
-	PrintToConsole(client,"[database table playertimes]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp&pro times for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
-	PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n[database table jumpstats]\n sm_resetjumpstats (Drops jumpstats table)");
-	PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhoprecords (Resets all drop bhop records)");
-	PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)");
+	PrintToConsole(client," rcon kz_dist_pro_multibhop - Minimum distance for multibhop to be considered pro\n rcon kz_dist_leet_multibhop - Minimum distance for multibhop to be considered leet");		
+	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
+	{
+		PrintToConsole(client,"\nAdmin commands:\nsm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
+		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_getmultiplier <steamid> (Gets the dynamic points multiplier for given steamid)\n sm_setmultiplier <steamid> <multiplier> (Sets the dynamic points multiplier for given steamid)\n [players have to refresh their profile afterwards]");
+		PrintToConsole(client,"[database table playertimes]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp&pro times for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
+		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n[database table jumpstats]\n sm_resetjumpstats (Drops jumpstats table)");
+		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
+		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)");
+		
+	}
 	KzAdminMenu(client);
 	return Plugin_Handled;
 }
@@ -523,19 +528,19 @@ public Action:Admin_DropAllMapRecords(client, args)
 
 public Action:Admin_DropPlayerRanks(client, args)
 {
-	db_dropPlayerRanks(client);
+	db_dropPlayerRanks(client)
 	return Plugin_Handled;
 }
 
 public Action:Admin_DropPlayerJump(client, args)
-{
+{	
 	db_dropPlayerJump(client);
 	return Plugin_Handled;
 }
 
 public Action:Admin_ResetAllLjRecords(client, args)
 {
-	decl String:szQuery[255];      
+ 	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET ljrecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	       
 	PrintToConsole(client, "lj records reseted.");
@@ -569,7 +574,7 @@ public Action:Admin_ResetAllWjRecords(client, args)
 
 public Action:Admin_ResetAllBhopRecords(client, args)
 {
-	decl String:szQuery[255];      
+ 	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET bhoprecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	       
 	PrintToConsole(client, "bhop records reseted.");
@@ -586,7 +591,7 @@ public Action:Admin_ResetAllBhopRecords(client, args)
 
 public Action:Admin_ResetAllDropBhopRecords(client, args)
 {
-	decl String:szQuery[255];      
+ 	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET dropbhoprecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	
 	PrintToConsole(client, "dropbhop records reseted.");	
@@ -603,7 +608,7 @@ public Action:Admin_ResetAllDropBhopRecords(client, args)
 
 public Action:Admin_ResetAllMultiBhopRecords(client, args)
 {
-	decl String:szQuery[255];      
+ 	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET multibhoprecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	
 	PrintToConsole(client, "multibhop records reseted.");
@@ -620,7 +625,7 @@ public Action:Admin_ResetAllMultiBhopRecords(client, args)
 
 public Action:Admin_ResetAllLjBlockRecords(client, args)
 {
-	decl String:szQuery[255];      
+ 	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET ljblockdist=-1");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	
 	PrintToConsole(client, "ljblock records reseted.");
