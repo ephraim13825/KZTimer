@@ -12,7 +12,7 @@ Info:
 - globalconnections.sp doenst contain the correct login data
 - Global map record requirements (Global record top5 appears on all servers which are using KZ Timer):
 >kz_checkpoints_on_bhop_plattforms 0, kz_auto_timer 0, kz_settings_enforcer 1 and
->only maps with integrated climb buttons are supported
+>only kz_, bkz_ and xc_ maps with integrated climb buttons are supported
 
 - Known bug:
 The prestrafe method doenst work for a very (very very!) small amount of players.
