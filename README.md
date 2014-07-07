@@ -15,7 +15,7 @@ Info:
 >only kz_, bkz_ and xc_ maps with integrated climb buttons are supported
 
 - Known bug:
-The prestrafe method doenst work for a very (very very!) small amount of players.
+The prestrafe method doenst work for a very (very very!) small amount of players. Reason: Unkown and probably cliend-side
 
 Changelog
 =======
