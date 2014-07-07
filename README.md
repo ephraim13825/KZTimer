@@ -11,8 +11,8 @@ Info:
 - KZ AntiCheat is automatically disabled when kz_auto_bhop is set to 1
 - globalconnections.sp doenst contain the correct login data
 - Global map record requirements (Global record top5 appears on all servers which are using KZ Timer):
->settings enforcer must be enabled and
->only maps with integrated climb buttons are supported (e.g kz_giantbean)
+>kz_checkpoints_on_bhop_plattforms 0, kz_auto_timer 0, kz_settings_enforcer 1 and
+>only maps with integrated climb buttons are supported
 
 - Known bug:
 The prestrafe method doenst work for a very (very very!) small amount of players.
