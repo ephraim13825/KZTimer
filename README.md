@@ -1,5 +1,7 @@
 Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223274
 
+KZTimer developement branch: https://github.com/1NutWunDeR/KZTimer_nightly
+
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - tickrate 102.4 is optimal for kreedzing (start parameter: -tickrate 102.4)
