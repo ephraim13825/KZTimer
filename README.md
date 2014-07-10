@@ -16,11 +16,14 @@ Info:
 >kz_checkpoints_on_bhop_plattforms 0, kz_auto_timer 0, kz_settings_enforcer 1 and
 >only kz_, bkz_ and xc_ maps with integrated climb buttons are supported
 
-- Known bug:
-The prestrafe method doenst work for a very (very very!) small amount of players. Reason: Unkown and probably on cliend-side
-
 Changelog
 =======
+
+v1.45
+- fixed a prestrafe bug
+- increased refreshing of speed/keys center panel
+- re-integrated dhooks extention (should fix the wrong position of the replay bots after a teleport. old replays remain broken) - dhooks is optional!
+
 
 v1.44
 - changed global database login (new host ip)
