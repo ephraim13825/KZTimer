@@ -361,9 +361,7 @@ public Action:MainTimer(Handle:timer)
 		if (IsValidClient(client))
 		{			
 			if(IsPlayerAlive(client))
-				AliveMainTimer(client);
-			else
-				DeadMainTimer(client);					
+				AliveMainTimer(client);			
 		}
 	}	
 	return Plugin_Continue;		

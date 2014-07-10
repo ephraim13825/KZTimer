@@ -66,7 +66,9 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Ranks:");
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2], g_pr_rank_Scrub,g_szSkillGroups[3], g_pr_rank_Rookie,g_szSkillGroups[4], g_pr_rank_Skilled);
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Expert, g_szSkillGroups[6],g_pr_rank_Pro, g_szSkillGroups[7], g_pr_rank_Elite, g_szSkillGroups[8], g_pr_rank_Master);
-	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");	
+	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");		
+	PrintToConsole(client, "Illegal global record found? Then make a comment on the kztimer steam group!");
+	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
 	if (g_hDbGlobal == INVALID_HANDLE)
 		PrintToConsole(client, "[KZ] Global Records disabled. Reason: No connection to the global database.");
 	else
@@ -77,7 +79,7 @@ public PrintConsoleInfo(client)
 				PrintToConsole(client, "[KZ] Global Records disabled. Reason: Server settings enforcer disabled.");
 			else
 				if (!g_bglobalValidFilesize)
-					PrintToConsole(client, "[KZ] Global Records disabled. Reason: Wrong .bsp/map file size. (other version registered in the global database. Please contact an admin.)");	
+					PrintToConsole(client, "[KZ] Global Records disabled. Reason: Wrong map file size. (Map version has to be equal to the latest workshop version. If that's the case then make a comment on the kztimer steam group)");	
 				else
 					if (!g_bAntiCheat)
 						PrintToConsole(client, "[KZ] Global Records disabled. Reason: KZ AntiCheat disabled.");
@@ -1323,33 +1325,41 @@ public Prestrafe(client, mouse_ang, &buttons)
 			z = 20;
 		else
 			z = 30;
-		if ((buttons & IN_MOVERIGHT && mouse_ang > 0 && g_mouseAbs < z) || (buttons & IN_MOVELEFT && mouse_ang < 0 && g_mouseAbs < z))
+		if (((buttons & IN_MOVERIGHT && mouse_ang >= 0 && g_mouseAbs < z) || (buttons & IN_MOVELEFT && mouse_ang <= 0 && g_mouseAbs < z)) && g_MouseAbsCount[client] <= 15)
 		{            
+			if (mouse_ang == 0)
+				g_MouseAbsCount[client]++;
 			g_PrestrafeFrameCounter[client]++;
 			new x;
 			if (g_tickrate == 64)
 				x = 50;
 			else
-				x = 90;
+				x = 85;
 			if (g_PrestrafeFrameCounter[client] < x)
-			{
-				g_PrestrafeVelocity[client]+=0.00213;
-				
+			{				
 				if(StrEqual(classname, "weapon_hkp2000"))
 				{
+					if (g_PrestrafeVelocity[client]>1.1)
+						g_PrestrafeVelocity[client]+=0.001;
+					else
+						g_PrestrafeVelocity[client]+=0.0021;
 					if (g_PrestrafeVelocity[client] > 1.149)
-						g_PrestrafeVelocity[client]-=0.022;
+						g_PrestrafeVelocity[client]-=0.012;
 				}
 				else
 				{
+					if (g_PrestrafeVelocity[client]>1.052)
+						g_PrestrafeVelocity[client]+=0.001;
+					else
+						g_PrestrafeVelocity[client]+=0.0021;					
 					if (g_PrestrafeVelocity[client] > 1.107)
-						g_PrestrafeVelocity[client]-=0.032;
+						g_PrestrafeVelocity[client]-=0.012;
 				}
 				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);						
 			}
 			else
 			{
-				g_PrestrafeVelocity[client]-=0.003;
+				g_PrestrafeVelocity[client]-=0.0022;
 				if(StrEqual(classname, "weapon_hkp2000"))
 				{
 					if (g_PrestrafeVelocity[client]< 1.042)
@@ -1364,7 +1374,8 @@ public Prestrafe(client, mouse_ang, &buttons)
 		}
 		else
 		{
-			g_PrestrafeVelocity[client]-=0.03;				
+			g_MouseAbsCount[client] = 0;
+			g_PrestrafeVelocity[client]-=0.04;				
 			if(StrEqual(classname, "weapon_hkp2000"))
 			{
 				if (g_PrestrafeVelocity[client]< 1.042)
@@ -1905,7 +1916,7 @@ public ResetJump(client)
 	g_bPlayerJumped[client] = false;		
 }
 
-public DeadMainTimer(client)
+public DeadHud(client)
 {
 	decl String:szTick[32];
 	Format(szTick, 32, "%i", g_tickrate);			
@@ -1915,19 +1926,6 @@ public DeadMainTimer(client)
 	new SpecMode;			
 	ObservedUser = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");	
 	SpecMode = GetEntProp(client, Prop_Send, "m_iObserverMode");	
-	/*if (g_bInfoBot && g_InfoBot != -1 && g_InfoBot == ObservedUser)
-	{	
-		for(new z = ObservedUser; z <= MaxClients; z++) 				
-			if (IsValidClient(z) && IsPlayerAlive(z) && z != g_InfoBot)
-			{
-				SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", z);  
-				SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
-				SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);	
-				g_SpecTarget[client] = z;				
-				return;
-			}
-	}
-	else*/
 	if (SpecMode == 4 || SpecMode == 5)
 	{
 		g_SpecTarget[client] = ObservedUser;
@@ -2104,11 +2102,10 @@ public DeadMainTimer(client)
 			}
 			else
 				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fSpeed[ObservedUser],GetVelocity(ObservedUser),sResult);
-		}	
+		}			
 	}	
 	else
 		g_SpecTarget[client] = -1;
-
 }
 
 public AliveMainTimer(client)
@@ -2120,10 +2117,7 @@ public AliveMainTimer(client)
 		g_TotalGroundFrames[client]=0;
 	if (g_TotalGroundFrames[client] > 1 && g_bOnBhopPlattform[client])
 		g_bOnBhopPlattform[client] = false;
-		
-	//Get Speed
-	g_fSpeed[client] = GetSpeed(client);
-	
+			
 	//Wall check (JumpStats)
 	SurfCheck(client);
 	
@@ -2171,78 +2165,6 @@ public AliveMainTimer(client)
 		}
 	}
 	
-	//center name / info panel
-	/*new target = TraceClientViewEntity(client);		
-	decl String:classname[64];
-	GetClientWeapon(client, classname, 64);
-	if (IsValidEdict(target) && !g_bHide[client] && g_bShowNames[client] && target > 0 && target <= MaxClients)
-	{
-		new clientteam = GetClientTeam(client);
-		new targetteam = GetClientTeam(target);
-		CreateTimer(1.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-		g_bOverlay[client]=true;
-		if (clientteam != targetteam && !g_bPause[target])
-		{
-			if (target == g_iBot || target == g_iBot2)
-			{
-				if (target == g_iBot)
-					PrintHintText(client, " \nPRO RECORD REPLAY [BOT]");   
-				else
-					PrintHintText(client, " \nTP RECORD REPLAY [BOT]");  
-			}
-			else
-			{
-				new String:clientName[32];
-				GetClientName(target, clientName, sizeof(clientName));
-				PrintHintText(client, " \n%s | %s (%d HP)", <font size='22'[target], clientName, GetClientHealth(target));   
-			}
-		}
-	}*/
-	
-	//INFOPANEL	
-	if (g_bInfoPanel[client])
-	{
-		decl String:sResult[256];	
-		new Buttons;
-		Buttons = g_LastButton[client];			
-		if (Buttons & IN_MOVELEFT)
-			Format(sResult, sizeof(sResult), "<b>Keys</b>: A");
-		else
-			Format(sResult, sizeof(sResult), "<b>Keys</b>: _");
-		if (Buttons & IN_FORWARD)
-			Format(sResult, sizeof(sResult), "%s W", sResult);
-		else
-			Format(sResult, sizeof(sResult), "%s _", sResult);	
-		if (Buttons & IN_BACK)
-			Format(sResult, sizeof(sResult), "%s S", sResult);
-		else
-			Format(sResult, sizeof(sResult), "%s _", sResult);	
-		if (Buttons & IN_MOVERIGHT)
-			Format(sResult, sizeof(sResult), "%s D", sResult);
-		else
-			Format(sResult, sizeof(sResult), "%s _", sResult);	
-		if (Buttons & IN_DUCK)
-			Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
-		else
-			Format(sResult, sizeof(sResult), "%s - _", sResult);			
-		if (Buttons & IN_JUMP)
-			Format(sResult, sizeof(sResult), "%s JUMP", sResult);
-		else
-			Format(sResult, sizeof(sResult), "%s _", sResult);	
-		if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
-		{
-			if (g_bJumpStats)
-			{		
-				if (g_bPlayerJumped[client] && (g_bPreStrafe || g_bProMode))
-					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
-				else
-					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],sResult);
-			}
-			else
-				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fSpeed[client],GetVelocity(client),sResult);			
-		}
-	}	
-		
 	//Spec list for players
 	Format(g_szPlayerPanelText[client], 512, "");
 	decl String:sSpecs[512];
@@ -3182,4 +3104,51 @@ public SetInfoBotName(ent)
 	CS_SetClientName(g_InfoBot, szBuffer);
 	Client_SetScore(g_InfoBot,9999);
 	CS_SetClientClanTag(g_InfoBot, "NEXTMAP");
+}
+
+public InfoTimerAlive(client)
+{
+	if (g_bInfoPanel[client] && IsValidClient(client))
+	{
+		decl String:sResult[256];	
+		new Buttons;
+		Buttons = g_LastButton[client];			
+		if (Buttons & IN_MOVELEFT)
+			Format(sResult, sizeof(sResult), "<b>Keys</b>: A");
+		else
+			Format(sResult, sizeof(sResult), "<b>Keys</b>: _");
+		if (Buttons & IN_FORWARD)
+			Format(sResult, sizeof(sResult), "%s W", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_BACK)
+			Format(sResult, sizeof(sResult), "%s S", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_MOVERIGHT)
+			Format(sResult, sizeof(sResult), "%s D", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+		if (Buttons & IN_DUCK)
+			Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s - _", sResult);			
+		if (Buttons & IN_JUMP)
+			Format(sResult, sizeof(sResult), "%s JUMP", sResult);
+		else
+			Format(sResult, sizeof(sResult), "%s _", sResult);	
+
+		if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
+		{
+			if (g_bJumpStats)
+			{		
+				if (g_bPlayerJumped[client] && (g_bPreStrafe || g_bProMode))
+					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],g_fPreStrafe[client],sResult);
+				else
+					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_szLastJumpDistance[client],g_fSpeed[client],sResult);
+			}
+			else
+				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fSpeed[client],GetVelocity(client),sResult);			
+		}
+	}	
 }

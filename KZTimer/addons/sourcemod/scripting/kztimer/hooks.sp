@@ -11,6 +11,8 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			g_bSlowDownCheck[client] = false;
 			g_SpecTarget[client] = -1;	
 			g_bOnGround[client] = true;
+			g_MouseAbsCount[client] = 0;
+			g_SpeedRefreshCount[client] = 0;
 			
 			//remove weapons
 			if (g_bCleanWeapons && (GetClientTeam(client) > 1))
@@ -506,9 +508,17 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		g_bOnBhopPlattform[client] = false;
 		
 	//some methods..	
-	if(IsValidClient(client) && IsPlayerAlive(client))	
+	if(IsPlayerAlive(client))	
 	{	
 		MenuRefresh(client);
+		g_SpeedRefreshCount[client]++;
+		if (g_SpeedRefreshCount[client] >= 8)
+		{
+			g_SpeedRefreshCount[client] = 0;
+			g_fSpeed[client] = GetSpeed(client);
+		}
+		//hint msg info speed keys etc.
+		InfoTimerAlive(client);
 		
 		//undo check
 		if(!g_bAllowCpOnBhopPlattforms && (g_bUndo[client] || g_bUndoTimer[client]))
@@ -577,6 +587,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			TE_SendBlockPoint(client, g_OriginBlock[client][0], g_OriginBlock[client][1], g_Beam[0]);
 		}		
 	}
+	else
+		DeadHud(client);
 	
 	// postthink jumpstats (landing)	
 	if(GetEntityFlags(client) & FL_ONGROUND && !g_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)

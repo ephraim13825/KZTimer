@@ -481,7 +481,7 @@ public CL_OnEndTimerPress(client)
 					PrintToConsole(client, "[KZ] Global Records disabled. Reason: Server settings enforcer disabled.");
 				else
 					if (!g_bglobalValidFilesize)
-						PrintToConsole(client, "[KZ] Global Records disabled. Reason: Wrong .bsp/map file size. (other version registered in the global database. Please contact an admin)");	
+						PrintToConsole(client, "[KZ] Global Records disabled. Reason: Wrong map file size. (Map version has to be equal to the latest workshop version. If that's the case then make a comment on the kztimer steam group)");	
 					else
 						if (!g_bAntiCheat)
 							PrintToConsole(client, "[KZ] Global Records disabled. Reason: KZ AntiCheat disabled.");

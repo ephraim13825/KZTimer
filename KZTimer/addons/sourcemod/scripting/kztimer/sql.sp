@@ -126,6 +126,7 @@ new String:sqlglobal_insertBan[] 				= "INSERT INTO banlist (steamid, player64) 
 new String:sqlglobal_deleteban1[] 				= "DELETE FROM player64 WHERE steamid = '%s'"; 
 new String:sqlglobal_deleteban2[] 				= "DELETE FROM player128 WHERE steamid = '%s'"; 
 new String:sqlglobal_deleteban3[] 				= "DELETE FROM player102 WHERE steamid = '%s'"; 
+new String:sqlglobal_deleteban4[] 				= "DELETE FROM player102pro WHERE steamid = '%s'"; 
 //tickrate64
 new String:sqlglobal_selectGlobalRecord[] 		= "SELECT player, runtime, teleports FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
 new String:sqlglobal_selectGlobalTop[] 			= "SELECT player, runtime, teleports, steamid,playercountrycode FROM player64 WHERE mapname = '%s' ORDER BY runtime ASC LIMIT 5";
@@ -376,7 +377,9 @@ public sqlglobal_selectFilesizeCallback(Handle:owner, Handle:hndl, const String:
 			db_GetMapRecord_Global();
 		}
 		else
+		{
 			g_bglobalValidFilesize=false;
+		}
 	}
 	else
 		dbInsertGlobalMap();
@@ -401,6 +404,8 @@ public db_InsertBan(String:szSteamId[32], String:szName[64])
 	Format(szQuery, 256, sqlglobal_deleteban2, szSteamId);
 	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);	
 	Format(szQuery, 256, sqlglobal_deleteban3, szSteamId);
+	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);	
+	Format(szQuery, 256, sqlglobal_deleteban4, szSteamId);
 	SQL_TQuery(g_hDbGlobal, SQL_CheckCallback, szQuery,DBPrio_Low);	
 }
 

@@ -1,7 +1,3 @@
-/*
-- changed global database login (new host ip)
-- database admin commands requires root flag now
-*/
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -17,8 +13,9 @@
 #include <mapchooser>
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
+#include <dhooks>
 #include <sourcebans>
-#define VERSION "1.44"
+#define VERSION "1.45"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -61,6 +58,9 @@
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
 
+// DHooks
+new Handle:g_hTeleport;
+
 //botmimic2
 //https://forums.alliedmods.net/showthread.php?t=164148?t=164148
 #define MAX_RECORD_NAME_LENGTH 64
@@ -72,7 +72,7 @@
 #define FRAME_INFO_SIZE 15
 #define FRAME_INFO_SIZE_V1 14
 #define AT_SIZE 10
-#define ORIGIN_SNAPSHOT_INTERVAL 100
+#define ORIGIN_SNAPSHOT_INTERVAL 75
 #define FILE_HEADER_LENGTH 74
 
 //measure plugin by DaFox
@@ -559,6 +559,8 @@ new g_pr_finishedmaps_tp[MAX_PR_PLAYERS];
 new g_pr_finishedmaps_pro[MAX_PR_PLAYERS];
 new g_ReplayBotTpColor[3];
 new g_ReplayBotProColor[3];
+new g_MouseAbsCount[MAXPLAYERS+1];
+new g_SpeedRefreshCount[MAXPLAYERS+1];
 new detailView[MAXPLAYERS+1];
 new g_CBet[MAXPLAYERS+1];
 new g_UspDrops[MAXPLAYERS+1];
@@ -632,6 +634,7 @@ new String:g_pr_szName[MAX_PR_PLAYERS][64];
 new String:g_pr_szSteamID[MAX_PR_PLAYERS][32]; 
 new String:g_szSkillGroups[9][32];
 new String:g_szServerName[100];  
+new String:g_szMapPath[256]; 
 new String:g_szServerIp[32];  
 new String:g_szServerCountry[100]; 
 new String:g_szServerCountryCode[32];  
@@ -779,7 +782,7 @@ public OnPluginStart()
 	g_bMultiplayerBhop     = GetConVarBool(g_hMultiplayerBhop);
 	HookConVarChange(g_hMultiplayerBhop, OnSettingChanged);
 	
-	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hReplayBot = CreateConVar("kz_replay_bot", "0", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
 	
@@ -923,7 +926,7 @@ public OnPluginStart()
 	GetConVarString(g_hReplayBotTpColor,szTpColor,256);
 	GetRGBColor(1,szTpColor);
 	
-	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "0", "on/off - auto-ban (bhop hack and strafe hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even if this function is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "1", "on/off - auto-ban (bhop hack and strafe hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even if this function is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoBan     = GetConVarBool(g_hAutoBan);
 	HookConVarChange(g_hAutoBan, OnSettingChanged);	
 	
@@ -1210,6 +1213,33 @@ public OnLibraryAdded(const String:name[])
 		g_bMapChooser = true;
 	if (tmp != INVALID_HANDLE)
 		CloseHandle(tmp);
+	
+	// botmimic2 by peace-maker
+	if(StrEqual(name, "dhooks") && g_hTeleport == INVALID_HANDLE)
+	{
+		// Optionally setup a hook on CBaseEntity::Teleport to keep track of sudden place changes
+		new Handle:hGameData = LoadGameConfigFile("sdktools.games");
+		if(hGameData == INVALID_HANDLE)
+		return;
+		new iOffset = GameConfGetOffset(hGameData, "Teleport");
+		CloseHandle(hGameData);
+		if(iOffset == -1)
+		return;
+
+		g_hTeleport = DHookCreate(iOffset, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, DHooks_OnTeleport);
+		if(g_hTeleport == INVALID_HANDLE)
+		return;
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		DHookAddParam(g_hTeleport, HookParamType_ObjectPtr);
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		if(GetEngineVersion() == Engine_CSGO)
+		DHookAddParam(g_hTeleport, HookParamType_Bool);
+	}
+	for(new i=1;i<=MaxClients;i++)
+	{
+		if(IsClientInGame(i))
+			OnClientPutInServer(i);
+	}
 }
 
 public OnLibraryRemoved(const String:name[])
@@ -1218,6 +1248,8 @@ public OnLibraryRemoved(const String:name[])
 		g_hAdminMenu = INVALID_HANDLE;
 	if (StrEqual("sourcebans", name))
 		bCanUseSourcebans = false;
+	if(StrEqual(name, "dhooks"))
+		g_hTeleport = INVALID_HANDLE;
 }
 
 public OnAllPluginsLoaded()
@@ -1263,14 +1295,12 @@ public OnMapStart()
 	g_bAutoBhop2=false;
 	g_bRoundEnd=false;
 	
-	//get mapname
-	decl String:mapPath[256];
+	//get mapnam
 	new bool: fileFound;
 	GetCurrentMap(g_szMapName, MAX_MAP_LENGTH);
-	Format(mapPath, sizeof(mapPath), "maps/%s.bsp", g_szMapName); 	
-	fileFound = FileExists(mapPath);
-	
-	//fix workshop mapname
+	Format(g_szMapPath, sizeof(g_szMapPath), "maps/%s.bsp", g_szMapName); 	
+	fileFound = FileExists(g_szMapPath);
+			
 	new String:mapPieces[6][128];
 	new lastPiece = ExplodeString(g_szMapName, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
 	Format(g_szMapName, sizeof(g_szMapName), "%s", mapPieces[lastPiece-1]); 
@@ -1315,7 +1345,7 @@ public OnMapStart()
 	//valid timestamp? [global db]
 	if (fileFound && g_hDbGlobal != INVALID_HANDLE && g_bGlobalDB)
 	{	
-		g_unique_FileSize =  FileSize(mapPath);
+		g_unique_FileSize =  FileSize(g_szMapPath);
 		//supported map tags 
 		if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bkz"))
 			dbCheckFileSize();
@@ -1471,6 +1501,8 @@ public OnClientPutInServer(client)
 	GetCountry(client);		
 	ResetStrafes(client);
 	g_PlayerStates[client][bOn] = false;
+	if(g_hTeleport != INVALID_HANDLE)
+		DHookEntity(g_hTeleport, false, client);
 }
 
 public OnClientAuthorized(client)
