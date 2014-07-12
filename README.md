@@ -19,6 +19,9 @@ Info:
 Changelog
 =======
 
+v1.46
+- optimized prestrafe method (tickrate 64)
+
 v1.45
 - fixed a prestrafe bug
 - increased refreshing of speed/keys center panel
