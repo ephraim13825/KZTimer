@@ -536,6 +536,7 @@ public Action:Client_Undo(client, args)
 			g_fLastUndo[client] = GetEngineTime();
 		}	
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
+		g_LeetJumpDominating[client] = 0;
 	}
 	return Plugin_Handled;
 }
@@ -1716,6 +1717,7 @@ public TeleClient(client,pos)
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			g_bValidTeleport[client]=true;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
+			g_LeetJumpDominating[client] = 0;
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
 				EmitSoundToClient(client,"buttons/blip1.wav",client);

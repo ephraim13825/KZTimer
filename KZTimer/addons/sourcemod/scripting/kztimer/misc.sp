@@ -1310,72 +1310,131 @@ public bool:WallCheck(client)
 
 public Prestrafe(client, mouse_ang, &buttons)
 {
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || (!g_bPreStrafe && !g_bProMode) || (g_bSlowDownCheck[client]))
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || (!g_bPreStrafe && !g_bProMode) || (g_bSlowDownCheck[client]) | !(GetEntityFlags(client) & FL_ONGROUND))
 		return;
+	
+	//var
+	new g_mouseAbs, MaxMouseAbs, MaxFrameCount;	
 	decl String:classname[64];
 	GetClientWeapon(client, classname, 64);
+	new Float: IncSpeed, Float: DecSpeed;
 	new Float: speed = GetSpeed(client);
+	new bool: bForward;
+	
+	//direction
+	if (GetClientMovingDirection(client) > 0.0)
+		bForward=true;
+	else
+		bForward=false;
+		
+	
+	//no mouse movement?
+	if (mouse_ang == 0)
+	{
+		new Float: diff = GetEngineTime() - g_fVelocityModifierLastChange[client]
+		if (diff > 0.2)
+		{
+			if(StrEqual(classname, "weapon_hkp2000"))
+				g_PrestrafeVelocity[client] = 1.042;
+			else
+				g_PrestrafeVelocity[client] = 1.0;
+			g_fVelocityModifierLastChange[client] = GetEngineTime();
+			SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
+		}
+		g_mouseDirOld[client] = mouse_ang;
+		return;
+	}
+
 	if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)) && speed > 249.0)
-	{          
-		new g_mouseAbs = mouse_ang - g_mouseDirOld[client];
+	{       
+		//mouse ang diff
+		g_mouseAbs = mouse_ang - g_mouseDirOld[client];
 		if (g_mouseAbs < 0)
 			g_mouseAbs = g_mouseAbs*-1;
-		new z;
+			
+		//tickrate depending values
 		if (g_tickrate == 64)
-			z = 20;
-		else
-			z = 30;
-		if (((buttons & IN_MOVERIGHT && mouse_ang >= 0 && g_mouseAbs < z) || (buttons & IN_MOVELEFT && mouse_ang <= 0 && g_mouseAbs < z)) && g_MouseAbsCount[client] <= 15)
-		{            
-			if (mouse_ang == 0)
-				g_MouseAbsCount[client]++;
+		{
+			MaxMouseAbs =  30;
+			MaxFrameCount = 45;
+			IncSpeed = 0.00165;
+			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
+				IncSpeed = 0.001;
+			DecSpeed = 0.006;
+		}
+		
+		if (g_tickrate == 102)
+		{
+			MaxMouseAbs =  35;
+			MaxFrameCount = 60;	
+			IncSpeed = 0.00149;
+			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
+				IncSpeed = 0.001;			
+			DecSpeed = 0.006;
+			
+		}
+		
+		if (g_tickrate == 128)
+		{
+			MaxMouseAbs =  35;
+			MaxFrameCount = 80;	
+			IncSpeed = 0.00145;
+			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
+				IncSpeed = 0.001;			
+			DecSpeed = 0.006;
+		}
+		
+
+		if (((buttons & IN_MOVERIGHT && ((mouse_ang > 0 && bForward) || (mouse_ang < 0 && !bForward)))) || (buttons & IN_MOVELEFT && ((mouse_ang > 0 && !bForward) || (mouse_ang < 0 && bForward)) && g_mouseAbs < MaxMouseAbs))
+		{       
 			g_PrestrafeFrameCounter[client]++;
-			new x;
-			if (g_tickrate == 64)
-				x = 50;
-			else
-				x = 85;
-			if (g_PrestrafeFrameCounter[client] < x)
-			{				
+						
+			//Add speed if Prestrafe frames smaller than max frame count	
+			if (g_PrestrafeFrameCounter[client] < MaxFrameCount)
+			{	
+				//increase speed
+				g_PrestrafeVelocity[client]+= IncSpeed;
+				
+				//usp
 				if(StrEqual(classname, "weapon_hkp2000"))
-				{
-					if (g_PrestrafeVelocity[client]>1.1)
-						g_PrestrafeVelocity[client]+=0.001;
-					else
-						g_PrestrafeVelocity[client]+=0.0021;
-					if (g_PrestrafeVelocity[client] > 1.149)
-						g_PrestrafeVelocity[client]-=0.012;
+				{		
+					if (g_PrestrafeVelocity[client] > 1.15)
+						g_PrestrafeVelocity[client]-=0.007;
 				}
 				else
-				{
-					if (g_PrestrafeVelocity[client]>1.052)
-						g_PrestrafeVelocity[client]+=0.001;
-					else
-						g_PrestrafeVelocity[client]+=0.0021;					
-					if (g_PrestrafeVelocity[client] > 1.107)
-						g_PrestrafeVelocity[client]-=0.012;
-				}
-				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);						
+					if (g_PrestrafeVelocity[client] > 1.104)
+						g_PrestrafeVelocity[client]-=0.007;
+				
+				g_PrestrafeVelocity[client]+= IncSpeed;
 			}
 			else
 			{
-				g_PrestrafeVelocity[client]-=0.0022;
+				//decrease speed
+				g_PrestrafeVelocity[client]-= DecSpeed;
+				
+				//usp reset 250.0 speed
 				if(StrEqual(classname, "weapon_hkp2000"))
 				{
 					if (g_PrestrafeVelocity[client]< 1.042)
+					{
+						g_PrestrafeFrameCounter[client] = 0;
 						g_PrestrafeVelocity[client]= 1.042;
+					}
 				}
-				else						
-				if (g_PrestrafeVelocity[client]< 1.0)
-					g_PrestrafeVelocity[client]= 1.0;
+				else	
+					//knife reset 250.0 speed
+					if (g_PrestrafeVelocity[client]< 1.0)
+					{	
+						g_PrestrafeFrameCounter[client] = 0;
+						g_PrestrafeVelocity[client]= 1.0;	
+					}
 				g_PrestrafeFrameCounter[client] = g_PrestrafeFrameCounter[client] - 2;
-				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
 			}
 		}
 		else
 		{
-			g_MouseAbsCount[client] = 0;
-			g_PrestrafeVelocity[client]-=0.04;				
+			//no prestrafe
+			g_PrestrafeVelocity[client] -= 0.04;
 			if(StrEqual(classname, "weapon_hkp2000"))
 			{
 				if (g_PrestrafeVelocity[client]< 1.042)
@@ -1383,8 +1442,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 			}
 			else						
 			if (g_PrestrafeVelocity[client]< 1.0)
-				g_PrestrafeVelocity[client]= 1.0;
-			SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
+				g_PrestrafeVelocity[client]= 1.0;		
 		}
 	}
 	else
@@ -1393,10 +1451,36 @@ public Prestrafe(client, mouse_ang, &buttons)
 			g_PrestrafeVelocity[client] = 1.042;
 		else
 			g_PrestrafeVelocity[client] = 1.0;	
-		SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
 		g_PrestrafeFrameCounter[client] = 0;
 	}
+	
+	//Set VelocityModifier	
+	SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
+	g_fVelocityModifierLastChange[client] = GetEngineTime();
 	g_mouseDirOld[client] = mouse_ang;
+}
+
+//zipcore movedirection
+stock Float:GetClientMovingDirection(client)
+{
+	new Float:fVelocity[3];
+	GetEntPropVector(client, Prop_Data, "m_vecAbsVelocity", fVelocity);
+	   
+	new Float:fEyeAngles[3];
+	GetClientEyeAngles(client, fEyeAngles);
+
+	if(fEyeAngles[0] > 70.0) fEyeAngles[0] = 70.0;
+	if(fEyeAngles[0] < -70.0) fEyeAngles[0] = -70.0;
+
+	new Float:fViewDirection[3];
+	GetAngleVectors(fEyeAngles, fViewDirection, NULL_VECTOR, NULL_VECTOR);
+	   
+	NormalizeVector(fVelocity, fVelocity);
+	NormalizeVector(fViewDirection, fViewDirection);
+
+	new Float:direction = GetVectorDotProduct(fVelocity, fViewDirection);
+	   
+	return direction;
 }
 
 public MenuRefresh(client)

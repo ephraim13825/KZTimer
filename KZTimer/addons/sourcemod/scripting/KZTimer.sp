@@ -1,3 +1,8 @@
+/*
+v1.46
+- optimized prestrafe
+*/
+
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -15,7 +20,7 @@
 #undef REQUIRE_PLUGIN
 #include <dhooks>
 #include <sourcebans>
-#define VERSION "1.45"
+#define VERSION "1.46"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -394,6 +399,7 @@ new Float:g_fRecordTimeGlobal102Pro=9999999.0;
 new Float:g_fRecordTimeGlobal=9999999.0;
 new Float:g_fRecordTimeGlobal128=9999999.0;
 new Float:g_fRunTime[MAXPLAYERS+1];
+new Float:g_fVelocityModifierLastChange[MAXPLAYERS+1];
 new Float:g_fLastTimeButtonSound[MAXPLAYERS+1];
 new Float:g_fPlayerConnectedTime[MAXPLAYERS+1];
 new Float:g_fStartCommandUsed_LastTime[MAXPLAYERS+1];

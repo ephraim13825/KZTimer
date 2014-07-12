@@ -379,6 +379,7 @@ public sqlglobal_selectFilesizeCallback(Handle:owner, Handle:hndl, const String:
 		else
 		{
 			g_bglobalValidFilesize=false;
+			BlockGlobal();
 		}
 	}
 	else

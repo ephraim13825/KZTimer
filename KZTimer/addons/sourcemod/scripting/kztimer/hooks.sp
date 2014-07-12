@@ -545,7 +545,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		}
 		AutoBhopFunction(client, buttons);
 		Prestrafe(client,mouse[0], buttons);
-		
+
 		//jumpstats/timer
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
