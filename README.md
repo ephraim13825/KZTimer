@@ -1,3 +1,8 @@
+
+kztimer will be re-uploaded in the next days. stay tuned..
+
+
+
 Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223274
 
 KZTimer developement branch: https://github.com/1NutWunDeR/KZTimer_nightly
