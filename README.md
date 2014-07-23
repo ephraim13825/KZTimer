@@ -2,6 +2,7 @@ Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223
 
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
+- The ranking system is based on the mapcycle.txt, keep it always up2date !!!!!!!!
 - tickrate 102.4 is optimal for kreedzing (start parameter: -tickrate 102.4)
 - The point system is based on the mapcycle.txt of cs:go. That is why you should keep your mapcycle always up to date!
 - keep also your database clean and delete player times from maps which are not longer in your mapcycle because map records on those maps are still counted in the top pro/tp climbers list (!resetmaptimes <map>)
