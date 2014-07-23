@@ -1,0 +1,4 @@
+// The climbers menu of kztimer keeps updating and blocks menus of other plugins
+// Here you are able to add chat commands which create menus
+!knife
+/knife

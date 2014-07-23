@@ -1,0 +1,10 @@
+// Here you are able to define the names of all 9 skill groups. But you can't add more!
+NEW
+SCRUB
+TRAINEE
+CASUAL
+REGULAR
+SKILLED
+EXPERT
+SEMIPRO
+PRO
