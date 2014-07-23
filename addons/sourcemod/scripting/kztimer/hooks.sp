@@ -539,8 +539,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_SpeedRefreshCount[client] = 0;
 			g_fSpeed[client] = GetSpeed(client);
 		}
-		//hint msg info speed keys etc.
-		InfoTimerAlive(client);
 		
 		//undo check
 		if(!g_bAllowCpOnBhopPlattforms && (g_bUndo[client] || g_bUndoTimer[client]))
@@ -609,8 +607,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			TE_SendBlockPoint(client, g_fOriginBlock[client][0], g_fOriginBlock[client][1], g_Beam[0]);
 		}		
 	}
-	else
-		DeadHud(client);
+		
 	
 	// postthink jumpstats (landing)	
 	if(GetEntityFlags(client) & FL_ONGROUND && !g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)

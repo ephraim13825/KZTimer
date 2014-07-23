@@ -2127,6 +2127,7 @@ public DeadHud(client)
 
 public AliveMainTimer(client)
 {
+
 	//bhop plattform
 	if (GetEntityFlags(client) & FL_ONGROUND)
 		g_js_TotalGroundFrames[client]++;

@@ -80,7 +80,7 @@ public Action:MainTimer2(Handle:timer)
 	{	
 		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;
-					
+		
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
@@ -360,7 +360,12 @@ public Action:MainTimer(Handle:timer)
 		if (IsValidClient(client))
 		{			
 			if(IsPlayerAlive(client))
-				AliveMainTimer(client);			
+			{
+				InfoTimerAlive(client);
+				AliveMainTimer(client);	
+			}
+			else
+				DeadHud(client);				
 		}
 	}	
 	return Plugin_Continue;		
