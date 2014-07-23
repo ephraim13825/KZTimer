@@ -1,37 +1,4 @@
-
-kztimer will be re-uploaded soon.. stay tuned..
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Alliedmodders kztimer thread: https://forums.alliedmods.net/showthread.php?t=223274
-
-KZTimer developement branch: https://github.com/1NutWunDeR/KZTimer_nightly
 
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
@@ -39,16 +6,21 @@ Info:
 - The point system is based on the mapcycle.txt of cs:go. That is why you should keep your mapcycle always up to date!
 - keep also your database clean and delete player times from maps which are not longer in your mapcycle because map records on those maps are still counted in the top pro/tp climbers list (!resetmaptimes <map>)
 - datatable warnings are harmless
-- Log "error": [SDKTOOLS] "FindEntityByClassname" not supported by this mod, falling back to IServerTools method.
--> https://forums.alliedmods.net/showthread.php?t=235737
 - KZ AntiCheat is automatically disabled when kz_auto_bhop is set to 1
-- globalconnections.sp doenst contain the correct login data
-- Global map record requirements (Global record top5 appears on all servers which are using KZ Timer):
->kz_checkpoints_on_bhop_plattforms 0, kz_auto_timer 0, kz_settings_enforcer 1 and
->only kz_, bkz_ and xc_ maps with integrated climb buttons are supported
+
 
 Changelog
 =======
+
+v1.47
+- removed global records
+- fixed a bug, which allowed players to abuse pause on boosters
+- fixed "player joined CT/T" chat message on player disconnect
+- added further strafe hack preventions
+- put some server cvars from the main.cfg back into the kztimer mapstart method because they must be set anways
+- --> mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1	
+- added an auto. .nav file generator but only for maps in your mapcycle.txt (execuded on plugin start)
+- minor bug fixes and optimizations
 
 v1.46
 - optimized prestrafe method (tickrate 64)
