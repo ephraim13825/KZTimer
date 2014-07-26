@@ -1,5 +1,8 @@
-Alliedmodders thread: https://forums.alliedmods.net/showthread.php?t=223274
-KZTimer steam group: http://steamcommunity.com/groups/KZTIMER
+Alliedmodders: 
+https://forums.alliedmods.net/showthread.php?t=223274
+
+Steam group: 
+http://steamcommunity.com/groups/KZTIMER
 
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
