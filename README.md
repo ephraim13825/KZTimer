@@ -5,6 +5,7 @@ Info:
 - tickrate 102.4 is optimal for kreedzing
 - the point system is based on your mapcycle
 - sourcebans support
+- workshop maps support
 
 Changelog
 =======
