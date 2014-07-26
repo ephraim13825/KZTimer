@@ -4,7 +4,7 @@ Info:
 - KZTimer is designed as Kreedz/Climb plugin!
 - tickrate 102.4 is optimal for kreedzing
 - the point system is based on your mapcycle
-- keep  your database clean and delete player times from maps which are not longer in your mapcycle because map records on those maps are still counted at the top pro/tp climbers list (!resetmaptimes <map>)
+- keep  your database clean and wipe times from maps (!resetmaptimes <map>) which are not longer in your mapcycle
 - datatable warnings are harmless
 
 Changelog
