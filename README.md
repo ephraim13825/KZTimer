@@ -1,5 +1,4 @@
 Alliedmodders thread: https://forums.alliedmods.net/showthread.php?t=223274
-
 KZTimer steam group: http://steamcommunity.com/groups/KZTIMER
 
 Info: 
