@@ -4,7 +4,7 @@ Info:
 - KZTimer is designed as Kreedz/Climb plugin!
 - tickrate 102.4 is optimal for kreedzing
 - the point system is based on your mapcycle
-- datatable warnings are harmless
+- sourcebans support
 
 Changelog
 =======
