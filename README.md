@@ -8,6 +8,7 @@ Info:
 - KZTimer is designed as Kreedz/Climb plugin!
 - Tickrate 102.4 is optimal for kreedzing
 - Ranking system is based on your mapcycle
+- SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
 
