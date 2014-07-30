@@ -219,7 +219,7 @@ public Action:Say_Hook(client, const String:command[], argc)
 		}	
 		
 		//chat trigger?
-		if(IsChatTrigger() || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT ||  GetUserFlagBits(client) & ADMFLAG_GENERIC)))
+		if((IsChatTrigger() && sText[0] == '/') || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT ||  GetUserFlagBits(client) & ADMFLAG_GENERIC)))
 		{
 			g_bSayHook[client]=false;
 			return Plugin_Continue;
