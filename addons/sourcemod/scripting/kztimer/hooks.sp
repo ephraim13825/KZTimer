@@ -139,7 +139,7 @@ public Action:Event_PlayerDisconnect(Handle:event, const String:name[], bool:don
 		new String:disconnectReason[64];
 		new clientid = GetEventInt(event,"userid");
 		new client = GetClientOfUserId(clientid);
-		if (IsFakeClient(client))
+		if (!IsValidClient(client) || IsFakeClient(client))
 			return Plugin_Handled;
 		GetEventString(event, "name", szName, sizeof(szName));
 		GetEventString(event, "reason", disconnectReason, sizeof(disconnectReason));  
@@ -152,8 +152,17 @@ public Action:Event_PlayerDisconnect(Handle:event, const String:name[], bool:don
 		return Plugin_Continue;
 }
 
-public Action:Say_Hook(client, args)
+public Action:Say_Hook(client, const String:command[], argc)
 {
+	//Call Admin - Own Reason
+	if (g_bClientOwnReason[client])
+	{
+		StopClimbersMenu(client);
+		g_bClientOwnReason[client] = false;
+		return Plugin_Continue;
+	}
+	
+	//Chat trigger?
 	g_bSayHook[client]=true;
 	if (IsValidClient(client))
 	{		
@@ -163,17 +172,31 @@ public Action:Say_Hook(client, args)
 		new team = GetClientTeam(client);		
 		TrimString(sText); 
 
+		//empty message
 		if(StrEqual(sText, " ") || StrEqual(sText, ""))
 		{
 			g_bSayHook[client]=false;
 			return Plugin_Handled;		
 		}
+
+		//lowercase
+		if((sText[0] == '/') || (sText[0] == '!'))
+		{
+			if(IsCharUpper(sText[1]))
+			{
+				for(new i = 0; i <= strlen(sText); ++i)
+						sText[i] = CharToLower(sText[i]);
+				g_bSayHook[client]=false;
+				FakeClientCommand(client, "say %s", sText);
+				return Plugin_Handled;
+			}
+		}
+		
+		//exception list
 		decl String:sPath[PLATFORM_MAX_PATH];
 		decl String:line[64];
 		BuildPath(Path_SM, sPath, sizeof(sPath), "%s", EXCEPTION_LIST_PATH);
 		new Handle:fileHandle=OpenFile(sPath,"r");		
-		
-		//fix chat text
 		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
 		{
 			TrimString(line);
@@ -185,6 +208,7 @@ public Action:Say_Hook(client, args)
 		}
 		CloseHandle(fileHandle);
 		
+		//blocked commands
 		for(new i; i < sizeof(BlockedChatText); i++)
 		{
 			if (StrEqual(BlockedChatText[i],sText,true))
@@ -194,30 +218,16 @@ public Action:Say_Hook(client, args)
 			}
 		}	
 		
-		if (StrEqual("timeleft",sText,true))
+		//chat trigger?
+		if(IsChatTrigger() || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT ||  GetUserFlagBits(client) & ADMFLAG_GENERIC)))
 		{
-			new timeleft;
-			GetMapTimeLeft(timeleft);
-			new Float:ftime = float(timeleft);
-			FormatTimeFloat(client,ftime,4);
-			PrintToChat(client,"[%cKZ%c] Timeleft: %s",MOSSGREEN,WHITE, g_szTime[client]);
 			g_bSayHook[client]=false;
-			return Plugin_Handled;
-		}	
-		
-		if (StrEqual("nextmap",sText,true))
-		{
-			decl String:sNextMap[64];
-			if(g_bMapChooser && EndOfMapVoteEnabled() && !HasEndOfMapVoteFinished())
-				Format(sNextMap, sizeof(sNextMap), "Pending Vote");
-			else
-				GetNextMap(sNextMap, sizeof(sNextMap));
-			PrintToChat(client,"[%cKZ%c] Nextmap: %s",MOSSGREEN,WHITE, sNextMap);
-			g_bSayHook[client]=false;
-			return Plugin_Handled;
+			return Plugin_Continue;
 		}
 		
-		
+		////////////////
+		//say stuff
+		//
 		//SPEC
 		if (team==1)
 		{
@@ -291,13 +301,7 @@ public Action:Say_Hook(client, args)
 	return Plugin_Continue;
 }
 
-public Action:Event_OnPlayerTeamPre(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	SetEventBroadcast(event, true);
-	return Plugin_Continue;
-} 
-
-public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:dontBroadcast)
+public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if (!IsValidClient(client) || IsFakeClient(client))
@@ -323,23 +327,6 @@ public Action:Event_OnPlayerTeamPost(Handle:event, const String:name[], bool:don
 			g_bPauseWasActivated[client]=true;
 		g_bPause[client]=false;
 	}
-	
-	//team join msg
-	/*new String:strTeamName[32];
-	if (team==1)
-		Format(strTeamName, 32, "Spectators");
-	else
-		if (team==2)
-			Format(strTeamName, 32, "Terrorist force");	
-		else
-			Format(strTeamName, 32, "Counter-terrorist force");	
-	if (client != 0 && !IsFakeClient(client))
-	{
-		for (new i = 1; i <= MaxClients; i++)
-			if (IsValidClient(i) && i != client)
-				PrintToChat(i, "%t", "TeamJoin",client,strTeamName);
-	}*/
-	
 	return Plugin_Continue;
 }
 

@@ -2072,13 +2072,13 @@ public HelpPanel(client)
 	g_bClimbersMenuOpen[client]=false;
 	new Handle:panel = CreatePanel();
 	decl String:title[64];
-	Format(title, 64, "KZ Timer Help (1/3) - g_favVEL%s\nby 1NuTWunDeR",VERSION);
+	Format(title, 64, "KZ Timer Help (1/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, title);
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!helpmenu - opens this menu");
-	DrawPanelText(panel, "!menu - opens climbers menu");
-	DrawPanelText(panel, "!options - opens options menu");	
-	DrawPanelText(panel, "!top - top players/records");
+	DrawPanelText(panel, "!menu - climbers menu");
+	DrawPanelText(panel, "!options - options menu");	
+	DrawPanelText(panel, "!top - top menu");
 	DrawPanelText(panel, "!latest - latest local records");
 	DrawPanelText(panel, "!profile [<name>] - player profile");
 	DrawPanelText(panel, "!checkpoint / !gocheck - checkpoint / gocheck");
@@ -2109,7 +2109,7 @@ public HelpPanel2(client)
 {
 	new Handle:panel = CreatePanel();
 	decl String:szTmp[64];
-	Format(szTmp, 64, "KZ Timer Help (2/3) - g_favVEL%s\nby 1NuTWunDeR",VERSION);
+	Format(szTmp, 64, "KZ Timer Help (2/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ")	
 	DrawPanelText(panel, "!start/!r - go back to start");
@@ -2149,7 +2149,7 @@ public HelpPanel3(client)
 {
 	new Handle:panel = CreatePanel();
 	decl String:szTmp[64];
-	Format(szTmp, 64, "KZ Timer Help (3/3) - g_favVEL%s\nby 1NuTWunDeR",VERSION);
+	Format(szTmp, 64, "KZ Timer Help (3/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ");	
 	DrawPanelText(panel, "!maptop <mapname> - displays map top for a given map");

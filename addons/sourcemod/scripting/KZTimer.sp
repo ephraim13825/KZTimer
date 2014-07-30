@@ -13,10 +13,10 @@
 #include <mapchooser>
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
-//optional
 #include <sourcebans>
+#include <calladmin>
 
-#define VERSION "1.47"
+#define VERSION "1.48"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -390,6 +390,7 @@ new bool:g_bTimeractivated[MAXPLAYERS+1];
 new bool:g_bFirstTeamJoin[MAXPLAYERS+1];
 new bool:g_bFirstSpawn[MAXPLAYERS+1];
 new bool:g_bTop100Refresh;
+new bool:g_bClientOwnReason[MAXPLAYERS+1];
 new bool:g_bMissedTpBest[MAXPLAYERS+1];
 new bool:g_bMissedProBest[MAXPLAYERS+1];
 new bool:g_bRestoreC[MAXPLAYERS+1]; 
@@ -600,7 +601,7 @@ new String:g_pr_szrank[MAXPLAYERS+1][512];
 new String:g_pr_szName[MAX_PR_PLAYERS][64];  
 new String:g_pr_szSteamID[MAX_PR_PLAYERS][32]; 
 new String:g_szSkillGroups[9][32];
-new String:g_szServerName[100];  
+new String:g_szServerName[64];  
 new String:g_szMapPath[256]; 
 new String:g_szServerIp[32];  
 new String:g_szServerCountry[100]; 
@@ -625,11 +626,9 @@ new const String:PROJUMP_RELATIVE_SOUND_PATH[] = "*quake/perfect.mp3";
 new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog",
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
-new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock", "/ljblock", "!flashlight", "/flashlight", "!radio", "/radio",
-	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","/help","/helpmenu","/menu","/menu ","/checkpoint", "!radiooff", "/radiooff",
-	"/gocheck","/unstuck","/stuck","/r","/prev","/undo","/next","/usp","/start","/stop","/pause",
-	"!knife","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", "!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure",
-	"/knife","/adv", "/info", "/colorchat", "/cpmessage", "/sound", "/menusound", "/hide", "/hidespecs", "/showtime", "/disablegoto", "/sync", "/bhop", "/speed", "/showkeys", "/goto", "/measure"};
+new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight", "!radio",
+	"!stuck","!knife","!r","!prev","!undo","!next","!start","!stop","!pause","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", 
+	"!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure"};
 new String:EntityList[][] = {"jail_teleport","logic_timer", "team_round_timer", "logic_relay"};
 new String:g_szReplay_PlayerName[MAXPLAYERS+1][MAX_RECORD_NAME_LENGTH];
 
@@ -1065,8 +1064,10 @@ public OnPluginStart()
 	RegAdminCmd("sm_deletetpreplay", Admin_DeleteTpReplay, ADMIN_LEVEL2, "[KZTimer] Deletes tp replay for a given map - requires z flag");	
 	RegAdminCmd("sm_getmultiplier", Admin_GetMulitplier, ADMIN_LEVEL2, "[KZTimer] Gets the dynamic multiplier for given player (points) - requires z flag");
 	RegAdminCmd("sm_setmultiplier", Admin_SetMulitplier, ADMIN_LEVEL2, "[KZTimer] Sets the dynamic multiplier for given player and mutliplier value (points) - requires z flag");	
-	RegConsoleCmd("say", Say_Hook);
-	RegConsoleCmd("say_team", Say_Hook);
+
+	//chat command listener
+	AddCommandListener(Say_Hook, "say");
+	AddCommandListener(Say_Hook, "say_team");
 	
 	//exec kztimer.cfg
 	AutoExecConfig(true, "kztimer");
@@ -1101,8 +1102,7 @@ public OnPluginStart()
 	HookEvent("player_hurt", Event_OnPlayerHurt);
 	HookEvent("player_jump", Event_OnJump);
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
-	HookEvent("player_team", Event_OnPlayerTeamPre, EventHookMode_Pre);
-	HookEvent("player_team", Event_OnPlayerTeamPost, EventHookMode_Post);
+	HookEvent("player_team", Event_OnPlayerTeam, EventHookMode_Post);
 	HookEvent("jointeam_failed", Event_JoinTeamFailed, EventHookMode_Pre);
 	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre); 
 	HookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
@@ -1486,6 +1486,7 @@ public OnClientPostAdminCheck(client)
 		g_MVPStars[client] = 0;		
 	g_bValidTeleport[client]=false;
 	g_bNewReplay[client] = false;
+	g_bClientOwnReason[client] = false;
 	g_pr_Calculating[client] = false;
 	g_bHyperscrollWarning[client] = false;	
 	g_bTimeractivated[client] = false;	
