@@ -7,7 +7,7 @@ http://steamcommunity.com/groups/KZTIMER
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
 - Tickrate 102.4 is optimal for kreedzing
-- Ranking system is based on your mapcycle
+- Ranking system is based on your mapcycle.txt file
 - SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
