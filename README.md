@@ -15,6 +15,10 @@ Info:
 Changelog
 =======
 
+v1.48
+- fixed missing team join message
+- minor optimizations
+
 v1.47
 - removed global records
 - fixed a bug, which allowed players to abuse pause on boosters
