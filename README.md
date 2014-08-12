@@ -15,6 +15,33 @@ Info:
 Changelog
 =======
 
+v1.5
+- added server cvar kz_ranking_extra_points (Gives players x extra points for improving their time. That makes it a easier to rank up.)
+(YOU SHOULD execute sm_ResetExtraPoints after updating from an old kztimer version(<1.49) if u wanna give extrapoints because extra points are saved in an old database field which was used otherwise and got some wrong values)
+- fixed two minor bugs on player profiles
+- added admin command sm_ResetExtraPoints
+- fixed two jumpstats bugs
+- minor optimizations
+
+v1.49
+- new optional feature: DHooks extention. Dhooks prevents a wrong mimic of replay bots after teleporting! (Old replays remain broken)
+- overhauled the ranking system (you should recalculate all player ranks after updating kztimer: !kzadmin -> recalculate player ranks). 
+-------------
+How does the ranking system work?
+The System depends mostly on your map and jumpstats ranks.
+Once you finished a map, you can get only points by improving your rank!
+Furthermore, you can lose points when others have beaten your map ranks.
+ 
+Calculation:
+TP Time: Rank percentage * 100 (extra bonus: Top 20 rankings, max. 400p for #1)
+PRO Time (without teleports): Rank percentage * 200 (extra bonus: Top 20 rankings, max. 600p for #1)
+JumpStats: Rank percentage (Top 20) * 500
+-------------
+- replaced skillgroups.txt by skillgroups.cfg. The new config file allows you to change rank limits
+- added MAPPER clantag (steamid's can be added in sourcemod/configs/kztimer/mapmakers.txt)
+- added skill group points to !ranks command
+
+ 
 v1.48
 - fixed missing team join message
 - minor optimizations
