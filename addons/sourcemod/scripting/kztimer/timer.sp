@@ -253,22 +253,17 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			db_insertPlayerChallenge(client);
 			
 			//new points
-			g_pr_multiplier[client]+=g_Challenge_Bet[client];
 			g_Challenge_WinRatio[client]++;
-			g_Challenge_PointsRatio[client]+= (g_pr_PointUnit*g_Challenge_Bet[client]);			
-			
-
-			
+			if (g_Challenge_Bet[client]>0)
+				g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;	
+			g_pr_showmsg[client]=true;
+			CreateTimer(1.5, RefreshPoints, client,TIMER_FLAG_NO_MAPCHANGE);
 			//db opponent
 			db_selectRankedPlayer(g_szChallenge_OpponentID[client], g_Challenge_Bet[client]);
 			
 			//chat msgs
 			if (IsValidClient(client))
 				PrintToChat(client, "%t", "ChallengeWon",RED,WHITE,YELLOW,WHITE);
-
-			//db client
-			g_pr_showmsg[client]=true;
-			CalculatePlayerRank(client);
 			
 			KillTimer(timer);
 			return Plugin_Handled;

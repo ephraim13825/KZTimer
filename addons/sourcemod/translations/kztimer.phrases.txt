@@ -489,7 +489,7 @@
 	"NoclipNotAvailable2"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] You must finish the map or be ranked as {3:s}, VIP or ADMIN to use +noclip"
+		"en"        "[{1}KZ{2}] You must finish the map or be ranked as {3:s}, MAPPER, VIP or ADMIN to use +noclip"
 	}
 	"NoclipNotAvailable3"
 	{

@@ -1,4 +1,3 @@
-// The climbers menu of kztimer keeps updating and blocks menus of other plugins
-// Here you are able to add chat commands which create menus
-!knife
-/knife
+// The climbers menu of kztimer keeps updating and blocking 3rd party menus!
+// Here you are able to add exceptions for sm commands. (e.g. sm_knife)
+sm_knife

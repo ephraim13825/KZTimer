@@ -263,7 +263,6 @@ public CL_OnEndTimerPress(client)
 		}
 		else
 		{
-			g_pr_multiplier[client]+=6;
 			g_pr_finishedmaps_pro[client]++;
 		}
 		
@@ -278,7 +277,6 @@ public CL_OnEndTimerPress(client)
 		}	
 		else
 		{
-			g_pr_multiplier[client]+=3;
 			g_pr_finishedmaps_tp[client]++;
 		}
 	}
@@ -286,7 +284,8 @@ public CL_OnEndTimerPress(client)
 	{
 		if (difference > 0.0)
 		{
-			g_pr_multiplier[client]+=2;
+			if (g_ExtraPoints > 0)
+				g_pr_multiplier[client]+=1;
 			Format(g_szTimeDifference[client], 32, "-%s", g_szTime[client]);
 		}
 		else
@@ -386,9 +385,7 @@ public CL_OnEndTimerPress(client)
 					if (g_Challenge_Bet[client]>0)
 					{
 						g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;
-						g_Challenge_PointsRatio[i] -= g_Challenge_Bet[i] * g_pr_PointUnit;
-						g_pr_multiplier[client]+= g_Challenge_Bet[client];
-						g_pr_multiplier[i] -= g_Challenge_Bet[client];								
+						g_Challenge_PointsRatio[i] -= g_Challenge_Bet[i] * g_pr_PointUnit;							
 						g_pr_showmsg[i] = true;
 						g_pr_showmsg[client] = true;
 						new lostpoints = g_Challenge_Bet[client] * g_pr_PointUnit;

@@ -29,8 +29,8 @@ public Action:Admin_KzPanel(client, args)
 	PrintToConsole(client," rcon kz_dist_pro_multibhop - Minimum distance for multibhop to be considered pro\n rcon kz_dist_leet_multibhop - Minimum distance for multibhop to be considered leet");		
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
-		PrintToConsole(client,"\nAdmin commands:\nsm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
-		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_getmultiplier <steamid> (Gets the dynamic points multiplier for given steamid)\n sm_setmultiplier <steamid> <multiplier> (Sets the dynamic points multiplier for given steamid)\n [players have to refresh their profile afterwards]");
+		PrintToConsole(client,"\nAdmin commands:\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
+		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_resetextrapoints (Resets the extra points multiplier for all players)\n [players have to refresh their profile afterwards]");
 		PrintToConsole(client,"[database table playertimes]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp&pro times for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
 		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n[database table jumpstats]\n sm_resetjumpstats (Drops jumpstats table)");
 		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
@@ -57,9 +57,9 @@ public KzAdminMenu(client)
 	else
 	{	
 		if (!g_pr_RankingRecalc_InProgress)
-			AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Recalculate player rankings");
+			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks");
 		else
-			AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Stop the recalculation");
+			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Stop the recalculation");
 	}
 	AddMenuItem(adminmenu, "", "-------------------------------------",ITEMDRAW_DISABLED);		
 	AddMenuItem(adminmenu, "[3.] Set start button", "[3.] Set start button");
@@ -942,73 +942,14 @@ public Action:Admin_ResetMultiBhopRecords(client, args)
 	return Plugin_Handled;
 }
 
-public Action:Admin_GetMulitplier(client, args)
+public Action:Admin_ResetExtraPoints(client, args)
 {
-	if(args == 0)
-	{
-		ReplyToCommand(client, "[KZ] Usage: sm_getmultiplier <steamid>");
-		return Plugin_Handled;
-	}
-	new String:sql_selectMutliplier[] = "SELECT multiplier FROM playerrank where steamid = '%s'"; 
-	if(args > 0)
-	{
-		decl String:szSteamID[128];
-		decl String:szArg[128];
-		decl String:szQuery[512];
-		Format(szSteamID, 128, "");
-		for (new i = 1; i < 6; i++)
-		{
-			GetCmdArg(i, szArg, 128);
-			if (!StrEqual(szArg, "", false))
-				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
-		}
-		Format(szQuery, 512, sql_selectMutliplier, szSteamID);
-		SQL_TQuery(g_hDb, sql_selectMutliplierCallback, szQuery, client);	
-	}
+	SQL_TQuery(g_hDb, sql_selectMutliplierCallback, "UPDATE playerrank SET multiplier ='0'", client);	
 	return Plugin_Handled;
 }
 
 public sql_selectMutliplierCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new client = data;
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{
-		new multiplier = SQL_FetchInt(hndl, 0);
-		PrintToConsole(client, "mutliplier = %i (points per multiplier %i)", multiplier,g_pr_PointUnit);
-	}    
-}
-
-public Action:Admin_SetMulitplier(client, args)
-{
-	if(args == 0)
-	{
-		ReplyToCommand(client, "[KZ] Usage: sm_getmultiplier <steamid> <multiplier>");
-		return Plugin_Handled;
-	}
-	
-	new String:sql_updateMultiplier[] = "UPDATE playerrank SET multiplier ='%i' where steamid='%s'";
-	if(args > 0)
-	{
-		decl String:szSteamID[128];
-		decl String:szArg[128];
-		new multiplier;
-		decl String:szQuery[512];
-		Format(szSteamID, 128, "");
-		for (new i = 1; i < 6; i++)
-		{
-			GetCmdArg(i, szArg, 128);
-			if (!StrEqual(szArg, "", false))
-				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
-		}
-		GetCmdArg(6, szArg, 128);	
-		multiplier = StringToInt(szArg);  
-		Format(szQuery, 512, sql_updateMultiplier, multiplier, szSteamID);
-		SQL_TQuery(g_hDb, sql_updateMultiplierCallback, szQuery, client);	
-		PrintToConsole(client, "mutliplier changed to %s (player needs to recalc his points via his profile menu", szArg);
-	}
-	return Plugin_Handled;
-}
-
-public sql_updateMultiplierCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 { 
+	new client = data;
+	PrintToConsole(client, "Extra points for all players reseted.");
 }

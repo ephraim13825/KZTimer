@@ -18,12 +18,12 @@ public SetServerTags()
 	CvarHandle = FindConVar("sv_tags");
 	decl String:szServerTags[1024];
 	GetConVarString(CvarHandle, szServerTags, 1024);
-	if (StrContains(szServerTags,"kztimer",false) == -1 && StrContains(szServerTags,"tickrate",false) == -1)
+	if (StrContains(szServerTags,"KZTimer 1.",true) == -1 && StrContains(szServerTags,"Tickrate",true) == -1)
 	{
 		if (g_bProMode)
-			Format(szServerTags, 1024, "%s, kztimer %s, ProMode",szServerTags,VERSION);
+			Format(szServerTags, 1024, "%s, KZTimer %s, ProMode",szServerTags,VERSION);
 		else
-			Format(szServerTags, 1024, "%s, kztimer %s, tickrate %i",szServerTags,VERSION,g_Server_Tickrate);
+			Format(szServerTags, 1024, "%s, KZTimer %s, Tickrate %i",szServerTags,VERSION,g_Server_Tickrate);
 		SetConVarString(CvarHandle, szServerTags);
 	}
 	if (CvarHandle != INVALID_HANDLE)
@@ -39,7 +39,6 @@ public PrintConsoleInfo(client)
 	mins = timeleft / 60;
 	secs = timeleft % 60;
 	Format(finalOutput, 1024, "%d:%02d", mins, secs);
-	new mapbonus= RoundToNearest(g_pr_rank_Master/4.0);
 	new Float:fltickrate = 1.0 / GetTickInterval( );
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
 	PrintToConsole(client, "This server is running KZTimer v%s - Author: 1NuTWunDeR <STEAM_0:1:73507922> - Server tickrate: %i", VERSION, RoundToNearest(fltickrate));
@@ -61,15 +60,19 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "MVP Stars: Number of finished map runs on the current map");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "How does the ranking system work?");		
-	PrintToConsole(client, "The System depends on your current rank on each map, to prevent points farming.");	
-	PrintToConsole(client, "Once you finished a map, you can get only points by improving your rank! (#1,#2,#3 extra bonus)");	
-	PrintToConsole(client, "You will get a bonus of %ip when your map completion (tp+pro) has reached 100%",mapbonus);	
-	PrintToConsole(client, "Moreover, you can earn points by winning challenges and top 20 lj's, wj's, bhop jumps,");
-	PrintToConsole(client, "dropbhop jumps and multi-bhop jumps.");	
+	PrintToConsole(client, "The System depends mostly on your map and jumpstats ranks.");	
+	PrintToConsole(client, "Once you finished a map, you can get only points by improving your rank!");	
+	PrintToConsole(client, "Furthermore, you can lose points when others have beaten your map ranks.");	
 	PrintToConsole(client, " ");
-	PrintToConsole(client, "Ranks:");
-	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Novice,g_szSkillGroups[2], g_pr_rank_Scrub,g_szSkillGroups[3], g_pr_rank_Rookie,g_szSkillGroups[4], g_pr_rank_Skilled);
-	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Expert, g_szSkillGroups[6],g_pr_rank_Pro, g_szSkillGroups[7], g_pr_rank_Elite, g_szSkillGroups[8], g_pr_rank_Master);
+	PrintToConsole(client, "Calculation:");
+	PrintToConsole(client, "TP Time: Rank percentage * 100 (extra bonus: Top 20 rankings, max. 400p for #1)");	
+	PrintToConsole(client, "PRO Time (without teleports): Rank percentage * 200 (extra bonus: Top 20 rankings, max. 600p for #1)");
+	PrintToConsole(client, "Extra points for time improvements: %ip", g_ExtraPoints);	
+	PrintToConsole(client, "JumpStats: Rank percentage (Top 20) * 500");	
+	PrintToConsole(client, " ");
+	PrintToConsole(client, "Skill groups:");
+	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Percentage[1],g_szSkillGroups[2], g_pr_rank_Percentage[2],g_szSkillGroups[3], g_pr_rank_Percentage[3],g_szSkillGroups[4], g_pr_rank_Percentage[4]);
+	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Percentage[5], g_szSkillGroups[6],g_pr_rank_Percentage[6], g_szSkillGroups[7], g_pr_rank_Percentage[7], g_szSkillGroups[8], g_pr_rank_Percentage[8]);
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");		
 	PrintToConsole(client, "KZTimer Global Edition available at http://steamcommunity.com/groups/KZTIMER");
 	PrintToConsole(client, "-> This version provides sharing of map records across KZTimer servers!");
@@ -838,55 +841,55 @@ public SetPlayerRank(client)
 {
 	if (g_bPointSystem)
 	{
-		if (g_pr_points[client] < g_pr_rank_Novice)
+		if (g_pr_points[client] < g_pr_rank_Percentage[1])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[0]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[0],WHITE);
 		}
 		else
-		if (g_pr_rank_Novice <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Scrub)
+		if (g_pr_rank_Percentage[1] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[2])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[1]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[1],WHITE);
 		}
 		else
-		if (g_pr_rank_Scrub <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Rookie)
+		if (g_pr_rank_Percentage[2] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[3])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[2]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",GRAY,g_szSkillGroups[2],WHITE);		
 		}
 		else
-		if (g_pr_rank_Rookie <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Skilled)
+		if (g_pr_rank_Percentage[3] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[4])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[3]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTBLUE,g_szSkillGroups[3],WHITE);		
 		}
 		else
-		if (g_pr_rank_Skilled <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Expert)
+		if (g_pr_rank_Percentage[4] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[5])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[4]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",BLUE,g_szSkillGroups[4],WHITE);
 		}
 		else
-		if (g_pr_rank_Expert <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Pro)
+		if (g_pr_rank_Percentage[5] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[6])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[5]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKBLUE,g_szSkillGroups[5],WHITE);
 		}
 		else
-		if (g_pr_rank_Pro <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Elite)
+		if (g_pr_rank_Percentage[6] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[7])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[6]);
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",PINK,g_szSkillGroups[6],WHITE);
 		}
 		else
-		if (g_pr_rank_Elite <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Master)
+		if (g_pr_rank_Percentage[7] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[8])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[7]);	
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTRED,g_szSkillGroups[7],WHITE);
 		}
 		else
-		if (g_pr_points[client] >= g_pr_rank_Master)
+		if (g_pr_points[client] >= g_pr_rank_Percentage[8])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[8]);	
 			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKRED,g_szSkillGroups[8],WHITE);
@@ -894,7 +897,31 @@ public SetPlayerRank(client)
 	}	
 	else
 		Format(g_pr_rankname[client], 32, "");	
-		
+	
+	// MAPPER Clantag
+	decl String:sPath[PLATFORM_MAX_PATH];
+	decl String:line[128]
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", MAPPERS_PATH);
+	if (FileExists(sPath))
+	{
+		decl String:szSteamId[32];
+		GetClientAuthString(client, szSteamId, 32);	
+		new Handle:fileHandle=OpenFile(sPath,"r");		
+		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
+		{
+			if ((StrContains(line, "//") == -1))
+			{	
+				TrimString(line);
+				if (StrEqual(line,szSteamId))
+				{
+					Format(g_pr_rankname[client], 32, "MAPPER");	
+					Format(g_pr_chat_coloredrank[client], 32, "%cMAPPER%c",LIMEGREEN,WHITE);
+				}
+			}	
+		}
+		CloseHandle(fileHandle);
+	}
+	
 	// VIP & ADMIN Clantag
 	if (g_bVipClantag)			
 		if ((GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC))
@@ -902,7 +929,7 @@ public SetPlayerRank(client)
 			Format(g_pr_rankname[client], 32, "VIP");	
 			Format(g_pr_chat_coloredrank[client], 32, "%cVIP%c",LIMEGREEN,WHITE);
 		}
-			
+		
 	if (g_bAdminClantag)
 		if (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) 
 		{
@@ -910,6 +937,7 @@ public SetPlayerRank(client)
 			Format(g_pr_chat_coloredrank[client], 32, "%cADMIN%c",LIMEGREEN,WHITE);
 		}
 }
+
 public SpectatorCount(client)
 {
 	decl String:szBuffer[64];
@@ -1087,27 +1115,42 @@ public GetRGBColor(bot, String:color[256])
 
 public SetSkillGroups()
 {
-	decl String:sPath[PLATFORM_MAX_PATH];
-	decl String:line[128]
-	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", SKILL_GROUPS_PATH);
+	//Map Points	
+	new mapcount;
+	if (g_pr_MapCount < 1)
+		mapcount = 1;
+	else
+		mapcount = g_pr_MapCount;	
+	g_pr_PointUnit = 1; 
+	new Float: MaxPoints = float(mapcount) * 1300.0 + 3000.0; //1300 = map max, 3000 = jumpstats max
+	new g_RankCount = 0;
+	
+	decl String:sPath[PLATFORM_MAX_PATH], String:sBuffer[32];
+	BuildPath(Path_SM, sPath, sizeof(sPath), "configs/kztimer/skillgroups.cfg");	
+	
 	if (FileExists(sPath))
 	{
-		new Handle:fileHandle=OpenFile(sPath,"r");		
-		new yy = 0;
-		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
+		new Handle:hKeyValues = CreateKeyValues("KZTimer.SkillGroups");
+		if(FileToKeyValues(hKeyValues, sPath) && KvGotoFirstSubKey(hKeyValues))
 		{
-			TrimString(line);
-			if ((StrContains(line, "//") == -1))
-			{		
-				if (yy < 9) 
-					Format(g_szSkillGroups[yy], sizeof(g_szSkillGroups), "%s", line);
-				yy++;
-			}	
+			do
+			{
+				if (g_RankCount <= 8)
+				{
+					KvGetString(hKeyValues, "name", g_szSkillGroups[g_RankCount], 32);
+					KvGetString(hKeyValues, "percentage", sBuffer,32);
+					if (g_RankCount != 0)
+						g_pr_rank_Percentage[g_RankCount] = RoundToCeil(MaxPoints * StringToFloat(sBuffer));  
+				}
+				g_RankCount++;
+			}
+			while (KvGotoNextKey(hKeyValues));
 		}
-		CloseHandle(fileHandle);
+		if (hKeyValues != INVALID_HANDLE)
+			CloseHandle(hKeyValues);
 	}
 	else
-		SetFailState("<KZTIMER> %s not found.", sPath);
+		SetFailState("<KZTIMER> addons/sourcemod/configs/kztimer/skillgroups.cfg not found.");
 }
 	
 public SpecList(client)
@@ -1498,7 +1541,7 @@ public TeleportCheck(client, Float: origin[3])
 			{
 					if (g_js_bPlayerJumped[client])	
 					{
-						g_js_bPlayerJumped[client] = false;
+						ResetJump(client);
 					}	
 			}
 			else
@@ -1508,7 +1551,7 @@ public TeleportCheck(client, Float: origin[3])
 				{
 					if (g_js_bPlayerJumped[client])
 					{
-						g_js_bPlayerJumped[client] = false;
+						ResetJump(client);
 					}			
 				}
 			}	
@@ -1551,7 +1594,10 @@ public NoClipCheck(client)
 	}		  
 	if(mt == MOVETYPE_NOCLIP && (g_js_bPlayerJumped[client] || g_bTimeractivated[client]))
 	{
-		g_js_bPlayerJumped[client] = false;
+		if (g_js_bPlayerJumped[client])
+		{
+			ResetJump(client);
+		}
 		g_bTimeractivated[client] = false;
 	}
 }
@@ -1935,6 +1981,7 @@ public SurfCheck(client)
 
 public ResetJump(client)
 {
+	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 	g_js_GroundFrames[client] = 0;
 	g_js_bPlayerJumped[client] = false;		
 }

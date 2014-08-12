@@ -136,16 +136,16 @@ public ChallengeMenuHandler1(Handle:menu, MenuAction:action, param1,param2)
 		AddMenuItem(menu2, "0", "No bet");			
 		if (g_bPointSystem)
 		{
-			Format(tmp, 64, "%i", g_pr_PointUnit*5);
+			Format(tmp, 64, "%i", g_pr_PointUnit*50);
 			if (g_pr_PointUnit*5  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);	
-			Format(tmp, 64, "%i", (g_pr_PointUnit*10));
+			Format(tmp, 64, "%i", (g_pr_PointUnit*100));
 			if ((g_pr_PointUnit*10)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);		
-			Format(tmp, 64, "%i", (g_pr_PointUnit*25));
+			Format(tmp, 64, "%i", (g_pr_PointUnit*250));
 			if ((g_pr_PointUnit*25)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);		
-			Format(tmp, 64, "%i", (g_pr_PointUnit*50));
+			Format(tmp, 64, "%i", (g_pr_PointUnit*500));
 			if ((g_pr_PointUnit*50)  <= g_pr_points[param1])
 				AddMenuItem(menu2, tmp, tmp);	
 		}
@@ -170,17 +170,17 @@ public ChallengeMenuHandler2(Handle:menu, MenuAction:action, param1,param2)
 		decl String:info[32];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		new value = StringToInt(info);
-		if (value == g_pr_PointUnit*5)		
-			g_Challenge_Bet[param1] = 5;
+		if (value == g_pr_PointUnit*50)		
+			g_Challenge_Bet[param1] = 50;
 		else
-			if (value == (g_pr_PointUnit*10))	
-				g_Challenge_Bet[param1] = 10;
+			if (value == (g_pr_PointUnit*100))	
+				g_Challenge_Bet[param1] = 100;
 			else
-				if (value == (g_pr_PointUnit*25))	
-					g_Challenge_Bet[param1] = 25;		
+				if (value == (g_pr_PointUnit*250))	
+					g_Challenge_Bet[param1] = 250;		
 				else
-					if (value == (g_pr_PointUnit*50))	
-						g_Challenge_Bet[param1] = 50;		
+					if (value == (g_pr_PointUnit*500))	
+						g_Challenge_Bet[param1] = 500;		
 					else
 						g_Challenge_Bet[param1] = 0;		
 		decl String:szPlayerName[MAX_NAME_LENGTH];	
@@ -409,8 +409,6 @@ public Action:Client_Surrender (client, args)
 					{
 						g_Challenge_PointsRatio[client]-= g_Challenge_Bet[client]*g_pr_PointUnit;
 						g_Challenge_PointsRatio[i]+= g_Challenge_Bet[i]*g_pr_PointUnit;
-						g_pr_multiplier[client]-= g_Challenge_Bet[client];
-						g_pr_multiplier[i] += g_Challenge_Bet[client];
 						g_pr_showmsg[i] = true;
 						g_pr_showmsg[client] = true;
 						PrintToChat(i, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
@@ -529,12 +527,12 @@ public Action:Client_Undo(client, args)
 
 public Action:NoClip(client, args)
 {
-	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC))
+	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER")))
 	{
 		if (!g_bMapFinished[client])
 		{
 			//BEST RANK || ADMIN || VIP
-			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
 				Action_NoClip(client);
 			else
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
@@ -986,7 +984,10 @@ public ProfileMenu(client,args)
 			db_viewPlayerRank(client, szSteamId2);
 		else
 		{
-			db_viewPlayerAll(client, g_szProfileName[client]);
+			if(!g_bProfileSelected[client])
+				db_viewPlayerAll(client, g_szProfileName[client]);
+			else
+				db_ReOpenSelectedProfile(client, g_szProfileName[client]);
 		}
 	}
 }
@@ -1090,7 +1091,10 @@ public Action:Client_Help(client, args)
 public Action:Client_Ranks(client, args)
 {
 	if (IsValidClient(client))
-		PrintToChat(client, "[%cKZ%c] %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s   %c%s",MOSSGREEN,WHITE, WHITE, g_szSkillGroups[0],WHITE, g_szSkillGroups[1],GRAY, g_szSkillGroups[2],LIGHTBLUE, g_szSkillGroups[3],BLUE, g_szSkillGroups[4],DARKBLUE, g_szSkillGroups[5],PINK, g_szSkillGroups[6],LIGHTRED, g_szSkillGroups[7],DARKRED,g_szSkillGroups[8]);
+		PrintToChat(client, "[%cKZ%c] %c%s (0p)  %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)   %c%s%c (%ip)",
+		MOSSGREEN,WHITE, WHITE, g_szSkillGroups[0],WHITE,g_szSkillGroups[1],WHITE,g_pr_rank_Percentage[1], GRAY, g_szSkillGroups[2],GRAY,g_pr_rank_Percentage[2],LIGHTBLUE, 
+		g_szSkillGroups[3],LIGHTBLUE,g_pr_rank_Percentage[3],BLUE, g_szSkillGroups[4],BLUE,g_pr_rank_Percentage[4],DARKBLUE,g_szSkillGroups[5],DARKBLUE,g_pr_rank_Percentage[5],
+		PINK,g_szSkillGroups[6],PINK,g_pr_rank_Percentage[6],LIGHTRED,g_szSkillGroups[7],LIGHTRED,g_pr_rank_Percentage[7],DARKRED,g_szSkillGroups[8],DARKRED,g_pr_rank_Percentage[8]);
 	return Plugin_Handled;
 }
 
@@ -1180,6 +1184,7 @@ public PauseMethod(client)
 		{
 			g_fPauseTime[client] = GetEngineTime() - g_fStartPauseTime[client];
 		}
+		g_bNoClip[client]=false;
 		g_bPause[client]=false;
 		if (!g_bRoundEnd)
 			SetEntityMoveType(client, MOVETYPE_WALK);
@@ -1929,8 +1934,8 @@ public TopMenu(client)
 	if (g_bPointSystem)
 		AddMenuItem(topmenu, "Top 100 Players", "Top 100 Players");
 	AddMenuItem(topmenu, "Top 5 Challengers", "Top 5 Challengers");
-	AddMenuItem(topmenu, "Top 5 Pro Jumpers", "Top 5 Pro Jumpers");
-	AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers");
+	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 Pro Record Holders");
+	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 TP Record Holders");
 	AddMenuItem(topmenu, "Map Top", "Map Top");	
 	AddMenuItem(topmenu, "Jump Top", "Jump Top");
 	SetMenuOptionFlags(topmenu, MENUFLAG_BUTTON_EXIT);
@@ -2231,6 +2236,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
 	PrintToConsole(client, "kz_pro_mode %b", g_bProMode);
+	PrintToConsole(client, "kz_ranking_extra_points %i", g_ExtraPoints);
 	PrintToConsole(client, "kz_recalc_top100_on_mapstart %b", g_bRecalcTop100);	
 	PrintToConsole(client, "kz_replay_bot %b", g_bReplayBot);
 	PrintToConsole(client, "kz_restore %b", g_bRestore);

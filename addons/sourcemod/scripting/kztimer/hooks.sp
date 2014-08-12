@@ -192,22 +192,6 @@ public Action:Say_Hook(client, const String:command[], argc)
 			}
 		}
 		
-		//exception list
-		decl String:sPath[PLATFORM_MAX_PATH];
-		decl String:line[64];
-		BuildPath(Path_SM, sPath, sizeof(sPath), "%s", EXCEPTION_LIST_PATH);
-		new Handle:fileHandle=OpenFile(sPath,"r");		
-		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
-		{
-			TrimString(line);
-			if (StrEqual(line,sText,false))
-			{
-				StopClimbersMenu(client);
-				break;
-			}
-		}
-		CloseHandle(fileHandle);
-		
 		//blocked commands
 		for(new i; i < sizeof(BlockedChatText); i++)
 		{
@@ -605,6 +589,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	}	
 				
 	//reset/save current values
+	if (GetEntityFlags(client) & FL_ONGROUND)
+		g_fLastPositionOnGround[client] = origin;
 	if (GetEntityFlags(client) & FL_ONGROUND)
 		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];		
 	if (!(GetEntityFlags(client) & FL_ONGROUND) && g_js_bPlayerJumped[client] == false)

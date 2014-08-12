@@ -677,12 +677,72 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 			}
 			else
 			{
-				weapon = Client_GiveWeapon(client, sAlias, false);
-				g_BotActiveWeapon[client] = weapon;
-				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-				Client_SetActiveWeapon(client, weapon);
+				 weapon = GivePlayerItem(client, sAlias);
+				 if(weapon != INVALID_ENT_REFERENCE)
+				 {
+					 g_BotActiveWeapon[client] = weapon;
+					 if(StrContains(sAlias, "grenade") == -1 && StrContains(sAlias, "flashbang") == -1 && StrContains(sAlias, "decoy") == -1 && StrContains(sAlias, "molotov") == -1)
+						 EquipPlayerWeapon(client, weapon);
+					 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+					 Client_SetActiveWeapon(client, weapon);
+				 }
 			}
 		}		
 		g_BotMimicTick[client]++;		
 	}
+}
+
+//dhooks
+public MRESReturn:DHooks_OnTeleport(client, Handle:hParams)
+{
+	// This one is currently mimicing something.
+	if(g_hBotMimicsRecord[client] != INVALID_HANDLE)
+	{
+		// We didn't allow that teleporting. STOP THAT.
+		if(!g_bValidTeleportCall[client])
+			return MRES_Supercede;
+		g_bValidTeleportCall[client] = false;
+		return MRES_Ignored;
+	}
+	
+	// Don't care if he's not recording.
+	if(g_hRecording[client] == INVALID_HANDLE)
+		return MRES_Ignored;
+	
+	new Float:origin[3], Float:angles[3], Float:velocity[3];
+	new bool:bOriginNull = DHookIsNullParam(hParams, 1);
+	new bool:bAnglesNull = DHookIsNullParam(hParams, 2);
+	new bool:bVelocityNull = DHookIsNullParam(hParams, 3);
+	
+	if(!bOriginNull)
+		DHookGetParamVector(hParams, 1, origin);
+	
+	if(!bAnglesNull)
+	{
+		for(new i=0;i<3;i++)
+			angles[i] = DHookGetParamObjectPtrVar(hParams, 2, i*4, ObjectValueType_Float);
+	}
+	
+	if(!bVelocityNull)
+		DHookGetParamVector(hParams, 3, velocity);
+	
+	if(bOriginNull && bAnglesNull && bVelocityNull)
+		return MRES_Ignored;
+	
+	new iAT[AT_SIZE];
+	Array_Copy(origin, iAT[_:atOrigin], 3);
+	Array_Copy(angles, iAT[_:atAngles], 3);
+	Array_Copy(velocity, iAT[_:atVelocity], 3);
+	
+	// Remember, 
+	if(!bOriginNull)
+		iAT[_:atFlags] |= ADDITIONAL_FIELD_TELEPORTED_ORIGIN;
+	if(!bAnglesNull)
+		iAT[_:atFlags] |= ADDITIONAL_FIELD_TELEPORTED_ANGLES;
+	if(!bVelocityNull)
+		iAT[_:atFlags] |= ADDITIONAL_FIELD_TELEPORTED_VELOCITY;
+	
+	PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT, AT_SIZE);
+	
+	return MRES_Ignored;
 }

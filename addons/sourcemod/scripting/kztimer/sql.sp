@@ -22,8 +22,9 @@ new String:sql_insertPlayerRank[] 				= "INSERT INTO playerrank (steamid, name, 
 new String:sql_updatePlayerRankPoints[]			= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i' where steamid='%s'";
 new String:sql_updatePlayerRankPoints2[]		= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i',winratio = '%i',pointsratio = '%i', country ='%s' where steamid='%s'";
 new String:sql_updatePlayerRank[]				= "UPDATE playerrank SET finishedmaps ='%i', finishedmapstp ='%i', finishedmapspro='%i', multiplier ='%i',winratio = '%i',pointsratio = '%i'  where steamid='%s'";
-new String:sql_updatePlayerRankChallenge[]		= "UPDATE playerrank SET multiplier ='%i',winratio = '%i',pointsratio = '%i'  where steamid='%s'";
+new String:sql_updatePlayerRankChallenge[]		= "UPDATE playerrank SET winratio = '%i',pointsratio = '%i'  where steamid='%s'";
 new String:sql_selectPlayerRankAll[] 			= "SELECT name, steamid FROM playerrank where name like '%c%s%c'";
+new String:sql_selectPlayerRankAll2[] 			= "SELECT name, steamid FROM playerrank where name = '%s'";
 
 new String:sql_selectTopPlayers[]				= "SELECT name, points, finishedmapspro, finishedmapstp, steamid FROM playerrank ORDER BY points DESC LIMIT 100";
 new String:sql_selectTopChallengers[]			= "SELECT name, winratio, pointsratio, steamid FROM playerrank ORDER BY pointsratio DESC LIMIT 5";
@@ -1778,69 +1779,70 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	if (finishedmapspro > g_pr_MapCount)	
 		finishedmapspro=g_pr_MapCount;
 		
-	if (points < g_pr_rank_Novice)
+	if (points < g_pr_rank_Percentage[1])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[0]);
-		RankDifference = g_pr_rank_Novice - points;
+		RankDifference = g_pr_rank_Percentage[1] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[1]);
 	}
 	else
-	if (g_pr_rank_Novice <= points && points < g_pr_rank_Scrub)
+	if (g_pr_rank_Percentage[1] <= points && points < g_pr_rank_Percentage[2])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[1]);
-		RankDifference = g_pr_rank_Scrub - points;
+		RankDifference = g_pr_rank_Percentage[2] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[2]);
 	}
 	else
-	if (g_pr_rank_Scrub <= points && points < g_pr_rank_Rookie)
+	if (g_pr_rank_Percentage[2] <= points && points < g_pr_rank_Percentage[3])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[2]);
-		RankDifference = g_pr_rank_Rookie - points;
+		RankDifference = g_pr_rank_Percentage[3] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[3]);
 	}		   
 	else
-	if (g_pr_rank_Rookie <= points && points < g_pr_rank_Skilled)
+	if (g_pr_rank_Percentage[3] <= points && points < g_pr_rank_Percentage[4])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[3]);
-		RankDifference = g_pr_rank_Skilled - points;
+		RankDifference = g_pr_rank_Percentage[4] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[4]);
 	}                      
 	else
-	if (g_pr_rank_Skilled <= points && points < g_pr_rank_Expert)
+	if (g_pr_rank_Percentage[4] <= points && points < g_pr_rank_Percentage[5])
 	{
 	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[4]);
-	   RankDifference = g_pr_rank_Expert - points;
+	   RankDifference = g_pr_rank_Percentage[5] - points;
 	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[5]);
 	}                      
 	else
-	if (g_pr_rank_Expert <= points && points < g_pr_rank_Pro)
+	if (g_pr_rank_Percentage[5] <= points && points < g_pr_rank_Percentage[6])
 	{
 	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[5]);
-	   RankDifference = g_pr_rank_Pro - points;
+	   RankDifference = g_pr_rank_Percentage[6] - points;
 	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[6]);
 	}
 	else
-	if (g_pr_rank_Pro <= points && points < g_pr_rank_Elite)
+	if (g_pr_rank_Percentage[6] <= points && points < g_pr_rank_Percentage[7])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[6]);
-		RankDifference = g_pr_rank_Elite - points;
+		RankDifference = g_pr_rank_Percentage[7] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[7]);
 	}
 	else
-	if (g_pr_rank_Elite <= points && points < g_pr_rank_Master)
+	if (g_pr_rank_Percentage[7] <= points && points < g_pr_rank_Percentage[8])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[7]);    
-		RankDifference = g_pr_rank_Master - points;
+		RankDifference = g_pr_rank_Percentage[8] - points;
 		Format(szNextRank, 32, " (%s)",g_szSkillGroups[8]);
 	}
 	else
-	if (points >= g_pr_rank_Master)
+	if (points >= g_pr_rank_Percentage[8])
 	{
 		Format(szSkillGroup, 32, "%s",g_szSkillGroups[8]);    
 		RankDifference = 0;
 		Format(szNextRank, 32, "");
 		master=true;
 	}  
+
 
 	if(SQL_HasResultSet(hndl))
 	{		
@@ -1887,6 +1889,7 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 		Format(szTitle, 512, "Player: %s\nID: %s\n \n%s\n",  szName,szSteamId,g_pr_szrank[client]);				
 		
 	new Handle:menu = CreateMenu(ProfileMenuHandler);
+	g_bProfileSelected[client]=true;
 	SetMenuTitle(menu, szTitle);
 	AddMenuItem(menu, "Current map time", "Current map time");
 	AddMenuItem(menu, "Jumpstats", "Jumpstats");
@@ -2230,6 +2233,17 @@ public db_viewPlayerAll(client, String:szPlayerName[MAX_NAME_LENGTH])
 	SQL_TQuery(g_hDb, SQL_ViewPlayerAllCallback, szQuery, client);
 }
 
+//PROFILE EXACT NAME
+public db_ReOpenSelectedProfile(client, String:szPlayerName[MAX_NAME_LENGTH])
+{
+	decl String:szQuery[512];
+	decl String:szName[MAX_NAME_LENGTH*2+1];
+	SQL_QuoteString(g_hDb, szPlayerName, szName, MAX_NAME_LENGTH*2+1);      
+	Format(szQuery, 512, sql_selectPlayerRankAll2, szName);
+	SQL_TQuery(g_hDb, SQL_ViewPlayerAllCallback, szQuery, client,DBPrio_Low);
+}
+
+
 public SQL_ViewPlayerAllCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {    
 	new client = data;  
@@ -2301,7 +2315,8 @@ public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				else
 					g_bMenuOpen[param1]=false;	
 			}
-		}							
+		}	
+		g_bProfileSelected[param1] = false;
 	}
 	else 
 		if (action == MenuAction_End)	
@@ -4247,22 +4262,20 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 	}
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{			
-		//add multiplier points	
-		g_pr_multiplier[client] = SQL_FetchInt(hndl, 5);
-		if (g_pr_multiplier[client]>0)
-			g_pr_points[client]+=  g_pr_PointUnit*g_pr_multiplier[client];					
 		
+		g_pr_multiplier[client] = SQL_FetchInt(hndl, 5);
+		g_pr_points[client]+=  g_ExtraPoints * g_pr_multiplier[client];			
+		
+		//add challenge points
+		g_pr_points[client]+=  SQL_FetchInt(hndl, 7);
+				
 		if (IsValidClient(client))
 		{
 			g_pr_Calculating[client] = true;
-			//challenge ratios 
-			if (g_bChallengeIngame[client])
-			{
-				g_Challenge_WinRatio[client] = SQL_FetchInt(hndl, 6);
-				g_Challenge_PointsRatio[client] = SQL_FetchInt(hndl, 7);
-				g_bChallengeIngame[client] = false;
-			}
+			g_Challenge_WinRatio[client] = SQL_FetchInt(hndl, 6);
+			g_Challenge_PointsRatio[client] = SQL_FetchInt(hndl, 7);
 		}
+				
 		//CountFinishedMapsTP
 		decl String:szQuery[512];       
 		Format(szQuery, 512, sql_CountFinishedMapsTP, szSteamId, szSteamId);  
@@ -4376,17 +4389,10 @@ public sql_CountFinishedMapsProCallback(Handle:owner, Handle:hndl, const String:
 				}
 			}			
 		}
+		//pro count
 		g_pr_finishedmaps_pro[client]=finished_Pro;
 		g_pr_finishedmaps_pro_perc[client]= (float(finished_Pro) / float(g_pr_MapCount)) * 100.0;	
-
-		//overall count
-		new pr_finishedmaps = g_pr_finishedmaps_tp[client]+g_pr_finishedmaps_pro[client];
-		new Float:pr_finishedmaps_perc = (float(pr_finishedmaps) / (float(g_pr_MapCount*2))) * 100.0;
-		g_pr_points[client]+= RoundToCeil(pr_finishedmaps_perc *(g_pr_MaxCalculatedPointsPerMap * 0.0015));
-	
-		//bonus points
-		if (pr_finishedmaps_perc== 100.0)
-			g_pr_points[client]+= RoundToNearest(g_pr_rank_Master/5.0);			
+				
 		Format(szQuery, 1024, sql_selectPersonalAllRecords, szSteamId, szSteamId);  	
 		if ((StrContains(szSteamId, "STEAM_") != -1))
 			SQL_TQuery(g_hDb, sql_selectPersonalAllRecordsCallback, szQuery, client, DBPrio_Low);			
@@ -4430,38 +4436,40 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 	}
 	if (g_pr_maprecords_row_count[client]==0)
 	{
-		new Float: max = g_pr_MaxCalculatedPointsPerMap * 0.05;
-		new r;
+		
+		new Float:percentage2;
 		if (g_js_LjBlockRank[client]<21 && g_js_LjBlockRank[client] > 0)
 		{
-			r = g_js_LjBlockRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_LjBlockRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_LjRank[client]<21 && g_js_LjRank[client] > 0)
 		{
-			r = g_js_LjRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_LjRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_BhopRank[client]<21 && g_js_BhopRank[client] > 0)
 		{
-			r = g_js_BhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_BhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_WjRank[client]<21 && g_js_WjRank[client] > 0)
 		{
-			r = g_js_WjRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_WjRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
+		
 		if (g_js_DropBhopRank[client]<21 && g_js_DropBhopRank[client] > 0)
 		{
-			r = g_js_DropBhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_DropBhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_MultiBhopRank[client]<21 && g_js_MultiBhopRank[client] > 0)
 		{
-			r = g_js_MultiBhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_MultiBhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
+			
 		db_updatePoints(client);		
 	}	
 }
@@ -4506,81 +4514,104 @@ public sql_selectPlayerRankCallback2(Handle:owner, Handle:hndl, const String:err
 		new count = SQL_GetRowCount(hndl);
 		for (new i = 0; i < GetArraySize(g_MapList); i++)
 		{
-			GetArrayString(g_MapList, i, szMapName2, sizeof(szMapName2));
-		
+			GetArrayString(g_MapList, i, szMapName2, sizeof(szMapName2));	
 			if (StrEqual(szMapName2, szMap, false))
 			{	
-				new max = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 0.0001);
-				new Float:rankperc = 100 * (1.0 - (float (rank) / float (count)));
-				if (rank== 1)
-					rankperc = 100.0;			
-				if (teleports > 0)
-				{
-					if (rank==1)
-						g_pr_points[client]+= RoundToZero(float(max) * rankperc*2.0);	
-					else
-						if (rank==2)
-							g_pr_points[client]+= RoundToZero(float(max) * rankperc*1.5);	
-						else
-							if (rank==3)
-									g_pr_points[client]+= RoundToZero(float(max) * rankperc*1.2);		
-							else
-								g_pr_points[client]+= RoundToZero(float(max) * rankperc);
+				if (teleports == 0)
+				{			
+					new Float: percentage = 1.0+(1.0/float (count)) - (float (rank) / float (count));
+					g_pr_points[client]+= RoundToCeil(200.0 * percentage);			
+					switch(rank) 
+					{
+						case 1: g_pr_points[client]+= 600;
+						case 2: g_pr_points[client]+= 500;
+						case 3: g_pr_points[client]+= 400;
+						case 4: g_pr_points[client]+= 375;
+						case 5: g_pr_points[client]+= 350;
+						case 6: g_pr_points[client]+= 325;
+						case 7: g_pr_points[client]+= 300;
+						case 8: g_pr_points[client]+= 275;
+						case 9: g_pr_points[client]+= 250;
+						case 10: g_pr_points[client]+= 225;
+						case 11: g_pr_points[client]+= 200;
+						case 12: g_pr_points[client]+= 175;
+						case 13: g_pr_points[client]+= 150;
+						case 14: g_pr_points[client]+= 125;
+						case 15: g_pr_points[client]+= 100;
+						case 16: g_pr_points[client]+= 90;
+						case 17: g_pr_points[client]+= 80;
+						case 18: g_pr_points[client]+= 70;
+						case 19: g_pr_points[client]+= 60;
+						case 20: g_pr_points[client]+= 50;
+					}							
 				}
 				else
 				{
-					if (rank==1)
-						g_pr_points[client]+= RoundToZero(float(max) * rankperc*3.0);	
-					else
-						if (rank==2)
-							g_pr_points[client]+= RoundToZero(float(max) * rankperc*2.5);	
-						else
-							if (rank==3)
-									g_pr_points[client]+= RoundToZero(float(max) * rankperc*2.0);		
-							else		
-								g_pr_points[client]+= RoundToZero(float(max) * rankperc*2);	
-						
+					new Float: percentage = 1.0+(1.0/float (count)) - (float (rank) / float (count));
+					g_pr_points[client]+= RoundToCeil(100.0 * percentage);					
+					switch(rank) 
+					{
+						case 1: g_pr_points[client]+= 400;
+						case 2: g_pr_points[client]+= 300;
+						case 3: g_pr_points[client]+= 200;
+						case 4: g_pr_points[client]+= 190;
+						case 5: g_pr_points[client]+= 180;
+						case 6: g_pr_points[client]+= 170;
+						case 7: g_pr_points[client]+= 160;
+						case 8: g_pr_points[client]+= 150;
+						case 9: g_pr_points[client]+= 140;
+						case 10: g_pr_points[client]+= 130;
+						case 11: g_pr_points[client]+= 120;
+						case 12: g_pr_points[client]+= 110;
+						case 13: g_pr_points[client]+= 100;
+						case 14: g_pr_points[client]+= 90;
+						case 15: g_pr_points[client]+= 80;
+						case 16: g_pr_points[client]+= 60;
+						case 17: g_pr_points[client]+= 40;
+						case 18: g_pr_points[client]+= 20;
+						case 19: g_pr_points[client]+= 10;
+						case 20: g_pr_points[client]+= 5;
+					}																	
 				}
 				break;
-			}	
-			
+			}				
 		}
 	}
 	g_pr_maprecords_row_counter[client]++;
 	if (g_pr_maprecords_row_counter[client]==g_pr_maprecords_row_count[client])
 	{
-		new Float: max = g_pr_MaxCalculatedPointsPerMap * 0.05;
-		new r;
+		new Float:percentage2;
 		if (g_js_LjBlockRank[client]<21 && g_js_LjBlockRank[client] > 0)
 		{
-			r = g_js_LjBlockRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_LjBlockRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_LjRank[client]<21 && g_js_LjRank[client] > 0)
 		{
-			r = g_js_LjRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_LjRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_BhopRank[client]<21 && g_js_BhopRank[client] > 0)
 		{
-			r = g_js_BhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_BhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_WjRank[client]<21 && g_js_WjRank[client] > 0)
 		{
-			r = g_js_WjRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_WjRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
+		
 		if (g_js_DropBhopRank[client]<21 && g_js_DropBhopRank[client] > 0)
 		{
-			r = g_js_DropBhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
+			percentage2 = 1.05 - (float (g_js_DropBhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
 		}
 		if (g_js_MultiBhopRank[client]<21 && g_js_MultiBhopRank[client] > 0)
 		{
-			r = g_js_MultiBhopRank[client] * 4;
-			g_pr_points[client]+= RoundToCeil((1.01-(float(r)/100.0))*max);
-		}		
+			percentage2 = 1.05 - (float (g_js_MultiBhopRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
+		}
 		db_updatePoints(client);		
 	}
 }
@@ -4754,14 +4785,12 @@ public db_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:err
 		decl String:szQuery[512];
 		decl String:szSteamId[32];
 		SQL_FetchString(hndl, 0, szSteamId, 32);
-		new multiplier = SQL_FetchInt(hndl, 5); 
 		new winratio = SQL_FetchInt(hndl, 6); 
 		new pointsratio = SQL_FetchInt(hndl, 7); 
-		multiplier = multiplier - bet;
 		winratio--;
 		pointsratio= pointsratio - (bet*g_pr_PointUnit)
 		
-		Format(szQuery, 512, sql_updatePlayerRankChallenge, multiplier,winratio,pointsratio,szSteamId); 
+		Format(szQuery, 512, sql_updatePlayerRankChallenge, winratio,pointsratio,szSteamId); 
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low);
 	}	
 	CloseHandle(pack);

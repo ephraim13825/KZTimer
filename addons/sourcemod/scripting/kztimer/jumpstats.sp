@@ -419,19 +419,12 @@ public Prethink (client, Float:pos[3], Float:vel)
 		new Float: fGroundDiff = g_js_fJump_JumpOff_Pos[client][2] - g_js_fJump_JumpOff_PosLastHeight[client];
 		if (fGroundDiff > -0.1 && fGroundDiff < 0.1)
 			fGroundDiff = 0.0;		
-		if(fGroundDiff != 0.0)
-		{		
-			if(FloatAbs(fGroundDiff) < 1.5)
-			{
-				g_js_fJump_JumpOff_PosLastHeight[client] = g_js_fJump_JumpOff_Pos[client][2];
-				g_js_bPlayerJumped[client] = false;
-				g_js_bDropJump[client] = false;
-				return;
-			}
+		if(fGroundDiff <= -1.5)
+		{
 			g_js_bDropJump[client] = true;
 			g_js_fDropped_Units[client] = FloatAbs(fGroundDiff);
-		}
-	}	
+		}		
+	}
 	
 	if (g_js_GroundFrames[client]<11)
 		g_js_bBhop[client] = true;
@@ -474,6 +467,11 @@ public Postthink(client)
 	//workaround
 	if (g_js_bFuncMoveLinear[client] && fGroundDiff < 0.6 && fGroundDiff > -0.6)
 		fGroundDiff = 0.0;
+
+	//ground diff 2
+	new Float: groundpos[3];
+	GetClientAbsOrigin(client, groundpos);
+	new Float: fGroundDiff2 = groundpos[2] - g_fLastPositionOnGround[client][2];
 		
 	//GetHeight
 	if (FloatAbs(g_js_fJump_JumpOff_Pos[client][2]) > FloatAbs(g_js_fMax_Height[client]))
@@ -560,15 +558,26 @@ public Postthink(client)
 			g_js_MultiBhop_Count[client]=1;
 		if (fGroundDiff==0.0)
 			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>%.1f units</font>", g_js_fJump_Distance[client]);
+		else
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>", g_js_fJump_Distance[client]);
 		PostThinkPost(client, ground_frames);
 		return;
 	}
+	
 	//change BotName (szName) for jumpstats output
 	if (client == g_ProBot)
 		Format(szName,sizeof(szName), "%s (Pro Replay)", g_szReplayName);		
 	if (client == g_TpBot)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
 	
+	//vertical jump
+	if (fGroundDiff2 > 1.5 || fGroundDiff2 < -1.5 || fGroundDiff != 0.0)
+	{
+		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>", g_js_fJump_Distance[client]);
+		PostThinkPost(client, ground_frames);
+		return;
+	}	
+
 	//Chat Output
 	//LongJump
 	if (ground_frames > 11 && fGroundDiff == 0.0 && fJump_Height <= 67.0 && g_js_fJump_Distance[client] < 300.0 && g_js_fMax_Speed_Final[client] > 200.0) 
@@ -578,6 +587,7 @@ public Postthink(client)
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 265.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 270.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 275.0)) 
 			{
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 				PostThinkPost(client, ground_frames);
 				return;
 			}				
@@ -586,12 +596,14 @@ public Postthink(client)
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 250.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 255.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 260.0)) 
 			{
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 				PostThinkPost(client, ground_frames);
 				return;
 			}
 		}
 		if (strafes > 20)
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 			PostThinkPost(client, ground_frames);
 			return;
 		}			
@@ -600,6 +612,7 @@ public Postthink(client)
 		//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_lj * 1.02))
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 			PostThinkPost(client, ground_frames);
 			return;
 		}
@@ -673,7 +686,7 @@ public Postthink(client)
 				PrintToConsole(client, "        ");
 				PrintToConsole(client, "[KZ] %s jumped %0.4f units with a LongJump [%i Strafes | %.3f %s | %.3f Max | Height %.1f | %i%c Sync]%s",szName, g_js_fJump_Distance[client],strafes, g_js_fPreStrafe[client],szVr, g_js_fMax_Speed_Final[client],fJump_Height,sync,PERCENT,sBlockDistCon);
 				PrintToConsole(client, "%s", szStrafeStats);		
-				PrintToChat(client, "[%cKZ%c] %cLJ%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c %s |  %c%0.f%c Max | %c%.0f%c Height | %c%i%c%c Sync]%s",MOSSGREEN,WHITE,GREEN,GRAY,GREEN,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,szVr,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY,LIMEGREEN, sync,PERCENT,GRAY,sBlockDist);
+				PrintToChat(client, "[%cKZ%c] %cLJ%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c %s | %c%0.f%c Max | %c%.0f%c Height | %c%i%c%c Sync]%s",MOSSGREEN,WHITE,GREEN,GRAY,GREEN,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,szVr,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY,LIMEGREEN, sync,PERCENT,GRAY,sBlockDist);
 				decl String:buffer[255];
 				Format(buffer, sizeof(buffer), "play %s", PROJUMP_RELATIVE_SOUND_PATH); 			
 				if (g_bEnableQuakeSounds[client])
@@ -698,6 +711,7 @@ public Postthink(client)
 					// strafe hack protection					
 					if (strafes == 0)
 					{
+						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 						PostThinkPost(client, ground_frames);
 						return;
 					}					
@@ -777,6 +791,7 @@ public Postthink(client)
 		//strafe hack block (aimware is pretty smart :/)
 		if (((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 380.0))
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 			PostThinkPost(client, ground_frames);
 			return;		
 		}
@@ -784,6 +799,7 @@ public Postthink(client)
 		//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_multibhop * 1.025))
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 			PostThinkPost(client, ground_frames);
 			return;
 		}
@@ -815,7 +831,7 @@ public Postthink(client)
 				PrintToConsole(client, "        ");
 				PrintToConsole(client, "[KZ] %s jumped %0.4f units with a MultiBhop [%i Strafes | %.3f Pre | %.3f Max |  Height %.1f | %s Bhops | %i%c Sync]",szName, g_js_fJump_Distance[client],strafes, g_js_fPreStrafe[client], g_js_fMax_Speed_Final[client], fJump_Height,szBhopCount,sync,PERCENT);				
 				PrintToConsole(client, "%s", szStrafeStats);					
-				PrintToChat(client, "[%cKZ%c] %cMultiBhop%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c Pre |  %c%0.f%c Max | %c%.0f%c Height | %c%s%c Bhops | %c%i%c%c Sync]",MOSSGREEN,WHITE,GREEN,GRAY,GREEN,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY, LIMEGREEN,szBhopCount,GRAY,LIMEGREEN, sync,PERCENT,GRAY);
+				PrintToChat(client, "[%cKZ%c] %cMultiBhop%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c Pre | %c%0.f%c Max | %c%.0f%c Height | %c%s%c Bhops | %c%i%c%c Sync]",MOSSGREEN,WHITE,GREEN,GRAY,GREEN,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY, LIMEGREEN,szBhopCount,GRAY,LIMEGREEN, sync,PERCENT,GRAY);
 				
 				decl String:buffer[255];
 				Format(buffer, sizeof(buffer), "play %s", PROJUMP_RELATIVE_SOUND_PATH); 
@@ -839,6 +855,7 @@ public Postthink(client)
 				// strafe hack protection					
 				if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 				{
+					Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 					PostThinkPost(client, ground_frames);
 					return;
 				}
@@ -848,7 +865,7 @@ public Postthink(client)
 				PrintToConsole(client, "        ");
 				PrintToConsole(client, "[KZ] %s jumped %0.4f units with a MultiBhop [%i Strafes | %.3f Pre | %.3f Max | Height %.1f | %s Bhops | %i%c Sync]",szName, g_js_fJump_Distance[client],strafes, g_js_fPreStrafe[client], g_js_fMax_Speed_Final[client], fJump_Height,szBhopCount,sync,PERCENT);
 				PrintToConsole(client, "%s", szStrafeStats);
-				PrintToChat(client, "[%cKZ%c] %cMultiBhop%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c Pre |  %c%0.f%c Max | %c%.0f%c Height | %c%s%c Bhops | %c%i%c%c Sync]",MOSSGREEN,WHITE,DARKRED,GRAY,DARKRED,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY, LIMEGREEN,szBhopCount,GRAY,LIMEGREEN, sync,PERCENT,GRAY);
+				PrintToChat(client, "[%cKZ%c] %cMultiBhop%c: %c%.2f units%c [%c%i%c Strafes | %c%.0f%c Pre | %c%0.f%c Max | %c%.0f%c Height | %c%s%c Bhops | %c%i%c%c Sync]",MOSSGREEN,WHITE,DARKRED,GRAY,DARKRED,g_js_fJump_Distance[client],GRAY,LIMEGREEN,strafes,GRAY,LIMEGREEN,g_js_fPreStrafe[client],GRAY,LIMEGREEN,g_js_fMax_Speed_Final[client],GRAY,LIMEGREEN, fJump_Height,GRAY, LIMEGREEN,szBhopCount,GRAY,LIMEGREEN, sync,PERCENT,GRAY);
 				if (g_js_LeetJump_Count[client]==3)
 					PrintToChat(client, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
 				else
@@ -916,6 +933,7 @@ public Postthink(client)
 				//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 				if ((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_dropbhop * 1.05)) || strafes > 20)
 				{
+					Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 					PostThinkPost(client, ground_frames);
 					return;
 				}
@@ -926,7 +944,7 @@ public Postthink(client)
 				{
 					Format(g_js_szLastJumpDistance[client], 256, "<font color='#676060'><b>%.1f units</b></font>", g_js_fJump_Distance[client]);
 					g_js_LeetJump_Count[client]=0;	
-					PrintToChat(client, "[%cKZ%c] %cDropBhop: %.2f units [%c%i%c Strafes | %c%.0f%c Pre  | %c%.0f%c Height | %c%i%c%c Sync]",MOSSGREEN,WHITE, GRAY,g_js_fJump_Distance[client],LIMEGREEN, strafes, GRAY, LIMEGREEN, g_js_fPreStrafe[client], GRAY, LIMEGREEN,fJump_Height,GRAY, LIMEGREEN,sync,PERCENT,GRAY);	
+					PrintToChat(client, "[%cKZ%c] %cDropBhop: %.2f units [%c%i%c Strafes | %c%.0f%c Pre | %c%.0f%c Height | %c%i%c%c Sync]",MOSSGREEN,WHITE, GRAY,g_js_fJump_Distance[client],LIMEGREEN, strafes, GRAY, LIMEGREEN, g_js_fPreStrafe[client], GRAY, LIMEGREEN,fJump_Height,GRAY, LIMEGREEN,sync,PERCENT,GRAY);	
 					PrintToConsole(client, "        ");
 					PrintToConsole(client, "[KZ] %s jumped %0.4f units with a DropBhop [%i Strafes | %.3f Pre | %.3f Max | Height %.1f | %i%c Sync]",szName, g_js_fJump_Distance[client],strafes, g_js_fPreStrafe[client], g_js_fMax_Speed_Final[client],fJump_Height,sync,PERCENT);						
 					PrintToConsole(client, "%s", szStrafeStats);
@@ -961,6 +979,7 @@ public Postthink(client)
 							//strafe hack protection
 							if (g_js_fPreStrafe[client] < 270.0 || strafes == 0)
 							{
+								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 								PostThinkPost(client, ground_frames);
 								return;
 							}		
@@ -1036,6 +1055,7 @@ public Postthink(client)
 					//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 					if ((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_weird * 1.05)) || strafes > 20)
 					{
+						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 						PostThinkPost(client, ground_frames);
 						return;
 					}					
@@ -1085,6 +1105,7 @@ public Postthink(client)
 								// strafe hack protection					
 								if (strafes == 0 || g_js_fPreStrafe[client] < 255.0)
 								{
+									Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 									PostThinkPost(client, ground_frames);
 									return;
 								}
@@ -1149,6 +1170,7 @@ public Postthink(client)
 			//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 			if (((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_bhop * 1.025)) || g_js_fJump_Distance[client] > 400.0) || strafes > 20)
 			{
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 				PostThinkPost(client, ground_frames);
 				return;
 			}
@@ -1201,6 +1223,7 @@ public Postthink(client)
 							// strafe hack protection					
 							if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 							{
+								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 								PostThinkPost(client, ground_frames);
 								return;
 							}

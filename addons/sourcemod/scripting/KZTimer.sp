@@ -13,10 +13,11 @@
 #include <mapchooser>
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
+#include <dhooks>
 #include <sourcebans>
 #include <calladmin>
 
-#define VERSION "1.48"
+#define VERSION "1.5"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -67,7 +68,7 @@
 #define FRAME_INFO_SIZE 15
 #define FRAME_INFO_SIZE_V1 14
 #define AT_SIZE 10
-#define ORIGIN_SNAPSHOT_INTERVAL 75
+#define ORIGIN_SNAPSHOT_INTERVAL 100
 #define FILE_HEADER_LENGTH 74
 
 enum FrameInfo 
@@ -139,6 +140,7 @@ new g_ReplayRecordTps;
 new Handle:g_hMainMenu = INVALID_HANDLE;
 new Handle:g_hSDK_Touch = INVALID_HANDLE;
 new Handle:g_hAdminMenu;
+new Handle:g_hTeleport;
 new Handle:g_MapList = INVALID_HANDLE;
 new Handle:g_hDb = INVALID_HANDLE;
 new Handle:hStartPress = INVALID_HANDLE;
@@ -266,6 +268,8 @@ new Handle:g_hMapEnd = INVALID_HANDLE;
 new bool:g_bMapEnd;
 new Handle:g_hAutohealing_Hp = INVALID_HANDLE;
 new g_Autohealing_Hp;
+new Handle:g_hExtraPoints = INVALID_HANDLE;
+new g_ExtraPoints;
 new Handle:g_hReplayBotProColor = INVALID_HANDLE;
 new Handle:g_hReplayBotTpColor = INVALID_HANDLE;
 new Float:g_fMapStartTime;
@@ -345,6 +349,7 @@ new Float:g_fInitialAngles[MAXPLAYERS+1][3];
 new Float:g_PrestrafeVelocity[MAXPLAYERS+1];
 new Float:g_fChallenge_RequestTime[MAXPLAYERS+1];
 new Float:g_fSpawnPosition[MAXPLAYERS+1][3]; 
+new Float:g_fLastPositionOnGround[MAXPLAYERS+1][3];
 new Float:g_fLastPosition[MAXPLAYERS + 1][3];
 new Float:g_fLastAngles[MAXPLAYERS + 1][3];
 new Float:g_fSpeed[MAXPLAYERS+1];
@@ -431,6 +436,7 @@ new bool:g_bStrafeSync[MAXPLAYERS+1];
 new bool:g_bGoToClient[MAXPLAYERS+1]; 
 new bool:g_bShowTime[MAXPLAYERS+1]; 
 new bool:g_bHide[MAXPLAYERS+1]; 
+new bool:g_bProfileSelected[MAXPLAYERS+1]; 
 new bool:g_bSayHook[MAXPLAYERS+1]; 
 new bool:g_bShowSpecs[MAXPLAYERS+1]; 
 new bool:g_bFlagged[MAXPLAYERS+1];
@@ -496,17 +502,9 @@ new g_pr_Recalc_AdminID=-1;
 new g_pr_AllPlayers;
 new g_pr_RankedPlayers;
 new g_pr_MapCount;
-new g_pr_rank_Novice; 
-new g_pr_rank_Scrub; 
-new g_pr_rank_Rookie;
-new g_pr_rank_Skilled;
-new g_pr_rank_Expert;
-new g_pr_rank_Pro;
-new g_pr_rank_Elite;
-new g_pr_rank_Master;
 new g_pr_PointUnit;
-new g_pr_MaxCalculatedPointsPerMap;
 new g_pr_TableRowCount;
+new g_pr_rank_Percentage[9];
 new g_pr_points[MAX_PR_PLAYERS];
 new g_pr_maprecords_row_counter[MAX_PR_PLAYERS];
 new g_pr_maprecords_row_count[MAX_PR_PLAYERS];
@@ -606,7 +604,7 @@ new String:g_szMapPath[256];
 new String:g_szServerIp[32];  
 new String:g_szServerCountry[100]; 
 new String:g_szServerCountryCode[32];  
-new const String:SKILL_GROUPS_PATH[] = "configs/kztimer/skill_groups.txt";
+new const String:MAPPERS_PATH[] = "configs/kztimer/mapmakers.txt";
 new const String:KZ_REPLAY_PATH[] = "data/kz_replays/";
 new const String:ANTICHEAT_LOG_PATH[] = "logs/kztimer_anticheat.log";
 new const String:EXCEPTION_LIST_PATH[] = "configs/kztimer/exception_list.txt";
@@ -660,26 +658,6 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 public OnPluginStart()
 {
-	//https://forums.alliedmods.net/showthread.php?p=808724
-	new Handle:hGameConf = LoadGameConfigFile("sdkhooks.games")
-	if(hGameConf == INVALID_HANDLE) 
-	{
-		SetFailState("GameConfigFile sdkhooks.games was not found.")
-		return
-	}
-
-	StartPrepSDKCall(SDKCall_Entity)
-	PrepSDKCall_SetFromConf(hGameConf,SDKConf_Virtual,"Touch")
-	PrepSDKCall_AddParameter(SDKType_CBaseEntity,SDKPass_Pointer)
-	g_hSDK_Touch = EndPrepSDKCall()
-	CloseHandle(hGameConf)
-
-	if(g_hSDK_Touch == INVALID_HANDLE) 
-	{
-		SetFailState("Unable to prepare virtual function CBaseEntity::Touch")
-		return
-	}
-	
 	//get server tickrate
 	new Float:fltickrate = 1.0 / GetTickInterval( );
 	if (fltickrate > 65)
@@ -700,7 +678,7 @@ public OnPluginStart()
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 
-	g_hRecalcTop100 = CreateConVar("kz_recalc_top100_on_mapstart", "0", "on/off - starts a recalculation of top 100 player ranks at map start. (This takes a lot of hardware performance!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hRecalcTop100 = CreateConVar("kz_recalc_top100_on_mapstart", "0", "on/off - starts a recalculation of top 100 player ranks at map start. (takes a lot of hardware performance!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bRecalcTop100     = GetConVarBool(g_hRecalcTop100);
 	HookConVarChange(g_hRecalcTop100, OnSettingChanged);	
 	
@@ -815,6 +793,10 @@ public OnPluginStart()
 	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed (inactive if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
+
+	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points", "0.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_ExtraPoints    = GetConVarInt(g_hExtraPoints);
+	HookConVarChange(g_hExtraPoints, OnSettingChanged);	
 	
 	g_hPointSystem    = CreateConVar("kz_point_system", "1", "on/off - Player point system", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPointSystem    = GetConVarBool(g_hPointSystem);
@@ -1062,8 +1044,7 @@ public OnPluginStart()
 	RegAdminCmd("sm_resetplayerjumpstats", Admin_ResetPlayerJumpstats, ADMIN_LEVEL2, "[KZTimer] Resets jump stats for given steamid - requires z flag");
 	RegAdminCmd("sm_deleteproreplay", Admin_DeleteProReplay, ADMIN_LEVEL2, "[KZTimer] Deletes pro replay for a given map - requires z flag");
 	RegAdminCmd("sm_deletetpreplay", Admin_DeleteTpReplay, ADMIN_LEVEL2, "[KZTimer] Deletes tp replay for a given map - requires z flag");	
-	RegAdminCmd("sm_getmultiplier", Admin_GetMulitplier, ADMIN_LEVEL2, "[KZTimer] Gets the dynamic multiplier for given player (points) - requires z flag");
-	RegAdminCmd("sm_setmultiplier", Admin_SetMulitplier, ADMIN_LEVEL2, "[KZTimer] Sets the dynamic multiplier for given player and mutliplier value (points) - requires z flag");	
+	RegAdminCmd("sm_resetextrapoints", Admin_ResetExtraPoints, ADMIN_LEVEL2, "[KZTimer] Resets the extra points multiplier for all players");	
 
 	//chat command listener
 	AddCommandListener(Say_Hook, "say");
@@ -1075,9 +1056,6 @@ public OnPluginStart()
 	//mic
 	g_ownerOffset = FindSendPropOffs("CBaseCombatWeapon", "m_hOwnerEntity");
 	g_ragdolls = FindSendPropOffs("CCSPlayer","m_hRagdoll");
-	
-	//setskill groups
-	SetSkillGroups();
 	
 	//Credits: Measure by DaFox
 	//https://forums.alliedmods.net/showthread.php?t=88830
@@ -1127,6 +1105,19 @@ public OnPluginStart()
 	AddCommandListener(Command_ext_Menu, "sm_votemenu");
 	AddCommandListener(Command_ext_Menu, "sm_revote");
 
+	//exception list
+	decl String:sPath[PLATFORM_MAX_PATH];
+	decl String:line[64];
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", EXCEPTION_LIST_PATH);
+	new Handle:fileHandle=OpenFile(sPath,"r");		
+	while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
+	{
+		TrimString(line);
+		AddCommandListener(Command_ext_Menu, line);
+	}
+	if (fileHandle != INVALID_HANDLE)
+		CloseHandle(fileHandle);
+		
 	//hook radio commands
 	for(new i; i < sizeof(RadioCMDS); i++)
 		AddCommandListener(BlockRadio, RadioCMDS[i]);
@@ -1134,16 +1125,59 @@ public OnPluginStart()
 	
 	//create .nav files
 	CreateNavFiles();
-	
-	//Replay Bots
+
+	// Botmimic 2
+	// https://forums.alliedmods.net/showthread.php?t=180114
+	// Optionally setup a hook on CBaseEntity::Teleport to keep track of sudden place changes
 	CheatFlag("bot_zombie", false, true);
+	CheatFlag("bot_mimic", false, true);
 	g_hLoadedRecordsAdditionalTeleport = CreateTrie();
-		
-	//Credits: MultiPlayer Bunny Hops: Source by DaFox & petsku
-	//https://forums.alliedmods.net/showthread.php?p=808724
+	new Handle:hGameData = LoadGameConfigFile("sdktools.games");
+	if(hGameData == INVALID_HANDLE) 
+	{
+		SetFailState("GameConfigFile sdkhooks.games was not found.")
+		return
+	}
+	new iOffset = GameConfGetOffset(hGameData, "Teleport");
+	CloseHandle(hGameData);
+	if(iOffset == -1)
+		return;
+	
+	if(LibraryExists("dhooks"))
+	{
+		g_hTeleport = DHookCreate(iOffset, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, DHooks_OnTeleport);
+		if(g_hTeleport == INVALID_HANDLE)
+			return;
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		DHookAddParam(g_hTeleport, HookParamType_ObjectPtr);
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		DHookAddParam(g_hTeleport, HookParamType_Bool);
+	}
+	
+	// MultiPlayer Bunny Hops: Source
+	// https://forums.alliedmods.net/showthread.php?p=808724
 	g_Offs_vecOrigin = FindSendPropInfo("CBaseEntity","m_vecOrigin");
 	g_Offs_vecMins = FindSendPropInfo("CBaseEntity","m_vecMins");
 	g_Offs_vecMaxs = FindSendPropInfo("CBaseEntity","m_vecMaxs");
+	new Handle:hGameConf = LoadGameConfigFile("sdkhooks.games")
+	StartPrepSDKCall(SDKCall_Entity)
+	PrepSDKCall_SetFromConf(hGameConf,SDKConf_Virtual,"Touch")
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity,SDKPass_Pointer)
+	g_hSDK_Touch = EndPrepSDKCall()
+	CloseHandle(hGameConf)
+	if(g_hSDK_Touch == INVALID_HANDLE) 
+	{
+		SetFailState("Unable to prepare virtual function CBaseEntity::Touch")
+		return
+	}
+
+	// 
+	for(new i=1;i<=MaxClients;i++)
+	{
+		if(IsClientInGame(i))
+			OnClientPutInServer(i);
+	}
+
 	if(g_bLateLoaded) 
 	OnPluginPauseChange(false);	
 		
@@ -1158,6 +1192,33 @@ public OnLibraryAdded(const String:name[])
 		g_bMapChooser = true;
 	if (tmp != INVALID_HANDLE)
 		CloseHandle(tmp);
+	//botmimic 2
+	if(StrEqual(name, "dhooks") && g_hTeleport == INVALID_HANDLE)
+	{
+		// Optionally setup a hook on CBaseEntity::Teleport to keep track of sudden place changes
+		new Handle:hGameData = LoadGameConfigFile("sdktools.games");
+		if(hGameData == INVALID_HANDLE)
+			return;
+		new iOffset = GameConfGetOffset(hGameData, "Teleport");
+		CloseHandle(hGameData);
+		if(iOffset == -1)
+			return;
+		
+		g_hTeleport = DHookCreate(iOffset, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, DHooks_OnTeleport);
+		if(g_hTeleport == INVALID_HANDLE)
+			return;
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		DHookAddParam(g_hTeleport, HookParamType_ObjectPtr);
+		DHookAddParam(g_hTeleport, HookParamType_VectorPtr);
+		if(GetEngineVersion() == Engine_CSGO)
+			DHookAddParam(g_hTeleport, HookParamType_Bool);
+		
+		for(new i=1;i<=MaxClients;i++)
+		{
+			if(IsClientInGame(i))
+				OnClientPutInServer(i);
+		}
+	}
 	for(new i=1;i<=MaxClients;i++)
 	{
 		if(IsClientInGame(i))
@@ -1171,6 +1232,8 @@ public OnLibraryRemoved(const String:name[])
 		g_hAdminMenu = INVALID_HANDLE;
 	if (StrEqual("sourcebans", name))
 		g_bCanUseSourcebans = false;
+	if(StrEqual(name, "dhooks"))
+		g_hTeleport = INVALID_HANDLE;
 }
 
 public OnAllPluginsLoaded()
@@ -1227,6 +1290,10 @@ public OnMapStart()
 	//get map tag
 	ExplodeString(g_szMapName, "_", g_szMapTag, 2, 32);
 
+	//precache
+	InitPrecache();	
+	SetCashState();
+	
 	//get local map records
 	db_GetMapRecord_CP();
 	db_GetMapRecord_Pro();
@@ -1239,9 +1306,6 @@ public OnMapStart()
 	db_viewMapProRankCount();
 	db_viewMapTpRankCount();
 
-	//mic
-	InitPrecache();	
-	SetCashState();
 	
 	//timers
 	CreateTimer(0.1, MainTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
@@ -1285,9 +1349,6 @@ public OnMapStart()
 	//https://forums.alliedmods.net/showthread.php?p=808724
 	if (g_bMultiplayerBhop)
 		ResetMultiBhop();
-	
-	//Skill groups
-	SetSkillGroups();
 	
 	//main cfg
 	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
@@ -1347,22 +1408,8 @@ public OnConfigsExecuted()
 		}
 	}	
 			
-	//Map Points	
-	new mapcount;
-	if (g_pr_MapCount < 1)
-		mapcount = 1;
-	else
-		mapcount = g_pr_MapCount;
-	g_pr_MaxCalculatedPointsPerMap = RoundToCeil((mapcount*1.3*500)/2);
-	g_pr_rank_Novice = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 0.001);  
-	g_pr_rank_Scrub = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 0.1); 
-	g_pr_rank_Rookie = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 0.3);  
-	g_pr_rank_Skilled = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 0.65);  
-	g_pr_rank_Expert = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 1.2);  
-	g_pr_rank_Pro = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 1.6);  
-	g_pr_rank_Elite = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 2.0); 
-	g_pr_rank_Master = RoundToCeil(g_pr_MaxCalculatedPointsPerMap * 2.4); 
-	g_pr_PointUnit = g_pr_rank_Novice;
+	//skillgroups
+	SetSkillGroups();
 
 	//map config
 	decl String:szPath[256];
@@ -1423,6 +1470,8 @@ public OnClientPutInServer(client)
 	GetCountry(client);		
 	ResetStrafes(client);
 	g_PlayerStates[client][bOn] = false;
+	if(LibraryExists("dhooks"))
+		DHookEntity(g_hTeleport, false, client);
 }
 
 public OnClientAuthorized(client)
@@ -1507,6 +1556,7 @@ public OnClientPostAdminCheck(client)
 	g_bPauseWasActivated[client]=false;
 	g_bTopMenuOpen[client] = false;
 	g_bRestoreC[client] = false;
+	g_bProfileSelected[client] = false;
 	g_bRestoreCMsg[client] = false;
 	g_bRespawnPosition[client] = false;
 	g_bNoClip[client] = false;		
@@ -2044,7 +2094,10 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 					if (IsValidClient(i))				
 						CreateTimer(0.5, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
-	}		
+	}
+
+	if(convar == g_hExtraPoints)
+		g_ExtraPoints = StringToInt(newValue[0]);	
 	if(convar == g_hdist_good_multibhop)
 		g_dist_good_multibhop = StringToFloat(newValue[0]);	
 	

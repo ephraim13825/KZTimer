@@ -1,0 +1,2 @@
+// Here you are able to add steam-id of map makers. They get access to no clip and are tagged as "MAPPER"
+// each line ONLY ONE steam-id (STEAM_x:x:xxx)
