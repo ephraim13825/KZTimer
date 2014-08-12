@@ -17,7 +17,7 @@ Changelog
 
 v1.5
 - added server cvar kz_ranking_extra_points (Gives players x extra points for improving their time. That makes it a easier to rank up.)
-(YOU SHOULD execute sm_ResetExtraPoints after updating from an old kztimer version(<1.49) if u wanna give extrapoints because extra points are saved in an old database field which was used otherwise and got some wrong values)
+-> YOU SHOULD execute sm_ResetExtraPoints after updating from an old kztimer version(<1.49) if u wanna give extrapoints because extra points are saved in an old database field which was used otherwise and got some wrong values
 - fixed two minor bugs on player profiles
 - added admin command sm_ResetExtraPoints
 - fixed two jumpstats bugs
