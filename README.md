@@ -26,17 +26,6 @@ v1.5
 v1.49
 - new optional feature: DHooks extention. Dhooks prevents a wrong mimic of replay bots after teleporting! (Old replays remain broken)
 - overhauled the ranking system (you should recalculate all player ranks after updating kztimer: !kzadmin -> recalculate player ranks). 
--------------
-How does the ranking system work?
-The System depends mostly on your map and jumpstats ranks.
-Once you finished a map, you can get only points by improving your rank!
-Furthermore, you can lose points when others have beaten your map ranks.
- 
-Calculation:
-TP Time: Rank percentage * 100 (extra bonus: Top 20 rankings, max. 400p for #1)
-PRO Time (without teleports): Rank percentage * 200 (extra bonus: Top 20 rankings, max. 600p for #1)
-JumpStats: Rank percentage (Top 20) * 500
--------------
 - replaced skillgroups.txt by skillgroups.cfg. The new config file allows you to change rank limits
 - added MAPPER clantag (steamid's can be added in sourcemod/configs/kztimer/mapmakers.txt)
 - added skill group points to !ranks command
