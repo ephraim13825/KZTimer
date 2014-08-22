@@ -11,9 +11,18 @@ Info:
 - SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
+- Multi-Language support (english, chinese, french, german, russian, swedish)
 
 Changelog
 =======
+
+v1.51
+- added multi-language support (client command: !language)
+- added four new language files (german, russian by blind, chinese by pchun, french by alouette)
+- added admin command sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid - requires z flag)
+- fixed jumpstats glitch on kz_olympus
+- fixed vertical jump glitch on multibhops
+- minor optimizations
 
 v1.5
 - added server cvar kz_ranking_extra_points (Gives players x extra points for improving their time. That makes it a easier to rank up.)
