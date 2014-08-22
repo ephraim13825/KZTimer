@@ -12,12 +12,13 @@
 #include <colors>
 #include <mapchooser>
 #undef REQUIRE_EXTENSIONS
+#include <clientprefs>
 #undef REQUIRE_PLUGIN
 #include <dhooks>
 #include <sourcebans>
 #include <calladmin>
 
-#define VERSION "1.5"
+#define VERSION "1.51"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -145,6 +146,9 @@ new Handle:g_MapList = INVALID_HANDLE;
 new Handle:g_hDb = INVALID_HANDLE;
 new Handle:hStartPress = INVALID_HANDLE;
 new Handle:hEndPress = INVALID_HANDLE;
+new Handle:g_hLangMenu = INVALID_HANDLE;
+new Handle:g_hCookie = INVALID_HANDLE;
+new Handle:g_OnLangChanged = INVALID_HANDLE;
 new Handle:g_hRecording[MAXPLAYERS+1];
 new Handle:g_hLoadedRecordsAdditionalTeleport;
 new Handle:g_hBotMimicsRecord[MAXPLAYERS+1] = {INVALID_HANDLE,...};
@@ -371,6 +375,8 @@ new bool:g_bTpReplay;
 new bool:g_pr_RankingRecalc_InProgress;
 new bool:g_bAntiCheat;
 new bool:g_bMapChooser;
+new bool:g_bUseCPrefs;
+new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
 new bool:g_bLjStarDest[MAXPLAYERS + 1];
 new bool:g_bLJBlockValidJumpoff[MAXPLAYERS + 1];
@@ -426,6 +432,7 @@ new bool:g_CMOpen[MAXPLAYERS+1];
 new bool:g_bRecalcRankInProgess[MAXPLAYERS+1];
 new bool:g_bAutoBhopWasActive[MAXPLAYERS+1];
 new bool:g_bColorChat[MAXPLAYERS+1];
+new bool:g_bLanguageSelected[MAXPLAYERS+1];
 new bool:g_bNewReplay[MAXPLAYERS+1];
 new bool:g_bPositionRestored[MAXPLAYERS+1];
 new bool:g_bInfoPanel[MAXPLAYERS+1];
@@ -551,6 +558,8 @@ new g_Challenge_Bet[MAXPLAYERS+1];
 new g_UspDrops[MAXPLAYERS+1];
 new g_MapRankTp[MAXPLAYERS+1];
 new g_MapRankPro[MAXPLAYERS+1];
+new g_OldMapRankPro[MAXPLAYERS+1];
+new g_OldMapRankTp[MAXPLAYERS+1];
 new g_Time_Type[MAXPLAYERS+1];
 new g_Sound_Type[MAXPLAYERS+1];
 new g_TpRecordCount[MAXPLAYERS+1];
@@ -624,7 +633,7 @@ new const String:PROJUMP_RELATIVE_SOUND_PATH[] = "*quake/perfect.mp3";
 new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog",
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
-new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!menu ","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight", "!radio",
+new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!cpmenu","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight", "!radio",
 	"!stuck","!knife","!r","!prev","!undo","!next","!start","!stop","!pause","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", 
 	"!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure"};
 new String:EntityList[][] = {"jail_teleport","logic_timer", "team_round_timer", "logic_relay"};
@@ -652,6 +661,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("KZTimer_GetTimerStatus", Native_GetTimerStatus);
 	CreateNative("KZTimer_StopUpdatingOfClimbersMenu", Native_StopUpdatingOfClimbersMenu);
 	CreateNative("KZTimer_StopTimer", Native_StopTimer);
+	g_OnLangChanged = CreateGlobalForward("GeoLang_OnLanguageChanged", ET_Ignore, Param_Cell, Param_Cell);
 	g_bLateLoaded = late;
 	return APLRes_Success;
 }
@@ -670,6 +680,16 @@ public OnPluginStart()
 	
 	//lanuage file
 	LoadTranslations("kztimer.phrases");	
+	
+	// https://forums.alliedmods.net/showthread.php?p=1436866
+	// GeoIP Language Selection by GoD-Tony
+	Init_GeoLang();
+	if (LibraryExists("clientprefs"))
+	{
+		g_hCookie = RegClientCookie("GeoLanguage", "The client's preferred language.", CookieAccess_Protected);
+		SetCookieMenuItem(CookieMenu_GeoLanguage, 0, "Language");
+		g_bUseCPrefs = true;
+	}	
 	
 	//Convars	
 	CreateConVar("kztimer_version", VERSION, "kztimer Version.", FCVAR_DONTRECORD|FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
@@ -896,7 +916,7 @@ public OnPluginStart()
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "350.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "250.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All] (prestrafe 1 = 263)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "250.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All] (prestrafe 1 = 265)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
 			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "255.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All] (prestrafe 1 = 268)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "240.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -974,6 +994,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_info", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_menusound", Client_ClimbersMenuSounds,"[KZTimer] on/off climbers menu sounds");
 	RegConsoleCmd("sm_sync", Client_StrafeSync,"[KZTimer] on/off strafe sync in chat");
+	RegConsoleCmd("sm_language", Client_Language, "[KZTimer] choose your language");
 	RegConsoleCmd("sm_sound", Client_QuakeSounds,"[KZTimer] on/off quake sounds");
 	RegConsoleCmd("sm_cpmessage", Client_CPMessage,"[KZTimer] on/off checkpoint message in chat");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[KZTimer] surrender your current challenge");
@@ -993,6 +1014,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[KZTimer] hides spectators from menu/panel");
 	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer] compare your challenge results");
 	RegConsoleCmd("sm_menu", Client_Kzmenu, "[KZTimer] opens kztimer climbers menu");
+	RegConsoleCmd("sm_cpmenu", Client_Kzmenu, "[KZTimer] opens kztimer climbers menu");
 	RegConsoleCmd("sm_measure",Command_Menu, "[KZTimer] allows you to measure the distance between 2 points");
 	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer] abort your current challenge");
 	RegConsoleCmd("sm_spec", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
@@ -1006,7 +1028,6 @@ public OnPluginStart()
 	RegConsoleCmd("sm_options", Client_OptionMenu, "[KZTimer] opens options menu");
 	RegConsoleCmd("sm_top", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
-	RegConsoleCmd("sm_top15", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
@@ -1025,6 +1046,7 @@ public OnPluginStart()
 	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times (drops table playertimes) - requires z flag");
 	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL2, "[KZTimer] Resets the player point system (drops table playerrank - requires z flag)");
 	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times for given map - requires z flag");
+	RegAdminCmd("sm_resetplayerchallenges", Admin_ResetChallenges, ADMIN_LEVEL2, "[KZTimer] Resets (won) challenges for given steamid - requires z flag");
 	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL2, "[KZTimer] Resets tp & pro map times for given steamid with or without given map - requires z flag");
 	RegAdminCmd("sm_resetplayertptime", Admin_ResetRecordTp, ADMIN_LEVEL2, "[KZTimer] Resets tp map time for given steamid and map - requires z flag");
 	RegAdminCmd("sm_resetplayerprotime", Admin_ResetRecordPro, ADMIN_LEVEL2, "[KZTimer] Resets pro map time for given steamid and map - requires z flag");
@@ -1472,6 +1494,10 @@ public OnClientPutInServer(client)
 	g_PlayerStates[client][bOn] = false;
 	if(LibraryExists("dhooks"))
 		DHookEntity(g_hTeleport, false, client);
+	//language
+	if (g_bUseCPrefs && !IsFakeClient(client))
+		if (AreClientCookiesCached(client) && !g_bLoaded[client])
+			LoadCookies(client);
 }
 
 public OnClientAuthorized(client)
@@ -1598,6 +1624,8 @@ public OnClientPostAdminCheck(client)
 	g_js_LeetJump_Count[client] = 0;
 	g_MapRankTp[client] = 99999;
 	g_MapRankPro[client] = 99999;
+	g_OldMapRankPro[client] = 99999;
+	g_OldMapRankTp[client] = 99999;
 	g_fPauseTime[client] = 0.0;
 	g_fProfileMenuLastQuery[client] = GetEngineTime();
 	Format(g_szPlayerPanelText[client], 512, "");
@@ -1614,7 +1642,7 @@ public OnClientPostAdminCheck(client)
 	g_bShowTime[client]=true; 
 	g_bHide[client]=false; 
 	g_bCPTextMessage[client]=false; 
-	g_bAdvancedClimbersMenu[client]=false;
+	g_bAdvancedClimbersMenu[client]=true;
 	g_bColorChat[client]=true; 
 	g_bShowSpecs[client]=true;
 	g_bAutoBhopClient[client]=true;
@@ -1717,6 +1745,7 @@ public OnClientDisconnect(client)
 	//zipcore anti strafe hack
 	ResetStrafes(client);
 	g_PlayerStates[client][bOn] = false;
+	g_bLoaded[client] = false;
 }
 
 public OnSettingChanged(Handle:convar, const String:oldValue[], const String:newValue[])

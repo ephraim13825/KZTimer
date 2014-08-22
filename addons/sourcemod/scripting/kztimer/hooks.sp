@@ -331,7 +331,7 @@ public Action:Hook_SetTransmit(entity, client)
 { 
     if (client != entity && (0 < entity <= MaxClients) && IsValidClient(client)) 
 	{
-		if (g_bChallenge[client])
+		if (g_bChallenge[client] && !g_bHide[client] && entity != g_SpecTarget[client])
 		{
 			decl String:szSteamId[32];
 			GetClientAuthString(entity, szSteamId, 32);	

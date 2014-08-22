@@ -6,15 +6,10 @@ public Action:RefreshAdminMenu(Handle:timer, any:client)
 		KzAdminMenu(client);
 }
 
-public Action:DBUpdateTimer(Handle:timer, any:client)
+public Action:UpdatePlayerProfile(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))	
 		db_updateStat(client);	
-}
-
-public Action:RefreshPoints(Handle:timer, any:client)
-{
-	db_updateStat(client);	
 }
 
 public Action:HyperscrollWarningTimer(Handle:timer, any:client)
@@ -257,7 +252,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			if (g_Challenge_Bet[client]>0)
 				g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;	
 			g_pr_showmsg[client]=true;
-			CreateTimer(1.5, RefreshPoints, client,TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(0.5, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
 			//db opponent
 			db_selectRankedPlayer(g_szChallenge_OpponentID[client], g_Challenge_Bet[client]);
 			
@@ -404,6 +399,9 @@ public Action:StartMsgTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
+		
+		if (!g_bLanguageSelected[client])
+			PrintToChat(client, "%t", "LanguageSwitch", MOSSGREEN,WHITE,GRAY,WHITE);
 		if (g_bAntiCheat)
 			PrintToChat(client, "%t", "AntiCheatEnabled", MOSSGREEN,WHITE,LIMEGREEN);
 		if (g_bEnforcer)

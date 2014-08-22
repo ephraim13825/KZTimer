@@ -361,7 +361,8 @@ public CL_OnEndTimerPress(client)
 		db_InsertLatestRecords(szSteamId, szName, g_fFinalTime[client], g_Tp_Final[client]);	
 	}
 			
-	//Challenge
+		//Challenge
+	new bool: bChallengeBet=false;
 	if (g_bChallenge[client])
 	{
 		SetEntityRenderColor(client, 255,255,255,255);		
@@ -387,27 +388,24 @@ public CL_OnEndTimerPress(client)
 						g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;
 						g_Challenge_PointsRatio[i] -= g_Challenge_Bet[i] * g_pr_PointUnit;							
 						g_pr_showmsg[i] = true;
-						g_pr_showmsg[client] = true;
 						new lostpoints = g_Challenge_Bet[client] * g_pr_PointUnit;
 						for (new j = 1; j <= MaxClients; j++)
 							if (IsValidClient(j))
-								PrintToChat(j, "%t", "ChallengeL", MOSSGREEN, WHITE, PURPLE,szNameOpponent, GRAY, RED, lostpoints,GRAY);			
-					}
-					CreateTimer(0.0, RefreshPoints, client,TIMER_FLAG_NO_MAPCHANGE);
-					CreateTimer(1.0, RefreshPoints, i,TIMER_FLAG_NO_MAPCHANGE);
+								PrintToChat(j, "%t", "ChallengeL", MOSSGREEN, WHITE, PURPLE,szNameOpponent, GRAY, RED, lostpoints,GRAY);		
+						CreateTimer(0.5, UpdatePlayerProfile, i,TIMER_FLAG_NO_MAPCHANGE);
+						bChallengeBet = true;
+					}				
 					i = MaxClients;
 				}
 			}
 		}		
 	}
 	
-	//set mvp stars
+	//set mvp star
 	g_MVPStars[client] += 1;
 	CS_SetMVPCount(client,g_MVPStars[client]);		
 	
-	//database stuff
-	
-	//add record if better than personal best
+	//local db update
 	if ((g_fFinalTime[client] < g_fPersonalRecord[client] && g_Tp_Final[client] > 0 || g_fPersonalRecord[client] <= 0.0 && g_Tp_Final[client] > 0) || (g_fFinalTime[client] < g_fPersonalRecordPro[client] && g_Tp_Final[client] == 0 || g_fPersonalRecordPro[client] <= 0.0 && g_Tp_Final[client] == 0))
 	{
 		g_pr_showmsg[client] = true;
@@ -419,9 +417,14 @@ public CL_OnEndTimerPress(client)
 			db_viewMapRankTp(client);
 		else
 			db_viewMapRankPro(client);
+		if (bChallengeBet)
+		{
+			g_pr_showmsg[client] = true;
+			CreateTimer(0.25, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
+		}
 	}
 	
-	//deelete tmp entry
+	//delete tmp entry
 	db_deleteTmp(client);
 	
 	//Credits: Antistrafe hack by Zipcore

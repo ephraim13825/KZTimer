@@ -3,6 +3,7 @@ new String:sql_createChallenges[] 				= "CREATE TABLE IF NOT EXISTS challenges (
 new String:sql_insertChallenges[] 				= "INSERT INTO challenges (steamid, steamid2, bet, map, cp_allowed) VALUES('%s', '%s','%i','%s','%i');";
 new String:sql_selectChallenges[] 				= "SELECT steamid, steamid2, bet, cp_allowed, map FROM challenges where steamid = '%s' OR steamid2 ='%s'";
 new String:sql_selectChallengesCompare[] 		= "SELECT steamid, steamid2, bet FROM challenges where (steamid = '%s' AND steamid2 ='%s') OR (steamid = '%s' AND steamid2 ='%s')";
+new String:sql_deleteChallenges[] 				= "DELETE from challenges where steamid = '%s'";
 
 //TABLE LATEST 15 LOCAL RECORDS
 new String:sql_createLatestRecords[] 			= "CREATE TABLE IF NOT EXISTS LatestRecords (steamid VARCHAR(32), name VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', teleports INT(12) DEFAULT '-1', map VARCHAR(32), date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);";
@@ -3951,6 +3952,18 @@ public db_resetPlayerMultiBhopRecord(client, String:steamid[128])
 	}
 }
 
+public db_resetPlayerResetChallenges(client, String:steamid[128])
+{
+	decl String:szQuery[255];
+	decl String:szsteamid[128*2+1];
+	SQL_QuoteString(g_hDb, steamid, szsteamid, 128*2+1);      
+	Format(szQuery, 255, sql_deleteChallenges, szsteamid);       
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	    
+	Format(szQuery, 255, sql_updatePlayerRankChallenge, 0,0, szsteamid);       
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	  	
+	PrintToConsole(client, "challenges cleared (%s) - requires profile recalculation. (on playerconnect or via !kzadmin)", szsteamid);
+}
+
 public db_resetPlayerLjRecord(client, String:steamid[128])
 {
 	decl String:szQuery[255];
@@ -4089,7 +4102,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 			GetClientAuthString(client, szSteamId, 32);
 		else
 			return;
-		Format(szQuery, 512, sql_insertPlayerOptions, szSteamId, 1,0,1,1,1,1,1,0,1,0,1,0,0,"weapon_knife",0,0,0,0)
+		Format(szQuery, 512, sql_insertPlayerOptions, szSteamId, 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0)
 		SQL_TQuery(g_hDb, SQL_InsertCheckCallback, szQuery,DBPrio_Low);			
 		g_borg_ColorChat[client] = true;
 		g_borg_InfoPanel[client] = false;
@@ -4802,7 +4815,6 @@ public SQL_UpdateStatCallback(Handle:owner, Handle:hndl, const String:error[], a
 	CalculatePlayerRank(client);
 }
 
-
 public db_viewMapRankPro(client)
 {
 	decl String:szQuery[512];
@@ -4812,12 +4824,13 @@ public db_viewMapRankPro(client)
 	else
 		return;
 	Format(szQuery, 512, sql_selectPlayerRankProTime, szSteamId, g_szMapName, g_szMapName);
-	SQL_TQuery(g_hDb, db_viewMapRankProCallback, szQuery, client);
+	SQL_TQuery(g_hDb, db_viewMapRankProCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_viewMapRankProCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;  
+	g_OldMapRankPro[client] = g_MapRankPro[client];
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 		g_MapRankPro[client] = SQL_GetRowCount(hndl); 
 	if (g_bMapRankToChat[client])
@@ -4828,7 +4841,7 @@ public db_viewMapProRankCount()
 {
 	decl String:szQuery[512];
 	Format(szQuery, 512, sql_selectPlayerProCount, g_szMapName);
-	SQL_TQuery(g_hDb, sql_selectPlayerProCountCallback, szQuery);
+	SQL_TQuery(g_hDb, sql_selectPlayerProCountCallback, szQuery,DBPrio_Low);
 }
 public sql_selectPlayerProCountCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -4847,12 +4860,13 @@ public db_viewMapRankTp(client)
 	else
 		return;
 	Format(szQuery, 512, sql_selectPlayerRankTime, szSteamId, g_szMapName, g_szMapName);
-	SQL_TQuery(g_hDb, db_viewMapRankTpCallback, szQuery, client);
+	SQL_TQuery(g_hDb, db_viewMapRankTpCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_viewMapRankTpCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;  
+	g_OldMapRankTp[client] = g_MapRankTp[client];
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 		g_MapRankTp[client] = SQL_GetRowCount(hndl); 
 	if (g_bMapRankToChat[client])

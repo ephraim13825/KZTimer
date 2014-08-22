@@ -5,6 +5,174 @@ public Action:CallAdmin_OnDrawOwnReason(client)
 	return Plugin_Continue;
 }
 
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+FormatLanguage(String:language[])
+{
+	// Format the input language.
+	new length = strlen(language);
+	
+	if (length <= 1)
+		return;
+	
+	// Capitalize first letter.
+	language[0] = CharToUpper(language[0]);
+	
+	// Lower case the rest.
+	for (new i = 1; i < length; i++)
+	{
+		language[i] = CharToLower(language[i]);
+	}
+}
+
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+LoadCookies(client)
+{
+	decl String:sCookie[4];
+	sCookie[0] = '\0';
+	g_bLanguageSelected[client] = true;
+	GetClientCookie(client, g_hCookie, sCookie, sizeof(sCookie));	
+	if (sCookie[0] != '\0')
+		SetClientLanguageByCode(client, sCookie);	
+	else
+		g_bLanguageSelected[client] = false;
+	g_bLoaded[client] = true;
+}
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+SetClientLanguageByCode(client, const String:code[])
+{
+	/* Set a client's language based on the language code. */
+	new iLangID = GetLanguageByCode(code);	
+	if (iLangID >= 0)
+		SetClientLanguage2(client, iLangID);
+}
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+SetClientLanguage2(client, language)
+{
+	// Set language.
+	SetClientLanguage(client, language);
+	
+	// forward GeoLang_OnLanguageChanged(client, language);
+	Call_StartForward(g_OnLangChanged);
+	Call_PushCell(client);
+	Call_PushCell(language);
+	Call_Finish();
+}
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+public LanguageMenu_Handler(Handle:menu, MenuAction:action, client, item)
+{
+	/* Handle the language selection menu. */
+	switch (action)
+	{
+		case MenuAction_DrawItem:
+		{
+			// Disable selection for currently used language.
+			decl String:sLangID[4];
+			GetMenuItem(menu, item, sLangID, sizeof(sLangID));
+			
+			if (StringToInt(sLangID) == GetClientLanguage(client))
+			{
+				return ITEMDRAW_DISABLED;
+			}
+			
+			return ITEMDRAW_DEFAULT;
+		}
+		
+		case MenuAction_Select:
+		{
+			decl String:sLangID[4], String:sLanguage[32];
+			GetMenuItem(menu, item, sLangID, sizeof(sLangID), _, sLanguage, sizeof(sLanguage));
+			
+			new iLangID = StringToInt(sLangID);
+			SetClientLanguage2(client, iLangID);
+			
+			if (g_bUseCPrefs)
+			{
+				decl String:sLangCode[6];
+				GetLanguageInfo(iLangID, sLangCode, sizeof(sLangCode));
+				SetClientCookie(client, g_hCookie, sLangCode);
+			}
+			
+			PrintToChat(client, "[%cKZ%c] Language changed to \"%s\".", MOSSGREEN,WHITE, sLanguage);
+		}
+	}
+	
+	return 0;
+}
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+Init_GeoLang()
+{
+	// Create and cache language selection menu.
+	new Handle:hLangArray = CreateArray(32);
+	decl String:sLangID[4];
+	decl String:sLanguage[128];
+	
+	new maxLangs = GetLanguageCount();
+	for (new i = 0; i < maxLangs; i++)
+	{
+		GetLanguageInfo(i, _, _, sLanguage, sizeof(sLanguage));
+		if (StrEqual(sLanguage,"german") || StrEqual(sLanguage,"russian") || StrEqual(sLanguage,"schinese") || StrEqual(sLanguage,"english")  || StrEqual(sLanguage,"swedish")  || StrEqual(sLanguage,"french"))
+		{
+			FormatLanguage(sLanguage);
+			PushArrayString(hLangArray, sLanguage);
+		}
+	}
+	
+	// Sort languages alphabetically.
+	SortADTArray(hLangArray, Sort_Ascending, Sort_String);
+	
+	// Create and cache the menu.
+	g_hLangMenu = CreateMenu(LanguageMenu_Handler, MenuAction_DrawItem);
+	SetMenuTitle(g_hLangMenu, "Language:");
+	SetMenuPagination(g_hLangMenu, MENU_NO_PAGINATION); 
+	
+	maxLangs = GetArraySize(hLangArray);
+	for (new i = 0; i < maxLangs; i++)
+	{
+		GetArrayString(hLangArray, i, sLanguage, sizeof(sLanguage));
+		
+		// Get language ID.
+		IntToString(GetLanguageByName(sLanguage), sLangID, sizeof(sLangID));
+		
+		// Add to menu.
+		if (StrEqual(sLanguage,"Schinese"))
+			Format(sLanguage, 128, "Chinese");	
+		AddMenuItem(g_hLangMenu, sLangID, sLanguage);
+	}
+	
+	SetMenuExitButton(g_hLangMenu, true);
+	
+	CloseHandle(hLangArray);
+}
+
+// https://forums.alliedmods.net/showthread.php?p=1436866
+// GeoIP Language Selection by GoD-Tony
+public CookieMenu_GeoLanguage(client, CookieMenuAction:action, any:info, String:buffer[], maxlen)
+{
+	/* Menu when accessed through !settings. */
+	switch (action)
+	{
+		case CookieMenuAction_DisplayOption:
+		{
+			Format(buffer, maxlen, "Language");
+		}
+		case CookieMenuAction_SelectOption:
+		{
+			DisplayMenu(g_hLangMenu, client, MENU_TIME_FOREVER);
+		}
+	}
+}
+
 stock bool:IsValidClient(client)
 {
     if(client >= 1 && client <= MaxClients && IsValidEntity(client) && IsClientConnected(client) && IsClientInGame(client))
@@ -41,7 +209,7 @@ public PrintConsoleInfo(client)
 	Format(finalOutput, 1024, "%d:%02d", mins, secs);
 	new Float:fltickrate = 1.0 / GetTickInterval( );
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
-	PrintToConsole(client, "This server is running KZTimer v%s - Author: 1NuTWunDeR <STEAM_0:1:73507922> - Server tickrate: %i", VERSION, RoundToNearest(fltickrate));
+	PrintToConsole(client, "This server is running KZTimer v%s - Author: 1NuTWunDeR - Server tickrate: %i", VERSION, RoundToNearest(fltickrate));
 	PrintToConsole(client, "KZTimer steam group: http://steamcommunity.com/groups/KZTIMER");
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
@@ -49,7 +217,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !usp, !challenge, !surrender, !goto, !spec,");
-	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight");
+	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
 	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop)");
 	PrintToConsole(client, " ");
@@ -613,12 +781,12 @@ public PrintMapRecords(client)
 	if (g_fRecordTimePro != 9999999.0)
 	{
 		FormatTimeFloat(client, g_fRecordTimePro, 3);
-		PrintToChat(client, "[%cKZ%c] %cPRO RECORD%c: %s (%s)",MOSSGREEN,WHITE,PURPLE,WHITE, g_szTime[client], g_szRecordPlayerPro); 
+		PrintToChat(client, "%t", "ProRecord",MOSSGREEN,WHITE,PURPLE,WHITE, g_szTime[client], g_szRecordPlayerPro); 
 	}	
 	if (g_fRecordTime != 9999999.0)
 	{
 		FormatTimeFloat(client, g_fRecordTime, 3);
-		PrintToChat(client, "[%cKZ%c] %cTP RECORD%c: %s (%s)",MOSSGREEN,WHITE,YELLOW,WHITE, g_szTime[client], g_szRecordPlayer); 
+		PrintToChat(client, "%t", "TpRecord",MOSSGREEN,WHITE,YELLOW,WHITE, g_szTime[client], g_szRecordPlayer); 
 	}	
 }
 
@@ -705,8 +873,29 @@ public MapFinishedMsgs(client, type)
 		if (IsValidClient(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) && !(GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC) && g_bNoClipS)
 			PrintToChat(client, "%t", "NoClipUnlocked",MOSSGREEN,WHITE,YELLOW);
 		g_bMapFinished[client] = true;
-		CreateTimer(2.0, DBUpdateTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(0.0, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
 		g_fStartTime[client] = -1.0;		
+
+		if (g_Time_Type[client] == 0 || g_Time_Type[client] == 1 || g_Time_Type[client] == 2 || g_Time_Type[client] == 3)
+			CheckMapRanks(client, g_Tp_Final[client]);
+	}
+}
+
+public CheckMapRanks(client, tps)
+{
+	for (new i = 1; i <= MaxClients; i++)
+	if (IsValidClient(i) && !IsFakeClient(i) && i != client)	
+	{	
+		if (tps > 0)
+		{
+			if (g_OldMapRankTp[client] > g_MapRankTp[client] && g_OldMapRankTp[client] > g_MapRankTp[i] && g_MapRankTp[client] <= g_MapRankTp[i])
+				g_MapRankTp[i]++;
+		}
+		else
+		{
+			if (g_OldMapRankPro[client] < g_MapRankPro[client] && g_OldMapRankPro[client] > g_MapRankPro[i] && g_MapRankPro[client] <= g_MapRankPro[i])
+				g_MapRankPro[i]++;
+		}			
 	}
 }
 
@@ -1234,7 +1423,11 @@ public PerformBan(client, String:szbantype[16])
 		if(g_bCanUseSourcebans)
 			SBBanPlayer(0, client, bantime, banmsg);
 		else
-			BanClient(client, bantime, BANFLAG_AUTO, banmsg, banmsg);
+		{
+			new String:f_sClientIP[64];
+			GetClientIP(client, f_sClientIP, sizeof(f_sClientIP));
+			BanIdentity(f_sClientIP, bantime, BANFLAG_IP, banmsg);
+		}
 		db_DeleteCheater(client,szSteamID);
 	}
 }
@@ -1290,14 +1483,13 @@ public bool:WallCheck(client)
 }
 
 //OnPlayerRunCmd Stuff
-
 public Prestrafe(client, mouse_ang, &buttons)
 {
 	if (!IsValidClient(client) || !IsPlayerAlive(client) || (!g_bPreStrafe && !g_bProMode) || (g_bSlowDownCheck[client]) | !(GetEntityFlags(client) & FL_ONGROUND))
 		return;
 	
 	//var
-	new g_mouseAbs, MaxMouseAbs, MaxFrameCount;	
+	new g_mouseAbs, MaxFrameCount;	
 	decl String:classname[64];
 	GetClientWeapon(client, classname, 64);
 	new Float: IncSpeed, Float: DecSpeed;
@@ -1338,7 +1530,6 @@ public Prestrafe(client, mouse_ang, &buttons)
 		//tickrate depending values
 		if (g_Server_Tickrate == 64)
 		{
-			MaxMouseAbs =  30;
 			MaxFrameCount = 45;
 			IncSpeed = 0.00165;
 			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
@@ -1348,9 +1539,8 @@ public Prestrafe(client, mouse_ang, &buttons)
 		
 		if (g_Server_Tickrate == 102)
 		{
-			MaxMouseAbs =  35;
 			MaxFrameCount = 60;	
-			IncSpeed = 0.00149;
+			IncSpeed = 0.0016;
 			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
 				IncSpeed = 0.001;			
 			DecSpeed = 0.006;
@@ -1359,7 +1549,6 @@ public Prestrafe(client, mouse_ang, &buttons)
 		
 		if (g_Server_Tickrate == 128)
 		{
-			MaxMouseAbs =  35;
 			MaxFrameCount = 80;	
 			IncSpeed = 0.00145;
 			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
@@ -1367,11 +1556,10 @@ public Prestrafe(client, mouse_ang, &buttons)
 			DecSpeed = 0.006;
 		}
 		
-
-		if (((buttons & IN_MOVERIGHT && ((mouse_ang > 0 && bForward) || (mouse_ang < 0 && !bForward)))) || (buttons & IN_MOVELEFT && ((mouse_ang > 0 && !bForward) || (mouse_ang < 0 && bForward)) && g_mouseAbs < MaxMouseAbs))
-		{       
-			g_PrestrafeFrameCounter[client]++;
-						
+		if (((buttons & IN_MOVERIGHT && ((mouse_ang > 0 && bForward) || (mouse_ang < 0 && !bForward)))) || (buttons & IN_MOVELEFT && ((mouse_ang > 0 && !bForward) || (mouse_ang < 0 && bForward))))
+		{
+			
+			g_PrestrafeFrameCounter[client]++;						
 			//Add speed if Prestrafe frames smaller than max frame count	
 			if (g_PrestrafeFrameCounter[client] < MaxFrameCount)
 			{	

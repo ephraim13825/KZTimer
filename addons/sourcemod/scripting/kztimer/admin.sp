@@ -30,7 +30,7 @@ public Action:Admin_KzPanel(client, args)
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
 		PrintToConsole(client,"\nAdmin commands:\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
-		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_resetextrapoints (Resets the extra points multiplier for all players)\n [players have to refresh their profile afterwards]");
+		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets the extra points multiplier for all players)\n [players have to refresh their profile afterwards]");
 		PrintToConsole(client,"[database table playertimes]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp&pro times for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
 		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n[database table jumpstats]\n sm_resetjumpstats (Drops jumpstats table)");
 		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
@@ -717,6 +717,29 @@ public Action:Admin_ResetRecordPro(client, args)
 	return Plugin_Handled;
 }
 
+
+public Action:Admin_ResetChallenges(client, args)
+{
+	if(args == 0)
+	{
+		ReplyToCommand(client, "[KZ] Usage: sm_resetplayerchallenges <steamid>");
+		return Plugin_Handled;
+	}
+	if(args > 0)
+	{
+		decl String:szSteamID[128];
+		decl String:szArg[128];
+		Format(szSteamID, 128, "");
+		for (new i = 1; i < 6; i++)
+		{
+			GetCmdArg(i, szArg, 128);
+			if (!StrEqual(szArg, "", false))
+				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
+		}
+		db_resetPlayerResetChallenges(client, szSteamID);
+	}
+	return Plugin_Handled;
+}
 
 public Action:Admin_ResetMapRecords(client, args)
 {

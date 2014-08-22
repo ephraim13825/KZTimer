@@ -648,12 +648,14 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 			if (iBotPause == 0 && g_bPause[client])
 				PauseMethod(client);
 		}
+		
 		if(g_BotMimicTick[client] == 0)
 		{
 			SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", -1);
 			CL_OnStartTimerPress(client);
 			g_bValidTeleportCall[client] = true;
 			TeleportEntity(client, g_fInitialPosition[client], g_fInitialAngles[client], fAcutalVelocity);
+			
 		}
 		else
 		{
@@ -664,28 +666,32 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 		if(iFrame[newWeapon] != CSWeapon_NONE)
 		{
 			decl String:sAlias[64];
+			decl String:sAliasOld[64];
 			CS_WeaponIDToAlias(iFrame[newWeapon], sAlias, sizeof(sAlias));
+			Format(sAliasOld, sizeof(sAliasOld), "weapon_%s", sAlias);
+			if (StrEqual(sAlias,"hkp2000"))
+				Format(sAlias, sizeof(sAlias), "weapon_usp_silencer", sAlias);
+			else
+				Format(sAlias, sizeof(sAlias), "weapon_%s", sAlias);
 			
-			Format(sAlias, sizeof(sAlias), "weapon_%s", sAlias);
-			
-			if(g_BotMimicTick[client] > 0 && Client_HasWeapon(client, sAlias))
-			{
-				weapon = Client_GetWeapon(client, sAlias);
+			if(g_BotMimicTick[client] > 0 && (Client_HasWeapon(client, sAlias) || Client_HasWeapon(client, sAliasOld)))
+			{			
+				weapon = Client_GetWeapon(client, sAliasOld);
 				g_BotActiveWeapon[client] = weapon;
 				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
 				Client_SetActiveWeapon(client, weapon);
 			}
 			else
 			{
-				 weapon = GivePlayerItem(client, sAlias);
-				 if(weapon != INVALID_ENT_REFERENCE)
-				 {
-					 g_BotActiveWeapon[client] = weapon;
-					 if(StrContains(sAlias, "grenade") == -1 && StrContains(sAlias, "flashbang") == -1 && StrContains(sAlias, "decoy") == -1 && StrContains(sAlias, "molotov") == -1)
-						 EquipPlayerWeapon(client, weapon);
-					 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-					 Client_SetActiveWeapon(client, weapon);
-				 }
+				weapon = GivePlayerItem(client, sAlias);
+				if(weapon != INVALID_ENT_REFERENCE)
+				{
+					g_BotActiveWeapon[client] = weapon;
+					if(StrContains(sAlias, "grenade") == -1 && StrContains(sAlias, "flashbang") == -1 && StrContains(sAlias, "decoy") == -1 && StrContains(sAlias, "molotov") == -1)
+						EquipPlayerWeapon(client, weapon);
+					SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+					Client_SetActiveWeapon(client, weapon);
+				}
 			}
 		}		
 		g_BotMimicTick[client]++;		

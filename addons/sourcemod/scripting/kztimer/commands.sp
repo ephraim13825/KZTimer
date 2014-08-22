@@ -14,6 +14,15 @@ public Action:Client_Ljblock(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_Language(client, args)
+{
+	if (!IsValidClient(client))
+			return Plugin_Handled;
+	StopClimbersMenu(client);
+	DisplayMenu(g_hLangMenu, client, MENU_TIME_FOREVER);	
+	return Plugin_Handled;
+}
+
 public LJBlockMenu(client)
 {	
 	new Handle:menu = CreateMenu(LjBlockMenuHandler);
@@ -419,8 +428,8 @@ public Action:Client_Surrender (client, args)
 								PrintToChat(j, "[%cKZ%c] %c%s%c has lost %c%i %cpoints!", MOSSGREEN, WHITE, PURPLE,szName, GRAY, RED, lostpoints,GRAY);
 					}
 					//db update
-					CreateTimer(4.0, RefreshPoints, i,TIMER_FLAG_NO_MAPCHANGE);
-					CreateTimer(4.5, RefreshPoints, client,TIMER_FLAG_NO_MAPCHANGE);
+					CreateTimer(0.0, UpdatePlayerProfile, i,TIMER_FLAG_NO_MAPCHANGE);
+					CreateTimer(0.5, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
 					i = MaxClients+1;
 				}
 			}
@@ -686,15 +695,19 @@ public SpecPlayer(client,args)
 			}
 		}
 		
+		new x = 0;
 		//add players
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 			{
+				if (x==0)
+					AddMenuItem(menu, "brp123123xcxc", ">> PLAYER WITH MOST EXP. POINTS <<");
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				Format(szPlayerName2, 128, "%s (%s)",szPlayerName, g_pr_rankname[i]);
 				AddMenuItem(menu, szPlayerName, szPlayerName2);
-				playerCount++;			
+				playerCount++;		
+				x++;
 			}
 		}
 		
@@ -738,7 +751,7 @@ public SpecPlayer(client,args)
 				}
 			}
 		}	
-		PrintToChat(client, "%t", "PlayerNotFound2",MOSSGREEN,WHITE, szOrgTargetName);	
+		PrintToChat(client, "%t", "PlayerNotFound",MOSSGREEN,WHITE, szOrgTargetName);	
 	}
 }
 
@@ -749,25 +762,56 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		decl String:info[32];
 		decl String:szPlayerName[MAX_NAME_LENGTH];
 		GetMenuItem(menu, param2, info, sizeof(info));
-		for (new i = 1; i <= MaxClients; i++)
+	
+		if(StrEqual(info,"brp123123xcxc"))
 		{
-			if (IsValidClient(i) && IsPlayerAlive(i) && i != param1)
+			new playerid;
+			new count = 0;
+			new points = -1;
+			for (new i = 1; i <= MaxClients; i++)
 			{
-				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
-				if (i == g_TpBot)
-					Format(szPlayerName, MAX_NAME_LENGTH, "TP RECORD REPLAY"); 
-				else
-					if (i == g_ProBot)
-						Format(szPlayerName, MAX_NAME_LENGTH, "PRO RECORD REPLAY"); 
-				if(StrEqual(info,szPlayerName))
+				if (IsValidClient(i) && IsPlayerAlive(i) && i != param1 && !IsFakeClient(i))
 				{
-					ChangeClientTeam(param1, 1);
-					SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", i);  
-					SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);
-					SetEntProp(param1, Prop_Send, "m_bDrawViewmodel", 1);					
-				}
-			}			
+					if (g_pr_points[i] > points)
+					{
+						points = g_pr_points[i];
+						playerid = i;
+						count++;
+					}
+				}						
+			}
+			if (count==0)
+				PrintToChat(param1, "%t", "NoPlayerTop", MOSSGREEN,WHITE);
+			else
+			{
+				ChangeClientTeam(param1, 1);
+				SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", playerid);  
+				SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);
+				SetEntProp(param1, Prop_Send, "m_bDrawViewmodel", 1);							
+			}
 		}
+		else
+		{		
+			for (new i = 1; i <= MaxClients; i++)
+			{
+				if (IsValidClient(i) && IsPlayerAlive(i) && i != param1)
+				{
+					GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
+					if (i == g_TpBot)
+						Format(szPlayerName, MAX_NAME_LENGTH, "TP RECORD REPLAY"); 
+					else
+						if (i == g_ProBot)
+							Format(szPlayerName, MAX_NAME_LENGTH, "PRO RECORD REPLAY"); 			
+					if(StrEqual(info,szPlayerName))
+					{
+						ChangeClientTeam(param1, 1);
+						SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", i);  
+						SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);
+						SetEntProp(param1, Prop_Send, "m_bDrawViewmodel", 1);					
+					}
+				}			
+			}
+		}		
 	}
 	else
 	if(action == MenuAction_Cancel)
@@ -1440,7 +1484,7 @@ public Action:Client_GoTo(client, args)
 					}
 				}
 			}	
-			PrintToChat(client, "%t", "PlayerNotFound2",MOSSGREEN,WHITE, szOrgTargetName);	
+			PrintToChat(client, "%t", "PlayerNotFound",MOSSGREEN,WHITE, szOrgTargetName);	
 		}
 	}
 	return Plugin_Handled;
@@ -1776,78 +1820,105 @@ public ClimbersMenu(client)
 		return;
 	}
 	g_bClimbersMenuOpen[client] = true;
-	decl String:cp[32];
+	decl String:buffer[32];
 	decl String:title[128];
-	decl String:tp[32];
 	g_hclimbersmenu[client] = CreateMenu(ClimbersMenuHandler);
 	if (g_bTimeractivated[client])
 	{
 		GetcurrentRunTime(client);
 		SetMenuTitle(g_hclimbersmenu[client], g_szMenuTitleRun[client]);
-		Format(cp, 32, "Checkpoint #%i", g_OverallCp[client]);
-		Format(tp, 32, "Teleport #%i", g_OverallTp[client]);
-		AddMenuItem(g_hclimbersmenu[client], "!save", cp);
-		AddMenuItem(g_hclimbersmenu[client], "!tele", tp);
+				
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu1", client, g_OverallCp[client]);
+		AddMenuItem(g_hclimbersmenu[client], "!save", buffer);
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu2", client, g_OverallTp[client]);	
+		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);
 		if (g_bAdvancedClimbersMenu[client])
 		{	
 			if (g_OverallCp[client] > 1)
 			{
-				AddMenuItem(g_hclimbersmenu[client], "", "Prev CP");
-				AddMenuItem(g_hclimbersmenu[client], "", "Next CP");		
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu3", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer);
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu4", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer);		
 			}
 			else
 			{
-				AddMenuItem(g_hclimbersmenu[client], "", "Prev CP",ITEMDRAW_DISABLED);
-				AddMenuItem(g_hclimbersmenu[client], "", "Next CP",ITEMDRAW_DISABLED);				
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu3", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer,ITEMDRAW_DISABLED);
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu4", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer,ITEMDRAW_DISABLED);			
 			}
+			Format(buffer, sizeof(buffer), "%T", "ClimbersMenu5", client);
 			if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
-				AddMenuItem(g_hclimbersmenu[client], "!undo", "Undo TP",ITEMDRAW_DISABLED);
+				AddMenuItem(g_hclimbersmenu[client], "!undo", buffer,ITEMDRAW_DISABLED);
 			else
-				AddMenuItem(g_hclimbersmenu[client], "!undo", "Undo TP");
+				AddMenuItem(g_hclimbersmenu[client], "!undo", buffer);
 			if (g_bPause[client])
-				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause - ON");
+			{
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu7", client);
+				AddMenuItem(g_hclimbersmenu[client], "!pause", buffer);
+			}
 			else
-				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause");
-				
-			AddMenuItem(g_hclimbersmenu[client], "!restart", "Start");
+			{
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu6", client);
+				AddMenuItem(g_hclimbersmenu[client], "!pause", buffer);
+			}	
+			Format(buffer, sizeof(buffer), "%T", "ClimbersMenu8", client);
+			AddMenuItem(g_hclimbersmenu[client], "!restart", buffer);
 		}	
 		else
 		{
 			if (g_bPause[client])
-				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause - ON");
+			{
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu7", client);
+				AddMenuItem(g_hclimbersmenu[client], "!pause", buffer);
+			}
 			else
-				AddMenuItem(g_hclimbersmenu[client], "!pause", "Pause");
-			AddMenuItem(g_hclimbersmenu[client], "!restart", "Start");
+			{
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu6", client);
+				AddMenuItem(g_hclimbersmenu[client], "!pause", buffer);
+			}	
+			Format(buffer, sizeof(buffer), "%T", "ClimbersMenu8", client);
+			AddMenuItem(g_hclimbersmenu[client], "!restart", buffer);
 		}
 	}
 	else
 	{
-		Format(title, 128, "%s\nSpeed: %.1f u/s", g_szPlayerPanelText[client],GetSpeed(client));
+		Format(title, 128, "%T", "ClimbersMenu10", client, g_szPlayerPanelText[client],GetSpeed(client));
 		SetMenuTitle(g_hclimbersmenu[client], title);
-		AddMenuItem(g_hclimbersmenu[client], "!save", "Checkpoint");
-		AddMenuItem(g_hclimbersmenu[client], "!tele", "Teleport");
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu11", client);
+		AddMenuItem(g_hclimbersmenu[client], "!save", buffer);
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu12", client);
+		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);
 		if (g_bAdvancedClimbersMenu[client])
 		{	
-			Format(title, 128, "%s\nSpeed: %.1f u/s", g_szPlayerPanelText[client],GetSpeed(client));
+			Format(title, 128, "%T", "ClimbersMenu10", client, g_szPlayerPanelText[client],GetSpeed(client));
 			SetMenuTitle(g_hclimbersmenu[client], title);		
 			if (g_OverallCp[client] > 1)
 			{
-				AddMenuItem(g_hclimbersmenu[client], "", "Prev CP");
-				AddMenuItem(g_hclimbersmenu[client], "", "Next CP");		
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu3", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer);
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu4", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer);	
 			}
 			else
 			{
-				AddMenuItem(g_hclimbersmenu[client], "", "Prev CP",ITEMDRAW_DISABLED);
-				AddMenuItem(g_hclimbersmenu[client], "", "Next CP",ITEMDRAW_DISABLED);				
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu3", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer,ITEMDRAW_DISABLED);
+				Format(buffer, sizeof(buffer), "%T", "ClimbersMenu4", client);	
+				AddMenuItem(g_hclimbersmenu[client], "", buffer,ITEMDRAW_DISABLED);			
 			}
 		}
-		AddMenuItem(g_hclimbersmenu[client], "!restart", "Start");
-		AddMenuItem(g_hclimbersmenu[client], "!Options", "Options");
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu8", client);	
+		AddMenuItem(g_hclimbersmenu[client], "!restart", buffer);
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu9", client);	
+		AddMenuItem(g_hclimbersmenu[client], "!Options", buffer);
 	}
 	SetMenuPagination(g_hclimbersmenu[client], MENU_NO_PAGINATION); 
 	SetMenuOptionFlags(g_hclimbersmenu[client], MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(g_hclimbersmenu[client], client, MENU_TIME_FOREVER);
 }
+
 
 
 public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
@@ -2163,6 +2234,7 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
 	DrawPanelText(panel, "!ranks - prints available ranks into chat");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
+	DrawPanelText(panel, "!language - select your language");
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "noclip bind: bind KEY +noclip");
 	DrawPanelText(panel, " ");
