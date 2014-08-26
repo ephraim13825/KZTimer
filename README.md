@@ -2,7 +2,7 @@ Alliedmodders:
 https://forums.alliedmods.net/showthread.php?t=223274
 
 Steam group: 
-http://steamcommunity.com/groups/KZTIMER
+http://steamcommunity.com/groups/KZTIMER (contains link to a KZTimer Version with global records)
 
 Info: 
 - KZTimer is designed as Kreedz/Climb plugin!
