@@ -12,6 +12,7 @@ Info:
 - Sourcebans support
 - Workshop maps support
 - Multi-Language support (english, chinese, french, german, russian, swedish)
+- A very large sqlite database can cause server lags (i prefer mysql databases)
 
 Changelog
 =======
