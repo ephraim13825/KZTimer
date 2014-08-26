@@ -2,7 +2,8 @@ Alliedmodders:
 https://forums.alliedmods.net/showthread.php?t=223274
 
 Steam group: 
-http://steamcommunity.com/groups/KZTIMER (contains a link to a KZTimer Version with global record)
+http://steamcommunity.com/groups/KZTIMER
+(provides KZTimer Version with Global Records!!)
 
 Info: 
 - KZTimer is almost done and very stable
