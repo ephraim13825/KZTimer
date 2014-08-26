@@ -2,16 +2,16 @@ Alliedmodders:
 https://forums.alliedmods.net/showthread.php?t=223274
 
 Steam group: 
-http://steamcommunity.com/groups/KZTIMER (contains a link to a [b]KZTimer Version with global records[/b])
+http://steamcommunity.com/groups/KZTIMER (contains a link to a KZTimer Version with global record)
 
 Info: 
-- KZTimer is designed as Kreedz/Climb plugin!
+- KZTimer is almost done and very stable
 - Tickrate 102.4 is optimal for kreedzing
 - Ranking system is based on your mapcycle.txt file
 - SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
-- Multi-Language support (english, chinese, french, german, russian, swedish)
+- Multi-Language support (english, chinese, french, german, russian and swedish)
 - A very large sqlite database can cause server lags (i prefer mysql databases)
 
 Changelog
