@@ -3,7 +3,7 @@ https://forums.alliedmods.net/showthread.php?t=223274
 
 Steam group: 
 http://steamcommunity.com/groups/KZTIMER 
-(KZTimer Version Global Records only here available!)
+(KZTimer with Global Records only here available!)
 
 Info: 
 - KZTimer is in the final version (only bugs will be fixed from now on)
