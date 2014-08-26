@@ -6,7 +6,7 @@ http://steamcommunity.com/groups/KZTIMER
 (provides KZTimer Version with Global Records!!)
 
 Info: 
-- KZTimer is almost done and very stable
+- KZTimer is in the final version (only bugs will be fixed from now on)
 - Tickrate 102.4 is optimal for kreedzing
 - Ranking system is based on your mapcycle.txt file
 - SQLite & MySQL support
