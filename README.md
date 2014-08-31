@@ -18,7 +18,7 @@ Info:
 (*) Why Tickrate 102.4?
 - eliminates the need of pressing crouch before jumping compared to tickrate 64 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
-- perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way to easy)
+- perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
 
 Changelog
 =======
