@@ -7,7 +7,7 @@ http://steamcommunity.com/groups/KZTIMER
 
 Info: 
 - KZTimer is in the final version (only bugs will be fixed from now on)
-- Tickrate 102.4 is optimal for kreedzing
+- Tickrate 102.4 is optimal for kreedzing (*)
 - Ranking system is based on your mapcycle.txt file
 - SQLite & MySQL support
 - Sourcebans support
@@ -15,7 +15,7 @@ Info:
 - Multi-Language support (english, chinese, french, german, russian and swedish)
 - A very large sqlite database can cause server lags (i prefer mysql databases)
 
-Why Tickrate 102.4?
+(*) Why Tickrate 102.4?
 - eliminates the need of pressing crouch before jumping compared to tickrate 64 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way to easy)
