@@ -16,7 +16,7 @@ Info:
 - A very large sqlite database can cause server lags (i prefer mysql databases)
 
 (*) Why Tickrate 102.4?
-- eliminates the need of pressing crouch before jumping compared to tickrate 64 (102/128 equal)
+- eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
 
