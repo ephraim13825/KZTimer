@@ -26,7 +26,7 @@ Changelog
 v1.52
 - fixed chat phrase "ChallengeAborted"
 - fixed timer bug on bhop_areaportal (moving plattforms)
-- fixed func_door bunnyhop blocks (e.g. on bhop_monsterjam)
+- fixed func door bunnyhop blocks (e.g. on bhop_monsterjam)
 - 
 v1.51
 - added multi-language support (client command: !language)
