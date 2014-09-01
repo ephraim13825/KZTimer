@@ -232,7 +232,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 						SetEntityRenderColor(client, 255,255,255,255);
 						SetEntityRenderColor(i, 255,255,255,255);
 						PrintToChat(client, "%t", "ChallengeAborted",RED,WHITE,GREEN,szNameTarget,WHITE);
-						PrintToChat(i, "%t", "ChallengeAborted",RED,WHITE,szName,WHITE);
+						PrintToChat(i, "%t", "ChallengeAborted", RED,WHITE,GREEN,szName,WHITE);
 						SetEntityMoveType(client, MOVETYPE_WALK);
 						SetEntityMoveType(i, MOVETYPE_WALK);
 					}				

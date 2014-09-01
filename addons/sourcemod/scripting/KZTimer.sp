@@ -18,7 +18,7 @@
 #include <sourcebans>
 #include <calladmin>
 
-#define VERSION "1.51"
+#define VERSION "1.52"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -55,8 +55,8 @@
 #define STRAFE_W 3
 #define STRAFE_S 4
 #define MAX_BHOPBLOCKS 5000
-#define BLOCK_TELEPORT 0.1	
-#define BLOCK_COOLDOWN 0.2		
+#define BLOCK_TELEPORT 0.05
+#define BLOCK_COOLDOWN 0.1		
 #define SF_BUTTON_DONTMOVE (1<<0)		
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		

@@ -1054,7 +1054,7 @@
 	"LanguageSwitch"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c}"
-		"chi"        "[{1}KZ{2}] Type {3}!language{4} in chat to select a different language"
+		"chi"        "[{1}KZ{2}] 输入 {3}!language{4} 切换语言"
 	}
 	"LjBlock"
 	{

@@ -1720,7 +1720,7 @@ public WjJumpPreCheck(client, &buttons)
 
 public TeleportCheck(client, Float: origin[3])
 {
-	if((StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz")) || g_bAutoBhop2 == false)
+	if((StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz")))
 	{
 		if (!IsFakeClient(client))
 		{
@@ -2697,6 +2697,8 @@ public FindBhopBlocks()
 
 //Credits: MultiPlayer Bunny Hops: Source by DaFox & petsku
 //https://forums.alliedmods.net/showthread.php?p=808724
+//MultiPlayer Bunnyhop
+//https://forums.alliedmods.net/showthread.php?p=808724
 public AlterBhopBlocks(bool:bRevertChanges) 
 {
 	static Float:vecDoorPosition2[sizeof g_BhopDoorList][3];
@@ -2745,11 +2747,11 @@ public AlterBhopBlocks(bool:bRevertChanges)
 		}
 	}
 	else 
-	{	//note: This only gets called directly after finding the blocks, so the entities are valid.
+	{	
 		decl Float:startpos[3];
-		for(i = 0; i < g_BhopDoorCount; i++) 
+		for (i = 0; i < g_BhopDoorCount; i++)
 		{
-			ent = g_BhopDoorList[i];
+			ent = g_BhopDoorList[i];			
 			GetEntDataVector(ent,g_DoorOffs_vecPosition2,vecDoorPosition2[i]);
 			flDoorSpeed[i] = GetEntDataFloat(ent,g_DoorOffs_flSpeed);
 			iDoorSpawnflags[i] = GetEntData(ent,g_DoorOffs_spawnflags,4);
@@ -2760,18 +2762,10 @@ public AlterBhopBlocks(bool:bRevertChanges)
 			SetEntData(ent,g_DoorOffs_spawnflags,SF_DOOR_PTOUCH,4);
 			AcceptEntityInput(ent,"Lock");
 			SetEntData(ent,g_DoorOffs_sLockedSound,GetEntData(ent,g_DoorOffs_NoiseMoving,4),4);
-			if(flDoorSpeed[i] <= 100)
-			{
-				SDKHook(ent,SDKHook_Touch,Entity_Touch);
-			}
-			else
-			{
-				g_fBhopDoorSp[i] = flDoorSpeed[i];
-				SDKHook(ent,SDKHook_Touch,Entity_BoostTouch);
-			}
+			SDKHook(ent,SDKHook_Touch,Entity_Touch);
 		}
-
-		for(i = 0; i < g_BhopButtonCount; i++) 
+		
+		for (i = 0; i < g_BhopButtonCount; i++)
 		{
 			ent = g_BhopButtonList[i];
 			GetEntDataVector(ent,g_ButtonOffs_vecPosition2,vecButtonPosition2[i]);
@@ -2780,11 +2774,10 @@ public AlterBhopBlocks(bool:bRevertChanges)
 			GetEntDataVector(ent,g_ButtonOffs_vecPosition1,startpos);
 			SetEntDataVector(ent,g_ButtonOffs_vecPosition2,startpos);
 			SetEntDataFloat(ent,g_ButtonOffs_flSpeed,0.0);
-			SetEntData(ent,g_ButtonOffs_spawnflags,SF_BUTTON_DONTMOVE|SF_BUTTON_TOUCH_ACTIVATES,4);			
+			SetEntData(ent,g_ButtonOffs_spawnflags,SF_BUTTON_DONTMOVE|SF_BUTTON_TOUCH_ACTIVATES,4);
 			SDKHook(ent,SDKHook_Touch,Entity_Touch);
 		}
 	}
-
 }
 
 //Credits: MultiPlayer Bunny Hops: Source by DaFox & petsku
@@ -2835,7 +2828,7 @@ public Entity_Touch(bhop,client)
 		if (!g_bMultiplayerBhop)
 			return;
 		static Float:flPunishTime[MAXPLAYERS + 1], iLastBlock[MAXPLAYERS + 1] = { -1,... };		
-		new Float:time = GetGameTime();		
+		new Float:time = GetEngineTime();		
 		new Float:diff = time - flPunishTime[client];		
 		if(iLastBlock[client] != bhop || diff > BLOCK_COOLDOWN) 
 		{
