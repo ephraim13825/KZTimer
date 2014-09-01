@@ -27,7 +27,7 @@ v1.52
 - fixed chat phrase "ChallengeAborted"
 - fixed timer bug on bhop_areaportal (moving plattforms)
 - fixed func door bunnyhop blocks (e.g. on bhop_monsterjam)
-- 
+
 v1.51
 - added multi-language support (client command: !language)
 - added four new language files (german, russian by blind, chinese by pchun, french by alouette)
