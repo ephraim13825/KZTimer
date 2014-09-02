@@ -18,7 +18,14 @@
 #include <sourcebans>
 #include <calladmin>
 
-#define VERSION "1.52"
+/*
+v1.52
+- fixed chat phrase "ChallengeAborted"
+- fixed timer bug on bhop_areaportal (moving plattforms)
+- fixed func_door bunnyhop blocks (e.g. on bhop_monsterjam)
+*/
+
+#define VERSION "1.52b"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01

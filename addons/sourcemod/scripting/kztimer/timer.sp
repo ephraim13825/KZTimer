@@ -381,7 +381,10 @@ public Action:HelpMsgTimer(Handle:timer, any:client)
 public Action:SteamGroupTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
-		PrintToChat(client, "%t", "SteamGroup", MOSSGREEN,WHITE);
+	{
+		PrintToChat(client, "[%cKZ%c] %cJoin the %cKZTimer steam group%c to receive latest news about KZTimer updates and new kreedz maps: http://steamcommunity.com/groups/kztimer", MOSSGREEN,WHITE,GRAY,LIMEGREEN,GRAY);
+		PrintToConsole(client, "[KZ] Join the KZTimer steam group to receive latest news about KZTimer updates and new kreedz maps: http://steamcommunity.com/groups/kztimer");	
+	}	
 }
 
 public Action:GetTakeOffSpeedTimer(Handle:timer, any:client)

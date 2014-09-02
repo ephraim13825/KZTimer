@@ -3162,7 +3162,7 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	decl String:szMap[128];
 	ReadPackString(pack, szMap, 128);	
 	CloseHandle(pack);
-
+	decl String:szFirstMap[128];
 	decl String:szValue[128];
 	decl String:szName[64];
 	new Float:time;
@@ -3190,35 +3190,40 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 			time = SQL_FetchFloat(hndl, 2); 
 			teleports = SQL_FetchInt(hndl, 3);		
 			SQL_FetchString(hndl, 5, szMap, 128);
-			new stringArraySize = GetArraySize(stringArray);
-			for(new x = 0; x < stringArraySize; x++)
+			if (i == 1 || (i > 1 && StrEqual(szFirstMap,szMap)))
 			{
-				GetArrayString(stringArray, x, lineBuf, sizeof(lineBuf));
-				if (StrEqual(lineBuf, szName, false))
-					bduplicat=true;		
-			}
-			if (bduplicat==false && i < 51)
-			{
-				if (teleports < 10)
-					Format(szTeleports, 32, "    %i",teleports);
-				else
-				if (teleports < 100)
-					Format(szTeleports, 32, "  %i",teleports);
-				else
-					Format(szTeleports, 32, "%i",teleports);
-				
-				FormatTimeFloat(client, time, 3);
-				if (time<3600.0)
-					Format(g_szTime[client], 32, "   %s", g_szTime[client]);			
-				if (i == 100)
-					Format(szValue, 128, "[%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
-				if (i >= 10)
-					Format(szValue, 128, "[%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
-				else
-					Format(szValue, 128, "[0%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
-				AddMenuItem(menu, szSteamID, szValue, ITEMDRAW_DEFAULT);
-				PushArrayString(stringArray, szName);
-				i++;
+				new stringArraySize = GetArraySize(stringArray);
+				for(new x = 0; x < stringArraySize; x++)
+				{
+					GetArrayString(stringArray, x, lineBuf, sizeof(lineBuf));
+					if (StrEqual(lineBuf, szName, false))
+						bduplicat=true;		
+				}
+				if (bduplicat==false && i < 51)
+				{
+					if (teleports < 10)
+						Format(szTeleports, 32, "    %i",teleports);
+					else
+					if (teleports < 100)
+						Format(szTeleports, 32, "  %i",teleports);
+					else
+						Format(szTeleports, 32, "%i",teleports);
+					
+					FormatTimeFloat(client, time, 3);
+					if (time<3600.0)
+						Format(g_szTime[client], 32, "   %s", g_szTime[client]);			
+					if (i == 100)
+						Format(szValue, 128, "[%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
+					if (i >= 10)
+						Format(szValue, 128, "[%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
+					else
+						Format(szValue, 128, "[0%i.] %s | %s    » %s", i, g_szTime[client], szTeleports, szName);
+					AddMenuItem(menu, szSteamID, szValue, ITEMDRAW_DEFAULT);
+					PushArrayString(stringArray, szName);
+					if (i == 1)
+						Format(szFirstMap, 128, "%s",szMap);
+					i++;
+				}
 			}
 		}
 		if(i == 1)
@@ -3228,14 +3233,15 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	}
 	else
 		PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
-	Format(g_szMapTopName[client], MAX_MAP_LENGTH, "%s",szMap);	
+	Format(g_szMapTopName[client], MAX_MAP_LENGTH, "%s",szFirstMap);	
 	StopClimbersMenu(client);
-	Format(title, 256, "Top 50 Times on %s (local)\n    Rank    Time          TP's        Player", szMap);
+	Format(title, 256, "Top 50 Times on %s (local)\n    Rank    Time          TP's        Player", szFirstMap);
 	SetMenuTitle(menu, title);     
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
 	CloseHandle(stringArray);
 }
+
 public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
 	new client = data;
