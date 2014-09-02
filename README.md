@@ -23,6 +23,9 @@ Info:
 Changelog
 =======
 
+v1.52b
+- removed "steamgroup" language phrase
+
 v1.52
 - fixed chat phrase "ChallengeAborted"
 - fixed timer bug on bhop_areaportal (moving plattforms)
