@@ -330,11 +330,6 @@
 		"#format"   "{1:c},{2:c}"
 		"en"        "[{1}KZ{2}] Recalculation stopped!"
 	}
-	"SteamGroup"
-	{
-		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] http://steamcommunity.com/groups/kztimer"
-	}
 	"NewGlobalRecord102Pro"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c}"
