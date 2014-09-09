@@ -1726,6 +1726,7 @@ public OnClientDisconnect(client)
 	//Database	
 	if (IsValidClient(client))
 	{
+		db_UpdateLastSeen(client);
 		db_insertLastPosition(client,g_szMapName);
 		db_updatePlayerOptions(client);
 	}	

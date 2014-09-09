@@ -26,10 +26,11 @@ new String:sql_updatePlayerRank[]				= "UPDATE playerrank SET finishedmaps ='%i'
 new String:sql_updatePlayerRankChallenge[]		= "UPDATE playerrank SET winratio = '%i',pointsratio = '%i'  where steamid='%s'";
 new String:sql_selectPlayerRankAll[] 			= "SELECT name, steamid FROM playerrank where name like '%c%s%c'";
 new String:sql_selectPlayerRankAll2[] 			= "SELECT name, steamid FROM playerrank where name = '%s'";
-
+new String:sql_UpdateLastSeenMySQL[]			= "UPDATE playerrank SET lastseen = NOW() where steamid = '%s';"
+new String:sql_UpdateLastSeenSQLite[]			= "UPDATE playerrank SET lastseen = date('now') where steamid = '%s';"
 new String:sql_selectTopPlayers[]				= "SELECT name, points, finishedmapspro, finishedmapstp, steamid FROM playerrank ORDER BY points DESC LIMIT 100";
 new String:sql_selectTopChallengers[]			= "SELECT name, winratio, pointsratio, steamid FROM playerrank ORDER BY pointsratio DESC LIMIT 5";
-new String:sql_selectRankedPlayer[]				= "SELECT steamid, name, points, finishedmapstp, finishedmapspro, multiplier, winratio, pointsratio, country from playerrank where steamid='%s'";
+new String:sql_selectRankedPlayer[]				= "SELECT steamid, name, points, finishedmapstp, finishedmapspro, multiplier, winratio, pointsratio, country, lastseen from playerrank where steamid='%s'";
 new String:sql_selectRankedPlayersRank[]		= "SELECT name FROM playerrank WHERE points >= (SELECT points FROM playerrank WHERE steamid = '%s') ORDER BY points";
 new String:sql_selectRankedPlayers[]			= "SELECT steamid, name from playerrank where points > 0 ORDER BY points DESC";
 new String:sql_CountRankedPlayers[] 			= "SELECT COUNT(steamid) FROM playerrank";
@@ -349,7 +350,19 @@ public db_setupDatabase()
 	
 }
 
-
+public db_UpdateLastSeen(client)
+{	 
+	if((StrContains(g_szSteamID[client], "STEAM_") != -1) && !IsFakeClient(client))
+	{
+		decl String:szQuery[512]; 
+		if (g_DbType == 0)
+			Format(szQuery, 512, sql_UpdateLastSeenMySQL,g_szSteamID[client]);
+		else
+			if (g_DbType == 1)
+				Format(szQuery, 512, sql_UpdateLastSeenSQLite,g_szSteamID[client]);
+		SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);
+	}
+}
 
 public db_createTables()
 {
@@ -362,6 +375,7 @@ public db_createTables()
 	SQL_FastQuery(g_hDb, sql_createMapButtons);
 	SQL_FastQuery(g_hDb, sql_createPlayerOptions);
 	SQL_FastQuery(g_hDb, sql_createLatestRecords);
+	SQL_FastQuery(g_hDb, "ALTER TABLE playerrank ADD lastseen DATE");	
 	SQL_UnlockDatabase(g_hDb);
 }
 
@@ -1656,6 +1670,7 @@ public SQL_ViewRankedPlayerCallback(Handle:owner, Handle:hndl, const String:erro
 		decl String:szQuery[512];
 		decl String:szName[MAX_NAME_LENGTH];
 		decl String:szCountry[100];
+		decl String:szLastSeen[100];
 		decl String:szSteamId[32];
 		new finishedmapstp;
 		new finishedmapspro;
@@ -1674,6 +1689,7 @@ public SQL_ViewRankedPlayerCallback(Handle:owner, Handle:hndl, const String:erro
 		wonc = SQL_FetchInt(hndl, 6);
 		pointsc = SQL_FetchInt(hndl, 7);
 		SQL_FetchString(hndl, 8, szCountry, 100);
+		SQL_FetchString(hndl, 9, szLastSeen, 100);
 		
 		new Handle:pack_pr = CreateDataPack();
 		
@@ -1686,8 +1702,9 @@ public SQL_ViewRankedPlayerCallback(Handle:owner, Handle:hndl, const String:erro
 		WritePackCell(pack_pr, wonc);
 		WritePackCell(pack_pr, pointsc);
 		WritePackString(pack_pr, szCountry);	
+		WritePackString(pack_pr, szLastSeen);	
 		Format(szQuery, 512, sql_selectRankedPlayersRank, szSteamId);
-		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback2, szQuery, pack_pr);
+		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback2, szQuery, pack_pr,DBPrio_Low);
 	}
 }
 
@@ -1706,7 +1723,7 @@ public SQL_ViewRankedPlayerCallback2(Handle:owner, Handle:hndl, const String:err
 		ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
 		ReadPackString(pack_pr, szSteamId, 32);	
 		Format(szQuery, 512, sql_selectTpRecordCount, szSteamId);
-		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback3, szQuery, pack_pr);	
+		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback3, szQuery, pack_pr,DBPrio_Low);	
 	}
 }
 
@@ -1723,7 +1740,7 @@ public SQL_ViewRankedPlayerCallback3(Handle:owner, Handle:hndl, const String:err
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
 		g_TpRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?´
 	Format(szQuery, 512, sql_selectProRecordCount, szSteamId);
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback4, szQuery, pack_pr);		
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback4, szQuery, pack_pr,DBPrio_Low);		
 }
 
 public SQL_ViewRankedPlayerCallback4(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1739,7 +1756,7 @@ public SQL_ViewRankedPlayerCallback4(Handle:owner, Handle:hndl, const String:err
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
 		g_ProRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?
 	Format(szQuery, 512, sql_selectChallenges, szSteamId,szSteamId);
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback5, szQuery, pack_pr);		
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback5, szQuery, pack_pr,DBPrio_Low);		
 }
 
 public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1753,6 +1770,7 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	decl String:szName[MAX_NAME_LENGTH];
 	decl String:szSteamId[32];
 	decl String:szCountry[100];
+	decl String:szLastSeen[100];
 	decl String:szNextRank[32];
 	decl String:szSkillGroup[32];
 	ResetPack(pack_pr);     
@@ -1765,6 +1783,9 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	new challengeswon= ReadPackCell(pack_pr);  
 	new challengespoints= ReadPackCell(pack_pr);  
 	ReadPackString(pack_pr, szCountry, 100);	
+	ReadPackString(pack_pr, szLastSeen, 100);	
+	if (StrEqual(szLastSeen,""))
+		Format(szLastSeen, 100, "Unknown");
 	new rank = ReadPackCell(pack_pr);
 	new tprecords = g_TpRecordCount[client];
 	new prorecords = g_ProRecordCount[client];
@@ -1844,7 +1865,6 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 		master=true;
 	}  
 
-
 	if(SQL_HasResultSet(hndl))
 	{		
 		challenges= SQL_GetRowCount(hndl);
@@ -1883,14 +1903,13 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 			Format(g_pr_szrank[client], 512, "%sMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L Points Ratio: %s\n ", szRanking,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
 		
 	}
-	decl String:szTitle[512];
+	decl String:szTitle[1024];
 	if (g_bCountry)
-		Format(szTitle, 512, "Player: %s\nID: %s\nNationality: %s\n \n%s\n",  szName,szSteamId,szCountry,g_pr_szrank[client]);		
+		Format(szTitle, 1024, "Player: %s\nID: %s\nNationality: %s\nLast Seen: %s\n \n%s\n",  szName,szSteamId,szCountry,szLastSeen,g_pr_szrank[client]);		
 	else
-		Format(szTitle, 512, "Player: %s\nID: %s\n \n%s\n",  szName,szSteamId,g_pr_szrank[client]);				
+		Format(szTitle, 1024, "Player: %s\nID: %s\nLast Seen: %s\n \n%s\n",  szName,szSteamId,szLastSeen,g_pr_szrank[client]);				
 		
 	new Handle:menu = CreateMenu(ProfileMenuHandler);
-	g_bProfileSelected[client]=true;
 	SetMenuTitle(menu, szTitle);
 	AddMenuItem(menu, "Current map time", "Current map time");
 	AddMenuItem(menu, "Jumpstats", "Jumpstats");
@@ -1908,6 +1927,7 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	}	
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+	g_bProfileSelected[client] = true;
 	g_bClimbersMenuOpen[client]=false;
 	g_bMenuOpen[client]=true;
 	CloseHandle(pack_pr);	
@@ -4281,6 +4301,9 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 	}
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{			
+		new Float: diff = GetEngineTime() - g_fMapStartTime;
+		if (GetClientTime(client) < diff)
+			db_UpdateLastSeen(client);
 		
 		g_pr_multiplier[client] = SQL_FetchInt(hndl, 5);
 		g_pr_points[client]+=  g_ExtraPoints * g_pr_multiplier[client];			
@@ -4313,7 +4336,7 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 			decl String:szName[MAX_NAME_LENGTH*2+1];      
 			SQL_QuoteString(g_hDb, szUName, szName, MAX_NAME_LENGTH*2+1);
 			Format(szQuery, 255, sql_insertPlayerRank, szSteamId, szName,g_szCountry[client]); 
-			SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, DBPrio_Low);
+			SQL_TQuery(g_hDb, SQL_InsertPlayerCallBack, szQuery, client, DBPrio_Low);
 			g_pr_multiplier[client] = 0;
 			g_pr_finishedmaps_pro[client] = 0;
 			g_pr_finishedmaps_tp[client] = 0;
@@ -4321,6 +4344,13 @@ public sql_selectRankedPlayerCallback(Handle:owner, Handle:hndl, const String:er
 			g_pr_finishedmaps_tp_perc[client] = 0.0;
 		}
 	}
+}
+
+public SQL_InsertPlayerCallBack(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if (IsClientInGame(client))
+		db_UpdateLastSeen(client);	
 }
 
 public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
