@@ -24,6 +24,10 @@ Info:
 Changelog
 =======
 
+v1.53
+- fixed a minor jumpstats bug
+- minor optimizations
+
 v1.52b
 - removed "steamgroup" language phrase
 
