@@ -19,6 +19,7 @@ Info:
 - eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
+- tickrate 128 breaks a lot maps because it makes some weird surf shortcuts possible
 
 Changelog
 =======
