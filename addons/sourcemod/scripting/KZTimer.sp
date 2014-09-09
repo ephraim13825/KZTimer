@@ -18,14 +18,12 @@
 #include <sourcebans>
 #include <calladmin>
 
+//
 /*
-v1.52
-- fixed chat phrase "ChallengeAborted"
-- fixed timer bug on bhop_areaportal (moving plattforms)
-- fixed func_door bunnyhop blocks (e.g. on bhop_monsterjam)
+v1.53
+- fixed minor jumpstats bug
 */
-
-#define VERSION "1.52b"
+#define VERSION "1.53"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define WHITE 0x01
@@ -353,6 +351,7 @@ new Float:g_js_fPersonal_MultiBhop_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_Lj_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_LjBlockRecord_Dist[MAX_PR_PLAYERS]=-1.0;
 new Float:g_fLastSpeed[MAXPLAYERS+1];
+new Float:g_fAirTime[MAXPLAYERS+1];
 new Float:g_fLastUndo[MAXPLAYERS +1];
 new Float:g_flastHeight[MAXPLAYERS +1];
 new Float:g_fInitialPosition[MAXPLAYERS+1][3];

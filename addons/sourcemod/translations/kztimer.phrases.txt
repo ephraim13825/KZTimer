@@ -313,7 +313,7 @@
 	"PrUpdateStarted"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] Recalculating player rankings. This may take a while, please wait!"
+		"en"        "[{1}KZ{2}] Recalculating player rankings. This may take a while, please wait! (You can follow the progress in your console)"
 	}
 	"PrUpdateFinished"
 	{

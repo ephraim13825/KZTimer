@@ -560,7 +560,7 @@ public Postthink(client)
 		if (fGroundDiff==0.0)
 			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>%.1f units</font>", g_js_fJump_Distance[client]);
 		else
-			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>", g_js_fJump_Distance[client]);
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>");
 		PostThinkPost(client, ground_frames);
 		return;
 	}
@@ -574,11 +574,17 @@ public Postthink(client)
 	//vertical jump
 	if (fGroundDiff2 > 1.8 || fGroundDiff2 < -1.8 || fGroundDiff != 0.0)
 	{	
-		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>", g_js_fJump_Distance[client]);
+		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>");
 		PostThinkPost(client, ground_frames);
 		return;
 	}
-	
+	//invalid jump
+	if (g_fAirTime[client] > 0.83)
+	{
+		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
+		PostThinkPost(client, ground_frames);
+		return;		
+	}	
 	
 	new bool: ValidJump=false;
 	//Chat Output
@@ -590,7 +596,7 @@ public Postthink(client)
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 265.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 270.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 275.0)) 
 			{
-				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 				PostThinkPost(client, ground_frames);
 				return;
 			}				
@@ -599,14 +605,14 @@ public Postthink(client)
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 250.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 255.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 260.0)) 
 			{
-				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 				PostThinkPost(client, ground_frames);
 				return;
 			}
 		}
 		if (strafes > 20)
 		{
-			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
 			return;
 		}			
@@ -614,7 +620,7 @@ public Postthink(client)
 		//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_lj * 1.02))
 		{
-			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
 			return;
 		}
@@ -728,7 +734,7 @@ public Postthink(client)
 					// strafe hack protection					
 					if (strafes == 0)
 					{
-						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 						PostThinkPost(client, ground_frames);
 						return;
 					}
@@ -956,7 +962,7 @@ public Postthink(client)
 				//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 				if ((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_dropbhop * 1.05)) || strafes > 20)
 				{
-					Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+					Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 					PostThinkPost(client, ground_frames);
 					return;
 				}
@@ -1006,7 +1012,7 @@ public Postthink(client)
 							// strafe hack protection					
 							if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 							{
-								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 								PostThinkPost(client, ground_frames);
 								return;
 							}
@@ -1083,7 +1089,7 @@ public Postthink(client)
 					//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 					if ((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_weird * 1.05)) || strafes > 20)
 					{
-						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+						Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 						PostThinkPost(client, ground_frames);
 						return;
 					}					
@@ -1135,7 +1141,7 @@ public Postthink(client)
 								// strafe hack protection					
 								if (strafes == 0 || g_js_fPreStrafe[client] < 255.0)
 								{
-									Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+									Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 									PostThinkPost(client, ground_frames);
 									return;
 								}
@@ -1201,7 +1207,7 @@ public Postthink(client)
 			//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 			if (((IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_bhop * 1.025)) || g_js_fJump_Distance[client] > 400.0) || strafes > 20)
 			{
-				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+				Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 				PostThinkPost(client, ground_frames);
 				return;
 			}
@@ -1257,7 +1263,7 @@ public Postthink(client)
 							// strafe hack protection					
 							if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 							{
-								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
+								Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 								PostThinkPost(client, ground_frames);
 								return;
 							}

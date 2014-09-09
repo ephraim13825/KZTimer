@@ -63,7 +63,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 				CreateTimer(1.5, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 				CreateTimer(15.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 				CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
-				CreateTimer(500.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
+				CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
 				g_bFirstTeamJoin[client] = false;
 			}
 
@@ -584,6 +584,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	if(GetEntityFlags(client) & FL_ONGROUND && !g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
 	{		
 		GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
+		g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
 		if (g_bJumpStats && !g_bKickStatus[client])
 			Postthink(client);
 	}	
@@ -613,6 +614,7 @@ public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 	
 	g_fLastJump[client] = time;
 	new bool:touchwall = WallCheck(client);	
+	g_fAirTime[client] = GetEngineTime();
 	if (g_bJumpStats && !touchwall)
 		Prethink(client, Float:{0.0,0.0,0.0},0.0);
 }

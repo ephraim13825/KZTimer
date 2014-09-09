@@ -1087,14 +1087,16 @@ public SetPlayerRank(client)
 	else
 		Format(g_pr_rankname[client], 32, "");	
 	
+	decl String:szSteamId[32];
+	if (IsValidClient(client) && !IsFakeClient(client))
+		GetClientAuthString(client, szSteamId, 32);
+	
 	// MAPPER Clantag
 	decl String:sPath[PLATFORM_MAX_PATH];
 	decl String:line[128]
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", MAPPERS_PATH);
 	if (FileExists(sPath))
 	{
-		decl String:szSteamId[32];
-		GetClientAuthString(client, szSteamId, 32);	
 		new Handle:fileHandle=OpenFile(sPath,"r");		
 		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
 		{
@@ -1104,7 +1106,7 @@ public SetPlayerRank(client)
 				if (StrEqual(line,szSteamId))
 				{
 					Format(g_pr_rankname[client], 32, "MAPPER");	
-					Format(g_pr_chat_coloredrank[client], 32, "%cMAPPER%c",LIMEGREEN,WHITE);
+					Format(g_pr_chat_coloredrank[client], 32, "%cMAPPER%c",LIGHTRED,WHITE);
 				}
 			}	
 		}
@@ -1116,7 +1118,7 @@ public SetPlayerRank(client)
 		if ((GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC))
 		{
 			Format(g_pr_rankname[client], 32, "VIP");	
-			Format(g_pr_chat_coloredrank[client], 32, "%cVIP%c",LIMEGREEN,WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "%cVIP%c",YELLOW,WHITE);
 		}
 		
 	if (g_bAdminClantag)
@@ -1125,6 +1127,12 @@ public SetPlayerRank(client)
 			Format(g_pr_rankname[client], 32, "ADMIN");	
 			Format(g_pr_chat_coloredrank[client], 32, "%cADMIN%c",LIMEGREEN,WHITE);
 		}
+		
+	if (StrEqual(szSteamId,"STEAM_1:1:73507922"))
+	{
+		Format(g_pr_rankname[client], 32, "CODER");	
+		Format(g_pr_chat_coloredrank[client], 32, "%cCODER%c",LIGHTRED,WHITE);			
+	}
 }
 
 public SpectatorCount(client)

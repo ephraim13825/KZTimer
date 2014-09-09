@@ -264,16 +264,19 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		if(param2 == 2)
 		{ 
 			SetStandingStartButton(param1);
+			KzAdminMenu(param1);
 		}
 		if(param2 == 3)
 		{ 
 			SetStandingStopButton(param1);
+			KzAdminMenu(param1);
 		}
 		if(param2 == 4)
 		{ 
 			DeleteButtons(param1);
 			db_deleteMapButtons(g_szMapName);
 			PrintToChat(param1,"[%cKZ%c] Timer buttons deleted", MOSSGREEN,WHITE,GREEN,WHITE);
+			KzAdminMenu(param1);
 		}
 		if(param2 == 5)
 		{
