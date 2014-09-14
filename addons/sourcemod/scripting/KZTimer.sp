@@ -18,14 +18,19 @@
 #include <sourcebans>
 #include <calladmin>
 
-//
 /*
-v1.53
-- fixed minor jumpstats bug
+//v1.54
+- added admin command sm_recalcprofile <steamid>
+- added server cvar kz_ranking_extra_points_firsttime (Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time) 
+- renamed kz_ranking_extra_points to kz_ranking_extra_points_improvements
+- added skill group to chattag of admin's and vip's
+- auto profile refreshing after using of an reset admin command
 */
-#define VERSION "1.53"
+	
+#define VERSION "1.54"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
+#define DEBUG 0
 #define WHITE 0x01
 #define DARKRED 0x02
 #define PURPLE 0x03
@@ -279,6 +284,8 @@ new Handle:g_hAutohealing_Hp = INVALID_HANDLE;
 new g_Autohealing_Hp;
 new Handle:g_hExtraPoints = INVALID_HANDLE;
 new g_ExtraPoints;
+new Handle:g_hExtraPoints2 = INVALID_HANDLE;
+new g_ExtraPoints2;
 new Handle:g_hReplayBotProColor = INVALID_HANDLE;
 new Handle:g_hReplayBotTpColor = INVALID_HANDLE;
 new Float:g_fMapStartTime;
@@ -419,6 +426,7 @@ new bool:g_bMapFinished[MAXPLAYERS+1];
 new bool:g_bRespawnPosition[MAXPLAYERS+1]; 
 new bool:g_bKickStatus[MAXPLAYERS+1]; 
 new bool:g_bUndo[MAXPLAYERS+1]; 
+new bool:g_bProfileRecalc[MAX_PR_PLAYERS];
 new bool:g_bManualRecalc; 
 new bool:g_bSelectProfile[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuwasOpen[MAXPLAYERS+1]; 
@@ -820,9 +828,13 @@ public OnPluginStart()
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
 
-	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points", "0.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "0.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints    = GetConVarInt(g_hExtraPoints);
 	HookConVarChange(g_hExtraPoints, OnSettingChanged);	
+
+	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "0.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_ExtraPoints2    = GetConVarInt(g_hExtraPoints2);
+	HookConVarChange(g_hExtraPoints2, OnSettingChanged);	
 	
 	g_hPointSystem    = CreateConVar("kz_point_system", "1", "on/off - Player point system", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPointSystem    = GetConVarBool(g_hPointSystem);
@@ -1049,11 +1061,12 @@ public OnPluginStart()
 	RegConsoleCmd("+noclip", NoClip, "[KZTimer] Player noclip on");
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
 	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kz admin panel");
+	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, ADMIN_LEVEL, "[KZTimer] Recalculates player profile for given steam id");
 	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times (drops table playertimes) - requires z flag");
 	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL2, "[KZTimer] Resets the player point system (drops table playerrank - requires z flag)");
 	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times for given map - requires z flag");
 	RegAdminCmd("sm_resetplayerchallenges", Admin_ResetChallenges, ADMIN_LEVEL2, "[KZTimer] Resets (won) challenges for given steamid - requires z flag");
-	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL2, "[KZTimer] Resets tp & pro map times for given steamid with or without given map - requires z flag");
+	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL2, "[KZTimer] Resets tp & pro map times (+extrapoints) for given steamid with or without given map - requires z flag");
 	RegAdminCmd("sm_resetplayertptime", Admin_ResetRecordTp, ADMIN_LEVEL2, "[KZTimer] Resets tp map time for given steamid and map - requires z flag");
 	RegAdminCmd("sm_resetplayerprotime", Admin_ResetRecordPro, ADMIN_LEVEL2, "[KZTimer] Resets pro map time for given steamid and map - requires z flag");
 	RegAdminCmd("sm_resetjumpstats", Admin_DropPlayerJump, ADMIN_LEVEL2, "[KZTimer] Resets jump stats (drops table playerjumpstats) - requires z flag");	
@@ -1072,7 +1085,7 @@ public OnPluginStart()
 	RegAdminCmd("sm_resetplayerjumpstats", Admin_ResetPlayerJumpstats, ADMIN_LEVEL2, "[KZTimer] Resets jump stats for given steamid - requires z flag");
 	RegAdminCmd("sm_deleteproreplay", Admin_DeleteProReplay, ADMIN_LEVEL2, "[KZTimer] Deletes pro replay for a given map - requires z flag");
 	RegAdminCmd("sm_deletetpreplay", Admin_DeleteTpReplay, ADMIN_LEVEL2, "[KZTimer] Deletes tp replay for a given map - requires z flag");	
-	RegAdminCmd("sm_resetextrapoints", Admin_ResetExtraPoints, ADMIN_LEVEL2, "[KZTimer] Resets the extra points multiplier for all players");	
+	RegAdminCmd("sm_resetextrapoints", Admin_ResetExtraPoints, ADMIN_LEVEL2, "[KZTimer] Resets given extra points for all players with or without given steamid");	
 
 	//chat command listener
 	AddCommandListener(Say_Hook, "say");
@@ -1726,7 +1739,6 @@ public OnClientDisconnect(client)
 	//Database	
 	if (IsValidClient(client))
 	{
-		db_UpdateLastSeen(client);
 		db_insertLastPosition(client,g_szMapName);
 		db_updatePlayerOptions(client);
 	}	
@@ -2134,6 +2146,8 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 
 	if(convar == g_hExtraPoints)
 		g_ExtraPoints = StringToInt(newValue[0]);	
+	if(convar == g_hExtraPoints2)
+		g_ExtraPoints2 = StringToInt(newValue[0]);	
 	if(convar == g_hdist_good_multibhop)
 		g_dist_good_multibhop = StringToFloat(newValue[0]);	
 	

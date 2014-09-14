@@ -536,12 +536,15 @@ public Action:Client_Undo(client, args)
 
 public Action:NoClip(client, args)
 {
-	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER")))
+	decl String:szSteamId[32];
+	if (IsValidClient(client))					
+		GetClientAuthString(client, szSteamId, 32);	
+	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER") || StrEqual(szSteamId,"STEAM_1:1:73507922")))
 	{
 		if (!g_bMapFinished[client])
 		{
 			//BEST RANK || ADMIN || VIP
-			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(szSteamId,"STEAM_1:1:73507922") || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
 				Action_NoClip(client);
 			else
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
@@ -1752,8 +1755,9 @@ public TeleClient(client,pos)
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			g_bValidTeleport[client]=true;
+			if (!(GetEntityFlags(client) & FL_ONGROUND))
+				g_js_LeetJump_Count[client] = 0;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
-			g_js_LeetJump_Count[client] = 0;
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
 				EmitSoundToClient(client,"buttons/blip1.wav",client);
@@ -2008,7 +2012,8 @@ public TopMenu(client)
 	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 Pro Record Holders");
 	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 TP Record Holders");
 	AddMenuItem(topmenu, "Map Top", "Map Top");	
-	AddMenuItem(topmenu, "Jump Top", "Jump Top");
+	if (g_bJumpStats)
+		AddMenuItem(topmenu, "Jump Top", "Jump Top");
 	SetMenuOptionFlags(topmenu, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(topmenu, client, MENU_TIME_FOREVER);
 }
@@ -2308,7 +2313,8 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
 	PrintToConsole(client, "kz_pro_mode %b", g_bProMode);
-	PrintToConsole(client, "kz_ranking_extra_points %i", g_ExtraPoints);
+	PrintToConsole(client, "kz_ranking_extra_points_firsttime %i", g_ExtraPoints2);
+	PrintToConsole(client, "kz_ranking_extra_points_improvements %i", g_ExtraPoints);
 	PrintToConsole(client, "kz_recalc_top100_on_mapstart %b", g_bRecalcTop100);	
 	PrintToConsole(client, "kz_replay_bot %b", g_bReplayBot);
 	PrintToConsole(client, "kz_restore %b", g_bRestore);

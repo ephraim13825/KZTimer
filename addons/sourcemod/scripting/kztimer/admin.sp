@@ -20,24 +20,29 @@ public TopMenuHandler2(Handle:topmenu, TopMenuAction:action, TopMenuObject:objec
 
 public Action:Admin_KzPanel(client, args)
 {
+	KzAdminMenu(client);
 	PrintToChat(client, "[%cKZ%c] See console for more commands", LIMEGREEN,WHITE);
 	PrintToConsole(client,"\n \n[KZ Admin]\n");
-	PrintToConsole(client,"more server cvars: \n rcon kz_prespeed_cap - Limits player's pre speed\n rcon kz_max_prespeed_bhop_dropbhop - Max counted pre speed for bhop & dropbhop (jumpstats)\n rcon kz_replay_bot_pro_color - Pro replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_replay_bot_tp_color - Tp replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_dist_min_bhop - Minimum distance for bhops to be considered good");
+	PrintToConsole(client,"more server cvars:");
+	PrintToConsole(client," rcon kz_ranking_extra_points_firsttime - Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time.\n rcon kz_ranking_extra_points_improvements - Gives players x extra points for improving their time.\n rcon kz_anticheat_auto_ban - auto-ban (bhop hack and strafe hack) including deletion of all player records");
+	PrintToConsole(client," rcon kz_anticheat_ban_duration - ban duration in hours\n rcon kz_prespeed_cap - Limits player's pre speed\n rcon kz_max_prespeed_bhop_dropbhop - Max counted pre speed for bhop & dropbhop (jumpstats)\n rcon kz_replay_bot_pro_color - Pro replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_replay_bot_tp_color - Tp replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_dist_min_bhop - Minimum distance for bhops to be considered good");
 	PrintToConsole(client," rcon kz_dist_pro_bhop - Minimum distance for bhops to be considered pro\n rcon kz_dist_leet_bhop - Minimum distance for bhops to be considered leet\n rcon kz_dist_min_wj - Minimum distance for weirdjumps to be considered good\n rcon kz_dist_min_lj - Minimum distance for longjumps to be considered good");
 	PrintToConsole(client," rcon kz_dist_pro_lj - Minimum distance for longjumps to be considered pro\n rcon kz_dist_leet_lj - Minimum distance for longjumps to be considered leet\n rcon kz_dist_pro_wj - Minimum distance for weirdjumps to be considered pro\n rcon kz_dist_leet_wj - Minimum distance for weirdjumps to be considered leet");
 	PrintToConsole(client," rcon kz_dist_min_dropbhop - Minimum distance for dropbhop to be considered good\n rcon kz_dist_pro_dropbhop - Minimum distance for dropbhop to be considered pro\n rcon kz_dist_leet_dropbhop - Minimum distance for dropbhop to be considered leet\n rcon kz_dist_min_multibhop - Minimum distance for multibhop to be considered good");
 	PrintToConsole(client," rcon kz_dist_pro_multibhop - Minimum distance for multibhop to be considered pro\n rcon kz_dist_leet_multibhop - Minimum distance for multibhop to be considered leet");		
+	PrintToConsole(client," gray = min, green = pro, red = leet");	
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
-		PrintToConsole(client,"\nAdmin commands:\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)");
-		PrintToConsole(client,"[database table playerrank]\n sm_resetranks (Drops playerrank table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets the extra points multiplier for all players)\n [players have to refresh their profile afterwards]");
-		PrintToConsole(client,"[database table playertimes]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp&pro times for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
-		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n[database table jumpstats]\n sm_resetjumpstats (Drops jumpstats table)");
+		PrintToConsole(client,"\nCOMMANDS:\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
+		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table - BE CAREFUL!!!)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
+		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table - BE CAREFUL!!!)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
+		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)");
 		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
 		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)");
 		
 	}
-	KzAdminMenu(client);
+	else
+		PrintToConsole(client,"(database commands require z flag.)");
 	return Plugin_Handled;
 }
 	
@@ -255,6 +260,8 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 			}
 			else
 			{
+				for(new i = 66; i < MAX_PR_PLAYERS; i++) 
+					g_bProfileRecalc[i]=false;	
 				g_bTop100Refresh = false;
 				g_bManualRecalc = false;
 				g_pr_RankingRecalc_InProgress = false;
@@ -782,6 +789,31 @@ public Action:Admin_ResetLjRecords(client, args)
 	}
 	return Plugin_Handled;
 }
+
+
+public Action:Admin_RefreshProfile(client, args)
+{
+	if(args == 0)
+	{
+		ReplyToCommand(client, "[KZ] Usage: sm_refreshprofile <steamid>");
+		return Plugin_Handled;
+	}
+	if(args > 0)
+	{
+		decl String:szSteamID[128];
+		decl String:szArg[128];
+		Format(szSteamID, 128, "");
+		for (new i = 1; i < 6; i++)
+		{
+			GetCmdArg(i, szArg, 128);
+			if (!StrEqual(szArg, "", false))
+				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
+		}
+		RecalcPlayerRank(client, szSteamID);
+	}
+	return Plugin_Handled;
+}
+
 
 public Action:Admin_ResetLjBlockRecords(client, args)
 {

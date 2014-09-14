@@ -271,12 +271,12 @@
 	"EarnedPoints"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:i},{8:c},{9:c},{10:i},{11:c}"
-		"en"        "[{1}KZ{2}] {3}{4}{5} has earned {6}{7} exp. points{8} [{9}{10}{11} Total]"
+		"en"        "[{1}KZ{2}] {3}{4}{5} has earned {6}{7} points{8} [{9}{10}{11} Total]"
 	}
 	"LostPoints"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:i},{8:c},{9:c},{10:i},{11:c}"
-		"en"        "[{1}KZ{2}] {3}{4}{5} has lost {6}{7} exp. points{8} [{9}{10}{11} Total]"
+		"en"        "[{1}KZ{2}] {3}{4}{5} has lost {6}{7} points{8} [{9}{10}{11} Total]"
 	}
 
 	"ChallengeW"
@@ -288,7 +288,7 @@
 	"ChallengeL"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:i},{8:c}"
-		"en"        "[{1}KZ{2}] {3}{4}{5} has lost {6}{7} {8} exp. points!"
+		"en"        "[{1}KZ{2}] {3}{4}{5} has lost {6}{7} {8} points!"
 	}
 	"NoReplayFound"
 	{

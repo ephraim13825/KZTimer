@@ -25,7 +25,6 @@ FormatLanguage(String:language[])
 	}
 }
 
-
 // https://forums.alliedmods.net/showthread.php?p=1436866
 // GeoIP Language Selection by GoD-Tony
 LoadCookies(client)
@@ -235,7 +234,8 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Calculation:");
 	PrintToConsole(client, "TP Time: Rank percentage * 100 (extra bonus: Top 20 rankings, max. 400p for #1)");	
 	PrintToConsole(client, "PRO Time (without teleports): Rank percentage * 200 (extra bonus: Top 20 rankings, max. 600p for #1)");
-	PrintToConsole(client, "Extra points for time improvements: %ip", g_ExtraPoints);	
+	PrintToConsole(client, "Extra points for time improvements: %ip (default 0)", g_ExtraPoints);	
+	PrintToConsole(client, "Extra points for finishing a map for the first time: tp time = %ip, pro time = %ip (default 0)", g_ExtraPoints2,(g_ExtraPoints2*2));	
 	PrintToConsole(client, "JumpStats: Rank percentage (Top 20) * 500");	
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Skill groups:");
@@ -1033,55 +1033,55 @@ public SetPlayerRank(client)
 		if (g_pr_points[client] < g_pr_rank_Percentage[1])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[0]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[0],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",WHITE,g_szSkillGroups[0],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[1] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[2])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[1]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",WHITE,g_szSkillGroups[1],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",WHITE,g_szSkillGroups[1],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[2] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[3])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[2]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",GRAY,g_szSkillGroups[2],WHITE);		
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",GRAY,g_szSkillGroups[2],WHITE);		
 		}
 		else
 		if (g_pr_rank_Percentage[3] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[4])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[3]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTBLUE,g_szSkillGroups[3],WHITE);		
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",LIGHTBLUE,g_szSkillGroups[3],WHITE);		
 		}
 		else
 		if (g_pr_rank_Percentage[4] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[5])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[4]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",BLUE,g_szSkillGroups[4],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",BLUE,g_szSkillGroups[4],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[5] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[6])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[5]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKBLUE,g_szSkillGroups[5],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",DARKBLUE,g_szSkillGroups[5],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[6] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[7])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[6]);
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",PINK,g_szSkillGroups[6],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",PINK,g_szSkillGroups[6],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[7] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[8])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[7]);	
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",LIGHTRED,g_szSkillGroups[7],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",LIGHTRED,g_szSkillGroups[7],WHITE);
 		}
 		else
 		if (g_pr_points[client] >= g_pr_rank_Percentage[8])
 		{
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[8]);	
-			Format(g_pr_chat_coloredrank[client], 32, "%c%s%c",DARKRED,g_szSkillGroups[8],WHITE);
+			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",DARKRED,g_szSkillGroups[8],WHITE);
 		}
 	}	
 	else
@@ -1095,6 +1095,7 @@ public SetPlayerRank(client)
 	decl String:sPath[PLATFORM_MAX_PATH];
 	decl String:line[128]
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", MAPPERS_PATH);
+	new bool:mapper=false;
 	if (FileExists(sPath))
 	{
 		new Handle:fileHandle=OpenFile(sPath,"r");		
@@ -1105,8 +1106,9 @@ public SetPlayerRank(client)
 				TrimString(line);
 				if (StrEqual(line,szSteamId))
 				{
-					Format(g_pr_rankname[client], 32, "MAPPER");	
-					Format(g_pr_chat_coloredrank[client], 32, "%cMAPPER%c",LIGHTRED,WHITE);
+					mapper=true;				
+					Format(g_pr_chat_coloredrank[client], 32, "%s %cMAPPER%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
+					Format(g_pr_rankname[client], 32, "MAPPER");
 				}
 			}	
 		}
@@ -1114,25 +1116,29 @@ public SetPlayerRank(client)
 	}
 	
 	// VIP & ADMIN Clantag
-	if (g_bVipClantag)			
+	new bool: vip=false;
+	if (g_bVipClantag && !mapper)			
 		if ((GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC))
 		{
+			vip=true;
+			Format(g_pr_chat_coloredrank[client], 32, "%s %cVIP%c",g_pr_chat_coloredrank[client],YELLOW,WHITE);
 			Format(g_pr_rankname[client], 32, "VIP");	
-			Format(g_pr_chat_coloredrank[client], 32, "%cVIP%c",YELLOW,WHITE);
 		}
 		
 	if (g_bAdminClantag)
-		if (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) 
-		{
+	{	if (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) 
+		{		
+			Format(g_pr_chat_coloredrank[client], 32, "%s %cADMIN%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
 			Format(g_pr_rankname[client], 32, "ADMIN");	
-			Format(g_pr_chat_coloredrank[client], 32, "%cADMIN%c",LIMEGREEN,WHITE);
 		}
-		
-	if (StrEqual(szSteamId,"STEAM_1:1:73507922"))
-	{
-		Format(g_pr_rankname[client], 32, "CODER");	
-		Format(g_pr_chat_coloredrank[client], 32, "%cCODER%c",LIGHTRED,WHITE);			
+		else
+			if (StrEqual(szSteamId,"STEAM_1:1:73507922") && !vip && !mapper)
+				Format(g_pr_chat_coloredrank[client], 32, "%s %cKZTIMER CREATOR%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
 	}
+	else
+		if (StrEqual(szSteamId,"STEAM_1:1:73507922") && !vip && !mapper)
+			Format(g_pr_chat_coloredrank[client], 32, "%s %cKZTIMER CREATOR%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);	
+	
 }
 
 public SpectatorCount(client)
@@ -1165,10 +1171,10 @@ stock Action:PrintSpecMessageAll(client)
 		Format(szChatRank, 64, "%s",g_pr_rankname[client]);
 				
 	if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))		
-		CPrintToChatAll("{green}%s{default} [{grey}%s{default}] *SPEC* {grey}%s{default}: %s",g_szCountryCode[client], szChatRank, szName,szTextToAll);
+		CPrintToChatAll("{green}%s{default} %s *SPEC* {grey}%s{default}: %s",g_szCountryCode[client], szChatRank, szName,szTextToAll);
 	else
 		if (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag))
-			CPrintToChatAll("[{grey}%s{default}] *SPEC* {grey}%s{default}: %s", szChatRank,szName,szTextToAll);
+			CPrintToChatAll("%s *SPEC* {grey}%s{default}: %s", szChatRank,szName,szTextToAll);
 		else
 			if (g_bCountry)
 				CPrintToChatAll("[{green}%s{default}] *SPEC* {grey}%s{default}: %s", g_szCountryCode[client],szName, szTextToAll);
@@ -1190,7 +1196,6 @@ stock Action:PrintSpecMessageAll(client)
 		}
 	return Plugin_Handled;
 }
-
 //http://pastebin.com/YdUWS93H
 public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:remove)
 {

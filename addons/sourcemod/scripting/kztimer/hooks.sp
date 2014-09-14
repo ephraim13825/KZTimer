@@ -238,9 +238,9 @@ public Action:Say_Hook(client, const String:command[], argc)
 				decl String:szName[32];
 				GetClientName(client,szName,32);
 				if (IsPlayerAlive(client))
-					CPrintToChatAllEx(client,"{green}%s{default} [{grey}%s{default}] {teamcolor}%s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);			
+					CPrintToChatAllEx(client,"{green}%s{default} %s {teamcolor}%s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);			
 				else
-					CPrintToChatAllEx(client,"{green}%s{default} [{grey}%s{default}] {teamcolor}*DEAD* %s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);
+					CPrintToChatAllEx(client,"{green}%s{default} %s {teamcolor}*DEAD* %s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);
 				g_bSayHook[client]=false;				
 				return Plugin_Handled;
 			}
@@ -256,9 +256,9 @@ public Action:Say_Hook(client, const String:command[], argc)
 					decl String:szName[32];
 					GetClientName(client,szName,32);
 					if (IsPlayerAlive(client))
-						CPrintToChatAllEx(client,"[{grey}%s{default}] {teamcolor}%s{default}: %s",szChatRank,szName,sText);	
+						CPrintToChatAllEx(client,"%s {teamcolor}%s{default}: %s",szChatRank,szName,sText);	
 					else
-						CPrintToChatAllEx(client,"[{grey}%s{default}] {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);			
+						CPrintToChatAllEx(client,"%s {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);			
 					return Plugin_Handled;							
 				}
 				else
