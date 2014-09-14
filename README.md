@@ -9,7 +9,7 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 - Sourcebans support
 - Workshop maps support
 - Multi-Language support (english, chinese, french, german, russian and swedish)
-- A very large sqlite database can cause server lags (i prefer mysql databases)
+- A very large sqlite database can cause server lags (i prefer a mysql database)
 
 *Why Tickrate 102.4?*
 - eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
