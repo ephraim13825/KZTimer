@@ -29,7 +29,6 @@ v1.54
 - added server cvar kz_ranking_extra_points_firsttime (Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time) 
 - renamed kz_ranking_extra_points to kz_ranking_extra_points_improvements
 - added skill group to chattag of admin's and vip's
-- auto profile refreshing after using of an reset admin command
 
 v1.53
 - fixed a minor jumpstats bug
