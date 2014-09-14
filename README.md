@@ -1,11 +1,11 @@
 Alliedmodders: 
 https://forums.alliedmods.net/showthread.php?t=223274
 
-Steam group: 
-http://steamcommunity.com/groups/KZTIMER 
-(KZTimer with Global Records only here available!)
+**Steam group:** 
+http://steamcommunity.com/groups/KZTIMER                                                                          
+**(KZTimer with global record system only here available)**
 
-Info: 
+**Info:** 
 - KZTimer is in the final version (only bugs will be fixed from now on)
 - Tickrate 102.4 is optimal for kreedzing (*)
 - Ranking system is based on your mapcycle.txt file
@@ -15,13 +15,13 @@ Info:
 - Multi-Language support (english, chinese, french, german, russian and swedish)
 - A very large sqlite database can cause server lags (i prefer mysql databases)
 
-(*) Why Tickrate 102.4?
+**(*) Why Tickrate 102.4?**
 - eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
 - tickrate 128 breaks a lot of maps because this tickrate makes some weird surf shortcuts possible
 
-Changelog
+**Changelog**
 =======
 
 v1.54
