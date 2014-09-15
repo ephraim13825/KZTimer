@@ -10,6 +10,9 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 - Workshop maps support
 - Multi-Language support (english, chinese, french, german, russian and swedish)
 - A very large sqlite database can cause server lags (i prefer a mysql database)
+- Knife plugins in combination with KZTimer cause server crashes! (I'm working on this issue)
+- The climbers menu/speed panel of kztimer keeps updating and blocking 3rd party menus. But you are able to add
+exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife or sm_radio)
 
 *Why Tickrate 102.4?*
 - eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
