@@ -1,19 +1,24 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
 
+
+
 **Please read the following information carefully (!!):**
 - Tickrate 102.4 is optimal for kreedzing (see below)
 - Ranking system is based on your mapcycle.txt file
 - A very large sqlite database can cause server lags (i prefer a mysql database)
+- The climbers menu of KZTimer keeps updating and blocking 3rd party menu. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
 - Knife plugins in combination with KZTimer cause server crashes! (I'm working on this issue)
-- The climbers menu/speed panel of kztimer keeps updating and blocking 3rd party menus. But you are able to add
-exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife or sm_radio)
 
- *Why Tickrate 102.4?*
-- eliminates crouching before jumping which increases the height of your jump on tickrate 64 (102/128 equal)
+
+
+*Why tickrate 102.4?*
+- eliminiates crouching before jumping which increases the height of your jump on tickrate 6 4 (102/128 equal)
 - better bunnyhop consistency compared to tickrate 64 (tickrate 102/128 almost equal)
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
 - tickrate 128 breaks a lot of maps because this tickrate makes some weird surf shortcuts possible
+
+
 
 **About KZTimer**
 - SQLite & MySQL support
