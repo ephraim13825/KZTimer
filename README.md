@@ -15,7 +15,7 @@ exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod
 - perfect strafe acceleration (tickrate 128 gives you too much speed and makes kz maps way too easy)
 - tickrate 128 breaks a lot of maps because this tickrate makes some weird surf shortcuts possible
 
-**About KZTimer*
+**About KZTimer**
 - SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
