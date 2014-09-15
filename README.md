@@ -1,7 +1,7 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                          
 
-*Please read the following information carefully:* 
+**Please read the following information carefully (!!):**
 - KZTimer is in the final version (only bugs will be fixed from now on)
 - Tickrate 102.4 is optimal for kreedzing (see below)
 - Ranking system is based on your mapcycle.txt file
