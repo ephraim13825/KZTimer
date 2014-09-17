@@ -1,3 +1,5 @@
+#KZTimer 1.54 Final Version
+
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
 
@@ -8,7 +10,7 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 - Ranking system is based on your mapcycle.txt file
 - A very large sqlite database can cause server lags (i prefer a mysql database)
 - The climbers menu of KZTimer keeps updating and blocking 3rd party menu. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
-- Knife plugins in combination with KZTimer cause server crashes! (I'm working on this issue)
+- Knife plugins in combination with KZTimer might cause server crashes!
 
 
 
