@@ -594,9 +594,12 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}
 		}
 		
-		if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
-			g_bTimeractivated[client] = false;
-			
+		if (g_bHookMod)
+		{
+			if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
+				g_bTimeractivated[client] = false;
+		}
+		
 		//jumpstats/timer
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);

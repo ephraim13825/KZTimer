@@ -7,7 +7,6 @@
 #include <entity>
 #include <setname>
 #include <smlib>
-#include <hgr>
 #include <KZTimer>
 #include <geoip>
 #include <colors>
@@ -18,20 +17,7 @@
 #include <dhooks>
 #include <sourcebans>
 #include <calladmin>
-
-//v1.55
-/*
-- fixed redundant calculation of points for challenge winners 
-- fixed displaying of the top 5 challengers with 10000+ points
-- fixed weapons stripper method (knife plugins should work again) 
-- fixed the viewmodel of tp and pro replay bots
-- added kz_attack_spam_protection (max 40 shots, +5 new/extra shots per minute)
-- added log off (prevents server crashes because of datatable warnings on servers without the cleaner extention) and sv_infinite_ammo 2 to cfg/sourcemod/kztimer/main.cfg
-- added client option 'start weapon' USP/Knife
-- added hookmod detection (stops the timer when you use a hook command)
-- added low fps check (fps_max < 120 results in a kick)  - thx to HtC^w
-- minor optimizations
-*/
+#include <hgr>
 
 #define VERSION "1.55"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
@@ -395,6 +381,7 @@ new bool:g_bProReplay;
 new bool:g_bTpReplay;
 new bool:g_pr_RankingRecalc_InProgress;
 new bool:g_bAntiCheat;
+new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
 new bool:g_bLoaded[MAXPLAYERS+1];
@@ -685,6 +672,11 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("KZTimer_GetTimerStatus", Native_GetTimerStatus);
 	CreateNative("KZTimer_StopUpdatingOfClimbersMenu", Native_StopUpdatingOfClimbersMenu);
 	CreateNative("KZTimer_StopTimer", Native_StopTimer);
+	MarkNativeAsOptional("HGR_IsHooking");
+	MarkNativeAsOptional("HGR_IsGrabbing");
+	MarkNativeAsOptional("HGR_IsBeingGrabbed");
+	MarkNativeAsOptional("HGR_IsRoping");
+	MarkNativeAsOptional("HGR_IsPushing");
 	g_OnLangChanged = CreateGlobalForward("GeoLang_OnLanguageChanged", ET_Ignore, Param_Cell, Param_Cell);
 	g_bLateLoaded = late;
 	return APLRes_Success;
@@ -1291,10 +1283,14 @@ public OnLibraryRemoved(const String:name[])
 		g_bCanUseSourcebans = false;
 	if(StrEqual(name, "dhooks"))
 		g_hTeleport = INVALID_HANDLE;
+	if (StrEqual("hookgrabrope", name))
+		g_bHookMod = false;
 }
 
 public OnAllPluginsLoaded()
 {
+	if (LibraryExists("hookgrabrope"))
+		g_bHookMod = true;
 	if (LibraryExists("sourcebans"))
 		g_bCanUseSourcebans = true;
 }
