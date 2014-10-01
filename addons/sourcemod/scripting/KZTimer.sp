@@ -1239,6 +1239,8 @@ public OnLibraryAdded(const String:name[])
 	new Handle:tmp = FindPluginByFile("mapchooser_extended.smx");
 	if ((StrEqual("mapchooser", name)) ||(tmp != INVALID_HANDLE && GetPluginStatus(tmp) == Plugin_Running))
 		g_bMapChooser = true;
+	if (StrEqual("hookgrabrope", name))
+		g_bHookMod = true;
 	if (tmp != INVALID_HANDLE)
 		CloseHandle(tmp);
 	//botmimic 2
