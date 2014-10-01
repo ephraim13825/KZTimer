@@ -1,4 +1,4 @@
-#KZTimer 1.54 Final Version
+#KZTimer 1.55 Final Version
 
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
