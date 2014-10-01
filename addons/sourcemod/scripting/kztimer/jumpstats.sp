@@ -548,7 +548,7 @@ public Postthink(client)
 	}
 	else
 		Format(szStrafeStats,1024, "");
-	
+
 	//t00-b4d
 	if(g_js_fJump_Distance[client] < 200.0)
 	{

@@ -216,10 +216,15 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[34.] Info bot  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bProMode)
-		Format(szTmp, sizeof(szTmp), "[35.] Pro Mode  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[35.] Pro mode  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[35.] Pro Mode  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[35.] Pro mode  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);			
+	if (g_bAttackSpamProtection)
+		Format(szTmp, sizeof(szTmp), "[36.] Attack spam protection  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[36.] Attack spam protection  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);		
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
 	if (g_AdminMenuLastPage[client] < 6)
@@ -495,6 +500,13 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				ServerCommand("kz_pro_mode 1");
 			else
 				ServerCommand("kz_pro_mode 0");
+		}
+		if(param2 == 35)
+		{
+			if (!g_bAttackSpamProtection)
+				ServerCommand("kz_attack_spam_protection 1");
+			else
+				ServerCommand("kz_attack_spam_protection 0");
 		}
 		g_AdminMenuLastPage[param1] = param2;
 		if (menu != INVALID_HANDLE)

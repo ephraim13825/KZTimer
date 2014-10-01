@@ -28,6 +28,23 @@ public Action:BhopCheck(Handle:timer, any:client)
 		g_js_LeetJump_Count[client] = 0;
 }
 
+public Action:AttackTimer(Handle:timer)
+{
+	for (new i = 1; i <= MaxClients; i++)
+	{	
+		if (!IsValidClient(i) || IsFakeClient(i))
+			continue;	
+		
+		if (g_AttackCounter[i] > 0)
+		{
+			if (g_AttackCounter[i] < 5)
+				g_AttackCounter[i] = 0;
+			else
+				g_AttackCounter[i] = g_AttackCounter[i]  - 5;
+		}
+	}
+}
+
 public Action:CheckRemainingTime(Handle:timer)
 {
 	new Handle:hTmp;	
@@ -156,10 +173,21 @@ public Action:KickPlayer(Handle:Timer, any:client)
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		decl String:szReason[64];
-		Format(szReason, 64, "Please set your fps_max between 100 and 300");		
+		Format(szReason, 64, "Please set your fps_max between 120 and 300 or 0!");		
 		KickClient(client, "%s", szReason);
 	}
 }
+
+public Action:KickPlayer2(Handle:Timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		decl String:szReason[64];
+		Format(szReason, 64, "Please set your fps_max bigger than 120 or 0!");		
+		KickClient(client, "%s", szReason);
+	}
+}
+
 
 
 //challenge start countdown

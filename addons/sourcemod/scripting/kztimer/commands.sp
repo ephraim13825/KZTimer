@@ -1,12 +1,3 @@
-public Action:Client_Usp(client, args)
-{
-	if (g_UspDrops[client] < 3)
-		GiveUsp(client);
-	else
-		PrintToChat(client, "%t", "Usp3", MOSSGREEN,WHITE);
-	return Plugin_Handled;
-}
-
 public Action:Client_Ljblock(client, args)
 {
 	if (IsValidClient(client) && IsPlayerAlive(client))
@@ -1417,6 +1408,21 @@ public GotoMethod(client, i)
 	}
 }
 
+public Action:Client_Usp(client, args)
+{
+	if(!IsValidClient(client) || !IsPlayerAlive(client))
+		return Plugin_Handled;		
+		
+	if(Client_HasWeapon(client, "weapon_hkp2000"))
+	{			
+		new weapon = Client_GetWeapon(client, "weapon_hkp2000");
+		Client_SetActiveWeapon(client, weapon);
+	}
+	else
+		GivePlayerItem(client, "weapon_usp_silencer");
+	return Plugin_Handled;
+}
+
 public Action:Client_GoTo(client, args) 
 {
 	if (!g_bGoToServer)
@@ -1440,7 +1446,7 @@ public Action:Client_GoTo(client, args)
 			new playerCount=0;
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(client))
+				if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 				{
 					GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 					AddMenuItem(menu, szPlayerName, szPlayerName);	
@@ -1886,7 +1892,7 @@ public ClimbersMenu(client)
 			AddMenuItem(g_hclimbersmenu[client], "!restart", buffer);
 		}
 	}
-	else
+	else 
 	{
 		Format(title, 128, "%T", "ClimbersMenu10", client, g_szPlayerPanelText[client],GetSpeed(client));
 		SetMenuTitle(g_hclimbersmenu[client], title);
@@ -1919,7 +1925,7 @@ public ClimbersMenu(client)
 		AddMenuItem(g_hclimbersmenu[client], "!Options", buffer);
 	}
 	SetMenuPagination(g_hclimbersmenu[client], MENU_NO_PAGINATION); 
-	SetMenuOptionFlags(g_hclimbersmenu[client], MENUFLAG_BUTTON_EXIT);
+	SetMenuOptionFlags(g_hclimbersmenu[client], MENUFLAG_NO_SOUND|MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(g_hclimbersmenu[client], client, MENU_TIME_FOREVER);
 }
 
@@ -2194,14 +2200,14 @@ public HelpPanel2(client)
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ")	
 	DrawPanelText(panel, "!start/!r - go back to start");
-	DrawPanelText(panel, "!stop - stops your timer");
-	DrawPanelText(panel, "!pause - on/off client pause");	
-	DrawPanelText(panel, "!usp - spawns a usp");
-	DrawPanelText(panel, "!challenge - starts a challenge/race against someone");	
-	DrawPanelText(panel, "!spec [<name>] - selects a player you want to watch");	
+	DrawPanelText(panel, "!stop - stops the timer");
+	DrawPanelText(panel, "!pause - on/off pause (timer on hold and movement frozen)");	
+	DrawPanelText(panel, "!usp - spawns a usp silencer");
+	DrawPanelText(panel, "!challenge - allows you to start a race against others");	
+	DrawPanelText(panel, "!spec [<name>] - select a player you want to watch");	
 	DrawPanelText(panel, "!goto [<name>] - teleports you to a given player");
-	DrawPanelText(panel, "!compare [<name>] - compares your challenge results with a given player");
-	DrawPanelText(panel, "!showsettings - shows plugin settings");
+	DrawPanelText(panel, "!compare [<name>] - compare your challenge/race results with a given player");
+	DrawPanelText(panel, "!showsettings - shows kztimer plugin settings");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "next page");
@@ -2239,7 +2245,7 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
 	DrawPanelText(panel, "!ranks - prints available ranks into chat");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
-	DrawPanelText(panel, "!language - select your language");
+	DrawPanelText(panel, "!language - opens language menu");
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "noclip bind: bind KEY +noclip");
 	DrawPanelText(panel, " ");
@@ -2269,8 +2275,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "KZ Timer settings");
 	PrintToConsole(client, "-----------------");
 	PrintToConsole(client, "kz_admin_clantag %b", g_bAdminClantag);
-	
-	
+	PrintToConsole(client, "kz_attack_spam_protection %b", g_bAttackSpamProtection);
 	PrintToConsole(client, "kz_anticheat_ban_duration %.1fh", g_fBanDuration);
 	PrintToConsole(client, "kz_auto_bhop %i (bhop_ & surf_ maps)", g_bAutoBhop);
 	PrintToConsole(client, "kz_auto_timer %i", g_bAutoTimer);
@@ -2416,15 +2421,15 @@ public OptionMenu(client)
 	else
 		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");	
 	//10
-	/*if (g_bShowNames[client])
-		AddMenuItem(optionmenu, "Target Name Panel  -  Enabled", "Target name panel  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "Target Name Panel  -  Disabled", "Target name panel  -  Disabled");	*/
-	//11
 	if (g_bGoToClient[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");					
+	//11
+	if (g_bStartWithUsp[client])
+		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Start weapon  -  USP");
+	else
+		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Start weapon  -  Knife");
 	//12
 	if (g_bAutoBhop2)
 	{
@@ -2446,6 +2451,14 @@ public OptionMenu(client)
 				DisplayMenuAtItem(optionmenu, client, 12, MENU_TIME_FOREVER);
 }
 
+public SwitchStartWeapon(client)
+{
+	if (g_bStartWithUsp[client])
+		g_bStartWithUsp[client] = false;
+	else
+		g_bStartWithUsp[client] = true;
+}
+
 public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 {
 	if(action == MenuAction_Select)
@@ -2463,7 +2476,8 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 8: HideSpecs(param1);
 			case 9: InfoPanel(param1);
 			case 10: DisableGoTo(param1);
-			case 11: AutoBhop(param1);		
+			case 11: SwitchStartWeapon(param1);
+			case 12: AutoBhop(param1);		
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);					

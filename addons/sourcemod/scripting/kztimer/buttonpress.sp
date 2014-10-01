@@ -359,10 +359,9 @@ public CL_OnEndTimerPress(client)
 			CreateTimer(3.0, TpReplayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 		}
 		db_InsertLatestRecords(szSteamId, szName, g_fFinalTime[client], g_Tp_Final[client]);	
-	}
+	}		
 			
-		//Challenge
-	new bool: bChallengeBet=false;
+	//Challenge
 	if (g_bChallenge[client])
 	{
 		SetEntityRenderColor(client, 255,255,255,255);		
@@ -393,9 +392,9 @@ public CL_OnEndTimerPress(client)
 							if (IsValidClient(j))
 								PrintToChat(j, "%t", "ChallengeL", MOSSGREEN, WHITE, PURPLE,szNameOpponent, GRAY, RED, lostpoints,GRAY);		
 						CreateTimer(0.5, UpdatePlayerProfile, i,TIMER_FLAG_NO_MAPCHANGE);
-						bChallengeBet = true;
+						g_pr_showmsg[client] = true;
 					}				
-					i = MaxClients;
+					break;
 				}
 			}
 		}		
@@ -417,11 +416,6 @@ public CL_OnEndTimerPress(client)
 			db_viewMapRankTp(client);
 		else
 			db_viewMapRankPro(client);
-		if (bChallengeBet)
-		{
-			g_pr_showmsg[client] = true;
-			CreateTimer(0.25, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
-		}
 	}
 	
 	//delete tmp entry

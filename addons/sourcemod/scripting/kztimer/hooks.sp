@@ -1,3 +1,22 @@
+
+//usp attack spam protection
+public Action:Event_OnFire(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	new client   = GetClientOfUserId(GetEventInt(event, "userid"));
+	if (client > 0 && IsClientInGame(client) && g_bAttackSpamProtection) 
+	{
+		decl String: weapon[64];
+		GetEventString(event, "weapon", weapon, 64);
+		if (StrContains(weapon,"knife",true) == -1 && g_AttackCounter[client] < 41)
+		{	
+			if (g_AttackCounter[client] < 41)
+			{
+				g_AttackCounter[client]++;
+			}
+		}
+	}
+}
+
 // - PlayerSpawn -
 public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -14,10 +33,21 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			g_MouseAbsCount[client] = 0;
 			g_SpeedRefreshCount[client] = 0;
 			
-			//remove weapons
-			if (g_bCleanWeapons && (GetClientTeam(client) > 1))
-				StripWeapons(client);
-				
+			//strip weapons
+			if ((GetClientTeam(client) > 1))
+			{			
+				StripAllWeapons(client);
+				if (!IsFakeClient(client))
+					GivePlayerItem(client, "weapon_usp_silencer");
+				if (!g_bStartWithUsp[client])
+				{
+					new weapon = GetPlayerWeaponSlot(client, 2);
+					if (weapon != -1 && !IsFakeClient(client))
+						 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+				}
+			}	
+			
+			
 			//godmode
 			if (g_bgodmode || IsFakeClient(client))
 				SetEntProp(client, Prop_Data, "m_takedamage", 0, 1);
@@ -47,8 +77,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			}
 			
 			//fps Check
-			if (g_bfpsCheck)
-				QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
+			QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
 			
 			//change player skin
 			if (g_bPlayerSkinChange && (GetClientTeam(client) > 1))
@@ -123,7 +152,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 
 			//get speed & origin
 			g_fLastSpeed[client] = GetSpeed(client);
-			GetClientAbsOrigin(client, g_fLastPosition[client]);						
+			GetClientAbsOrigin(client, g_fLastPosition[client]);				
 		}
 		else
 			CreateTimer(0.1, MoveTypeNoneTimer, client,TIMER_FLAG_NO_MAPCHANGE);
@@ -446,17 +475,30 @@ public Hook_Radar(client)
 {
 	SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0); 
 }
+
 //fpscheck
 public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const String:cvarName[], const String:cvarValue[])
 {
 	if (IsValidClient(client) && !IsFakeClient(client) && !g_bKickStatus[client])
 	{
-		new fps_max = StringToInt(cvarValue);        
-		if (fps_max < 100 || fps_max > 300 || fps_max<=0)
-		{
-			CreateTimer(10.0, KickPlayer, client, TIMER_FLAG_NO_MAPCHANGE);
-			PrintToChat(client, "%t", "KickMsg", DARKRED,WHITE,RED,WHITE,fps_max);
-			g_bKickStatus[client]=true;
+		new fps_max = StringToInt(cvarValue);  
+		g_bKickStatus[client]=false;
+		if (g_bfpsCheck)
+		{		    
+			if (fps_max < 120 || fps_max > 300 || fps_max<=0)
+			{
+				CreateTimer(10.0, KickPlayer, client, TIMER_FLAG_NO_MAPCHANGE);
+				PrintToChat(client, "%t", "KickMsg", DARKRED,WHITE,RED,WHITE,fps_max);
+				g_bKickStatus[client]=true;
+			}
+		}
+		if (!g_bKickStatus[client])
+		{			  
+			if (fps_max > 0 && fps_max < 120)
+			{
+				CreateTimer(10.0, KickPlayer2, client, TIMER_FLAG_NO_MAPCHANGE);
+				g_bKickStatus[client]=true;
+			}
 		}
 	}
 }
@@ -537,6 +579,24 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		AutoBhopFunction(client, buttons);
 		Prestrafe(client,mouse[0], buttons);
 
+		//usp attack spam protection
+		if (g_bAttackSpamProtection && client > 0 && IsClientInGame(client))
+		{
+			decl String:classnamex[64];
+			GetClientWeapon(client, classnamex, 64);
+			if(StrContains(classnamex,"knife",true) == -1 && g_AttackCounter[client] >= 40)
+			{
+				if(buttons & IN_ATTACK)
+				{
+					new weaponx = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
+					SetEntPropFloat(weaponx, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
+				}
+			}
+		}
+		
+		if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
+			g_bTimeractivated[client] = false;
+			
 		//jumpstats/timer
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);

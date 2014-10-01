@@ -68,11 +68,11 @@ new String:sql_selectTpRecordCount[] 			= "SELECT y.steamid, COUNT(*) AS rekorde
 new String:sql_selectProRecordCount[] 			= "SELECT y.steamid, COUNT(*) AS rekorde FROM (SELECT s.steamid FROM playertimes s INNER JOIN (SELECT mapname, MIN(runtimepro) AS runtimepro FROM playertimes where runtimepro > -1.0  GROUP BY mapname) x ON s.mapname = x.mapname AND s.runtimepro = x.runtimepro) y where y.steamid = '%s' GROUP BY y.steamid ORDER BY rekorde DESC , y.steamid;";
 
 //TABLE PLAYERTMP
-new String:sql_createPlayertmp[] 				= "CREATE TABLE IF NOT EXISTS playertmp (steamid VARCHAR(32), mapname VARCHAR(32), cords1 FLOAT NOT NULL DEFAULT '-1.0', cords2 FLOAT NOT NULL DEFAULT '-1.0', cords3 FLOAT NOT NULL DEFAULT '-1.0', angle1 FLOAT NOT NULL DEFAULT '-1.0',angle2 FLOAT NOT NULL DEFAULT '-1.0',angle3 FLOAT NOT NULL DEFAULT '-1.0', teleports INT(12) DEFAULT '-1.0', checkpoints INT(12) DEFAULT '-1.0', runtimeTmp FLOAT NOT NULL DEFAULT '-1.0', PRIMARY KEY(steamid,mapname));";
-new String:sql_insertPlayerTmp[]  				= "INSERT INTO playertmp (cords1, cords2, cords3, angle1,angle2,angle3, teleports,checkpoints,runtimeTmp,steamid,mapname) VALUES ('%f','%f','%f','%f','%f','%f','%i','%i','%f','%s', '%s');";
-new String:sql_updatePlayerTmp[] 				= "UPDATE playertmp SET cords1 = '%f', cords2 = '%f', cords3 = '%f', angle1 = '%f', angle2 = '%f', angle3 = '%f', teleports = '%i', checkpoints = '%i', runtimeTmp = '%f', mapname ='%s' where steamid = '%s';";
+new String:sql_createPlayertmp[] 				= "CREATE TABLE IF NOT EXISTS playertmp (steamid VARCHAR(32), mapname VARCHAR(32), cords1 FLOAT NOT NULL DEFAULT '-1.0', cords2 FLOAT NOT NULL DEFAULT '-1.0', cords3 FLOAT NOT NULL DEFAULT '-1.0', angle1 FLOAT NOT NULL DEFAULT '-1.0',angle2 FLOAT NOT NULL DEFAULT '-1.0',angle3 FLOAT NOT NULL DEFAULT '-1.0', EncTickrate INT(12) DEFAULT '-1.0', teleports INT(12) DEFAULT '-1.0', checkpoints INT(12) DEFAULT '-1.0', runtimeTmp FLOAT NOT NULL DEFAULT '-1.0', PRIMARY KEY(steamid,mapname));";
+new String:sql_insertPlayerTmp[]  				= "INSERT INTO playertmp (cords1, cords2, cords3, angle1,angle2,angle3, teleports,checkpoints,runtimeTmp,steamid,mapname,EncTickrate) VALUES ('%f','%f','%f','%f','%f','%f','%i','%i','%f','%s', '%s', '%i');";
+new String:sql_updatePlayerTmp[] 				= "UPDATE playertmp SET cords1 = '%f', cords2 = '%f', cords3 = '%f', angle1 = '%f', angle2 = '%f', angle3 = '%f', teleports = '%i', checkpoints = '%i', runtimeTmp = '%f', mapname ='%s', EncTickrate='%i' where steamid = '%s';";
 new String:sql_deletePlayerTmp[] 				= "DELETE FROM playertmp where steamid = '%s';";
-new String:sql_selectPlayerTmp[] 				= "SELECT cords1,cords2,cords3, angle1, angle2, angle3, teleports, checkpoints, runtimeTmp FROM playertmp WHERE steamid = '%s' AND mapname = '%s';";
+new String:sql_selectPlayerTmp[] 				= "SELECT cords1,cords2,cords3, angle1, angle2, angle3, teleports, checkpoints, runtimeTmp, EncTickrate FROM playertmp WHERE steamid = '%s' AND mapname = '%s';";
 
 
 
@@ -378,7 +378,8 @@ public db_createTables()
 	SQL_FastQuery(g_hDb, sql_createMapButtons);
 	SQL_FastQuery(g_hDb, sql_createPlayerOptions);
 	SQL_FastQuery(g_hDb, sql_createLatestRecords);
-	SQL_FastQuery(g_hDb, "ALTER TABLE playerrank ADD lastseen DATE");	
+	SQL_FastQuery(g_hDb, "ALTER TABLE playerrank ADD lastseen DATE"); //added in 1.54
+	SQL_FastQuery(g_hDb, "ALTER TABLE playertmp ADD EncTickrate INT");	//added in 1.55
 	SQL_UnlockDatabase(g_hDb);
 }
 
@@ -474,26 +475,30 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 		
 		//Set new start time	
 		new Float: fl_time = SQL_FetchFloat(hndl, 8);
-		if (fl_time > 0.0)
+		new tickrate = SQL_FetchInt(hndl, 9);		
+		if (tickrate == g_Server_Tickrate)
 		{
+			if (fl_time > 0.0)
+			{
 
-			if (g_OverallTp[client] < 0) 
-				g_OverallTp[client] = 0;
-			if (g_OverallCp[client] < 0) 
-				g_OverallCp[client] = 0;
-			g_fStartTime[client] = GetEngineTime() - fl_time;  
-			g_bTimeractivated[client] = true;
-		}
-		   	
-		if (SQL_FetchFloat(hndl, 0) == -1.0 && SQL_FetchFloat(hndl, 1) == -1.0 && SQL_FetchFloat(hndl, 2) == -1.0) 
-		{
-			g_bRestoreC[client] = false;
-			g_bRestoreCMsg[client] = false;
-		}
-		else
-		{
-			g_bRestoreC[client] = true;
-			g_bRestoreCMsg[client]=true;
+				if (g_OverallTp[client] < 0) 
+					g_OverallTp[client] = 0;
+				if (g_OverallCp[client] < 0) 
+					g_OverallCp[client] = 0;
+				g_fStartTime[client] = GetEngineTime() - fl_time;  
+				g_bTimeractivated[client] = true;
+			}
+				
+			if (SQL_FetchFloat(hndl, 0) == -1.0 && SQL_FetchFloat(hndl, 1) == -1.0 && SQL_FetchFloat(hndl, 2) == -1.0) 
+			{
+				g_bRestoreC[client] = false;
+				g_bRestoreCMsg[client] = false;
+			}
+			else
+			{
+				g_bRestoreC[client] = true;
+				g_bRestoreCMsg[client]=true;
+			}
 		}
 	}
 	else
@@ -2403,10 +2408,10 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 
 public db_updatePlayerOptions(client)
 {
-	if (g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
+	if (g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
 	{
 		decl String:szQuery[1024];
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,0,0,0,g_szSteamID[client]);
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),0,0,g_szSteamID[client]);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
 	}
 }
@@ -4207,7 +4212,9 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bHide[client]=IntoBool(SQL_FetchInt(hndl, 9));
 		g_bShowSpecs[client]=IntoBool(SQL_FetchInt(hndl, 10));		
 		g_bCPTextMessage[client]=IntoBool(SQL_FetchInt(hndl, 11));
-		g_bAdvancedClimbersMenu[client]=IntoBool(SQL_FetchInt(hndl, 12));
+		g_bAdvancedClimbersMenu[client]=IntoBool(SQL_FetchInt(hndl, 12));	
+		g_bStartWithUsp[client]=IntoBool(SQL_FetchInt(hndl, 15));
+
 		//org
 		g_borg_AutoBhopClient[client] = g_bAutoBhopClient[client];
 		g_borg_ColorChat[client] = g_bColorChat[client];
@@ -4219,6 +4226,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_GoToClient[client] = g_bGoToClient[client];
 		g_borg_ShowTime[client] = g_bShowTime[client]; 
 		g_borg_Hide[client] = g_bHide[client];
+		g_borg_StartWithUsp[client] = g_bStartWithUsp[client];
 		g_borg_ShowSpecs[client] = g_bShowSpecs[client]; 
 		g_borg_CPTextMessage[client] = g_bCPTextMessage[client];
 		g_borg_AdvancedClimbersMenu[client] = g_bAdvancedClimbersMenu[client];
@@ -4243,12 +4251,14 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_ShowTime[client] = true; 
 		g_borg_Hide[client] = false;
 		g_borg_ShowSpecs[client] = true; 
+		g_borg_StartWithUsp[client] = false;
 		g_borg_CPTextMessage[client] = false;
 		g_borg_AdvancedClimbersMenu[client] = true;
 		g_borg_AutoBhopClient[client] = true;
 	}
 }
-	
+
+
 public db_viewPlayerPoints(client)
 {
 	g_pr_multiplier[client] = 0;
@@ -4831,12 +4841,12 @@ public db_insertLastPositionCallback(Handle:owner, Handle:hndl, const String:err
 		
 		if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 		{
-			Format(szQuery, 1024, sql_updatePlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client], szMapName, szSteamID);
+			Format(szQuery, 1024, sql_updatePlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client], szMapName, g_Server_Tickrate,szSteamID);
 			SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);	
 		}
 		else
 		{
-			Format(szQuery, 1024, sql_insertPlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client],szSteamID, szMapName);
+			Format(szQuery, 1024, sql_insertPlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client],szSteamID, szMapName,g_Server_Tickrate);
 			SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);
 		}
 	}
@@ -5072,7 +5082,7 @@ public db_selectTopChallengers(client)
 public sql_selectTopChallengersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
 	new client = data;
-	decl String:szValue[64];
+	decl String:szValue[128];
 	decl String:szName[MAX_NAME_LENGTH];
 	decl String:szWinRatio[32];
 	decl String:szSteamID[32];
@@ -5105,16 +5115,18 @@ public sql_selectTopChallengersCallback(Handle:owner, Handle:hndl, const String:
 
 			
 			if (pointsratio  < 10)
-				Format(szValue, 64, "       %s         » %s (%s)", szPointsRatio, szName,szWinRatio);
+				Format(szValue, 128, "       %s         » %s (%s)", szPointsRatio, szName,szWinRatio);
 			else
 				if (pointsratio  < 100)
-					Format(szValue, 64, "       %s       » %s (%s)", szPointsRatio, szName,szWinRatio);		
+					Format(szValue, 128, "       %s       » %s (%s)", szPointsRatio, szName,szWinRatio);		
 				else
 					if (pointsratio  < 1000)
-						Format(szValue, 64, "       %s     » %s (%s)", szPointsRatio, szName,szWinRatio);		
+						Format(szValue, 128, "       %s     » %s (%s)", szPointsRatio, szName,szWinRatio);		
 					else
 						if (pointsratio  < 10000)
-							Format(szValue, 64, "       %s   » %s (%s)", szPointsRatio, szName,szWinRatio);	
+							Format(szValue, 128, "       %s   » %s (%s)", szPointsRatio, szName,szWinRatio);	
+						else
+							Format(szValue, 128, "       %s » %s (%s)", szPointsRatio, szName,szWinRatio);	
 			AddMenuItem(menu, szSteamID, szValue, ITEMDRAW_DEFAULT);
 			i++;
 		}

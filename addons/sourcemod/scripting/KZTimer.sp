@@ -7,6 +7,7 @@
 #include <entity>
 #include <setname>
 #include <smlib>
+#include <hgr>
 #include <KZTimer>
 #include <geoip>
 #include <colors>
@@ -18,16 +19,21 @@
 #include <sourcebans>
 #include <calladmin>
 
+//v1.55
 /*
-//v1.54
-- added admin command sm_recalcprofile <steamid>
-- added server cvar kz_ranking_extra_points_firsttime (Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time) 
-- renamed kz_ranking_extra_points to kz_ranking_extra_points_improvements
-- added skill group to chattag of admin's and vip's
-- auto profile refreshing after using of an reset admin command
+- fixed redundant calculation of points for challenge winners 
+- fixed displaying of the top 5 challengers with 10000+ points
+- fixed weapons stripper method (knife plugins should work again) 
+- fixed the viewmodel of tp and pro replay bots
+- added kz_attack_spam_protection (max 40 shots, +5 new/extra shots per minute)
+- added log off (prevents server crashes because of datatable warnings on servers without the cleaner extention) and sv_infinite_ammo 2 to cfg/sourcemod/kztimer/main.cfg
+- added client option 'start weapon' USP/Knife
+- added hookmod detection (stops the timer when you use a hook command)
+- added low fps check (fps_max < 120 results in a kick)  - thx to HtC^w
+- minor optimizations
 */
-	
-#define VERSION "1.54"
+
+#define VERSION "1.55"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -246,6 +252,8 @@ new Handle:g_hInfoBot = INVALID_HANDLE;
 new bool:g_bInfoBot;
 new Handle:g_hGoToServer = INVALID_HANDLE;
 new bool:g_bGoToServer;
+new Handle:g_hAttackSpamProtection = INVALID_HANDLE;
+new bool:g_bAttackSpamProtection;
 new Handle:g_hAllowCpOnBhopPlattforms = INVALID_HANDLE;
 new bool:g_bAllowCpOnBhopPlattforms;
 new Handle:g_hPlayerSkinChange = INVALID_HANDLE;
@@ -466,6 +474,8 @@ new bool:g_bMeasurePosSet[MAXPLAYERS+1][2];
 new bool:g_bCPTextMessage[MAXPLAYERS+1]; 
 new bool:g_bAdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_bAutoBhopClient[MAXPLAYERS+1];
+new bool:g_bStartWithUsp[MAXPLAYERS+1];
+new bool:g_borg_StartWithUsp[MAXPLAYERS+1];
 new bool:g_borg_ColorChat[MAXPLAYERS+1];
 new bool:g_borg_InfoPanel[MAXPLAYERS+1];
 new bool:g_borg_ClimbersMenuSounds[MAXPLAYERS+1];
@@ -542,6 +552,7 @@ new g_js_DropBhopRank[MAX_PR_PLAYERS];
 new g_js_WjRank[MAX_PR_PLAYERS];
 new g_js_TotalGroundFrames[MAXPLAYERS+1];
 new g_js_Sync_Final[MAXPLAYERS+1];
+new g_AttackCounter[MAXPLAYERS + 1];
 new g_js_GroundFrames[MAXPLAYERS+1];
 new g_js_StrafeCount[MAXPLAYERS+1];
 new g_js_Strafes_Final[MAXPLAYERS+1];
@@ -569,7 +580,6 @@ new g_MouseAbsCount[MAXPLAYERS+1];
 new g_SpeedRefreshCount[MAXPLAYERS+1];
 new g_MenuLevel[MAXPLAYERS+1];
 new g_Challenge_Bet[MAXPLAYERS+1];
-new g_UspDrops[MAXPLAYERS+1];
 new g_MapRankTp[MAXPLAYERS+1];
 new g_MapRankPro[MAXPLAYERS+1];
 new g_OldMapRankPro[MAXPLAYERS+1];
@@ -647,9 +657,9 @@ new const String:PROJUMP_RELATIVE_SOUND_PATH[] = "*quake/perfect.mp3";
 new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog",
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
-new String:BlockedChatText[][] = {"!help","!usp","!helpmenu","!menu","!cpmenu","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight", "!radio",
-	"!stuck","!knife","!r","!prev","!undo","!next","!start","!stop","!pause","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", 
-	"!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!goto", "!measure"};
+new String:BlockedChatText[][] = {"!usp","!help","!helpmenu","!menu","!cpmenu","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight",
+	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", 
+	"!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!measure"};
 new String:EntityList[][] = {"jail_teleport","logic_timer", "team_round_timer", "logic_relay"};
 new String:g_szReplay_PlayerName[MAXPLAYERS+1][MAX_RECORD_NAME_LENGTH];
 
@@ -736,11 +746,11 @@ public OnPluginStart()
 	g_bMultiplayerBhop     = GetConVarBool(g_hMultiplayerBhop);
 	HookConVarChange(g_hMultiplayerBhop, OnSettingChanged);
 	
-	g_hReplayBot = CreateConVar("kz_replay_bot", "0", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
 	
-	g_hPreStrafe = CreateConVar("kz_prestrafe", "0", "on/off - Prestrafe (always enabled if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hPreStrafe = CreateConVar("kz_prestrafe", "1", "on/off - Prestrafe (always enabled if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPreStrafe     = GetConVarBool(g_hPreStrafe);
 	HookConVarChange(g_hPreStrafe, OnSettingChanged);	
 
@@ -787,6 +797,10 @@ public OnPluginStart()
 	g_hcvarNoBlock    = CreateConVar("kz_noblock", "1", "on/off - Player blocking", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bNoBlock        = GetConVarBool(g_hcvarNoBlock);
 	HookConVarChange(g_hcvarNoBlock, OnSettingChanged);
+
+	g_hAttackSpamProtection    = CreateConVar("kz_attack_spam_protection", "1", "on/off - max 40 shots, +5 new/extra shots per minute", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bAttackSpamProtection       = GetConVarBool(g_hAttackSpamProtection);
+	HookConVarChange(g_hAttackSpamProtection, OnSettingChanged);
 	
 	g_hAllowCheckpoints = CreateConVar("kz_checkpoints", "1", "on/off - Allows Checkpoints creation", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCheckpoints     = GetConVarBool(g_hAllowCheckpoints);
@@ -808,7 +822,7 @@ public OnPluginStart()
 	g_Autohealing_Hp     = GetConVarInt(g_hAutohealing_Hp);
 	HookConVarChange(g_hAutohealing_Hp, OnSettingChanged);	
 	
-	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Removing of weapons on player spawn and on ground", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Remove all weapons on the ground", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bCleanWeapons     = GetConVarBool(g_hCleanWeapons);
 	HookConVarChange(g_hCleanWeapons, OnSettingChanged);
 
@@ -824,15 +838,15 @@ public OnPluginStart()
 	g_bAutoBhop     = GetConVarBool(g_hAutoBhop);
 	HookConVarChange(g_hAutoBhop, OnSettingChanged);
 
-	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed (inactive if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
+	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed (disabled if kz_pro_mode 1)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
 
-	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "0.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "10.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints    = GetConVarInt(g_hExtraPoints);
 	HookConVarChange(g_hExtraPoints, OnSettingChanged);	
 
-	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "0.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "25.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints2    = GetConVarInt(g_hExtraPoints2);
 	HookConVarChange(g_hExtraPoints2, OnSettingChanged);	
 	
@@ -884,7 +898,7 @@ public OnPluginStart()
 	GetConVarString(g_hReplayBotTpColor,szTpColor,256);
 	GetRGBColor(1,szTpColor);
 	
-	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "1", "on/off - auto-ban (bhop hack and strafe hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even when autoban is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "1", "on/off - auto-ban (bhop hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even when autoban is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoBan     = GetConVarBool(g_hAutoBan);
 	HookConVarChange(g_hAutoBan, OnSettingChanged);	
 	
@@ -894,8 +908,8 @@ public OnPluginStart()
 	{
 		g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "325.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 		g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-		g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "245.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-		g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "248.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+		g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "250.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+		g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "255.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 		g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "250.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "265.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "275.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -915,27 +929,27 @@ public OnPluginStart()
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "360.0", "Max counted pre speed for bhop,dropbhop  (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "240.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "254.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All] (prestrafe 1 = 270)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "263.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All] (prestrafe 1 = 275)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "268.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "273.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "255.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "285.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "283.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "288.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_dropbhop  = CreateConVar("kz_dist_min_dropbhop", "275.0", "Minimum distance for drop bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_dropbhop  = CreateConVar("kz_dist_pro_dropbhop", "320.0", "Minimum distance for drop bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_dropbhop   = CreateConVar("kz_dist_leet_dropbhop", "325.0", "Minimum distance for drop bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_bhop  = CreateConVar("kz_dist_min_bhop", "280.0", "Minimum distance for bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "325.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "330.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "327.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "333.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "335.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "343.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "340.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
+			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "345.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
 			}
 		else
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "350.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "250.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All] (prestrafe 1 = 265)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "255.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All] (prestrafe 1 = 268)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "265.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "268.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "240.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "285.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1005,6 +1019,7 @@ public OnPluginStart()
 	db_setupDatabase();
 	
 	//client commands
+	RegConsoleCmd("sm_usp", Client_Usp, "[KZTimer] spawns a usp silencer");
 	RegConsoleCmd("sm_accept", Client_Accept, "[KZTimer] allows you to accept a challenge request");
 	RegConsoleCmd("sm_goto", Client_GoTo, "[KZTimer] teleports you to a selected player");
 	RegConsoleCmd("sm_disablegoto", Client_DisableGoTo, "[KZTimer] on/off speed/showkeys center panel");
@@ -1017,7 +1032,6 @@ public OnPluginStart()
 	RegConsoleCmd("sm_cpmessage", Client_CPMessage,"[KZTimer] on/off checkpoint message in chat");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[KZTimer] surrender your current challenge");
 	RegConsoleCmd("sm_next", Client_Next,"[KZTimer] goto next checkpoint");
-	RegConsoleCmd("sm_usp", Client_Usp, "[KZTimer] spawns a usp silencer");
 	RegConsoleCmd("sm_bhop", Client_AutoBhop,"[KZTimer] on/off autobhop (only mg_,surf_ and bhop_ maps supported)");
 	RegConsoleCmd("sm_undo", Client_Undo,"[KZTimer] undoes your last telepoint");
 	RegConsoleCmd("sm_flashlight", Client_Flashlight,"[KZTimer] on/off flashlight");
@@ -1038,7 +1052,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_spec", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_watch", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
 	RegConsoleCmd("sm_spectate", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
-	RegConsoleCmd("sm_challenge", Client_Challenge, "[KZTimer] starts a map race against someone");
+	RegConsoleCmd("sm_challenge", Client_Challenge, "[KZTimer] allows you to start a race against others");
 	RegConsoleCmd("sm_helpmenu", Client_Help, "[KZTimer] help menu which displays all kztimer commands");
 	RegConsoleCmd("sm_help", Client_Help, "[KZTimer] help menu which displays all kztimer commands");
 	RegConsoleCmd("sm_profile", Client_Profile, "[KZTimer] opens a player profile");
@@ -1051,7 +1065,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
 	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks into chat");
 	RegConsoleCmd("sm_speed", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
-	RegConsoleCmd("sm_pause", Client_Pause,"[KZTimer] on/off client pause (sets your timer on hold and freezes your current position)");
+	RegConsoleCmd("sm_pause", Client_Pause,"[KZTimer] on/off pause (timer on hold and movement frozen)");
 	RegConsoleCmd("sm_colorchat", Client_Colorchat, "[KZTimer] on/off jumpstats messages of others in chat");
 	RegConsoleCmd("sm_showsettings", Client_Showsettings,"[KZTimer] shows kztimer server settings");
 	RegConsoleCmd("sm_latest", Client_Latest,"[KZTimer] shows latest map records");
@@ -1112,14 +1126,16 @@ public OnPluginStart()
 	if (LibraryExists("adminmenu") && ((topmenu = GetAdminTopMenu()) != INVALID_HANDLE))
 		OnAdminMenuReady(topmenu);
 	
+	//, EventHookMode_Post
 	//hooks
-	HookEvent("player_spawn", Event_OnPlayerSpawn, EventHookMode_Post);
+	HookEvent("player_spawn", Event_OnPlayerSpawn);
 	HookEvent("player_death", Event_OnPlayerDeath);
 	HookEvent("round_start",Event_OnRoundStart,EventHookMode_PostNoCopy);
 	HookEvent("round_start",Event_OnRoundStart2);
 	HookEvent("round_end", Event_OnRoundEnd, EventHookMode_Pre);
 	HookEvent("player_hurt", Event_OnPlayerHurt);
-	HookEvent("player_jump", Event_OnJump);
+	HookEvent("player_jump", Event_OnJump, EventHookMode_Pre);
+	HookEvent("weapon_fire",  Event_OnFire, EventHookMode_Pre);
 	HookEvent("player_jump", Event_OnJumpMacroDox, EventHookMode_Post);
 	HookEvent("player_team", Event_OnPlayerTeam, EventHookMode_Post);
 	HookEvent("jointeam_failed", Event_JoinTeamFailed, EventHookMode_Pre);
@@ -1129,7 +1145,7 @@ public OnPluginStart()
 	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("trigger_multiple", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("func_button", "OnPressed", ButtonPress);
-	
+
 	//mapcycle array
 	new arraySize = ByteCountToCells(PLATFORM_MAX_PATH);
 	g_MapList = CreateArray(arraySize);	
@@ -1354,13 +1370,11 @@ public OnMapStart()
 	CreateTimer(2.0, SettingsEnforcerTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(2.0, CreateMapButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
 	CreateTimer(1.0, CheckRemainingTime, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(60.0, AttackTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	
 	//srv settings
 	if (g_bEnforcer)
 		ServerCommand("sm_cvar sv_enablebunnyhopping 1");		
-		
-	if (g_bCleanWeapons)
-		ServerCommand("sv_infinite_ammo 0");
 
 	if (g_bAutoRespawn)
 		ServerCommand("mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0");
@@ -1415,7 +1429,7 @@ public OnMapEnd()
 	g_BhopDoorCount = 0;
 	g_ProBot = -1;
 	g_TpBot = -1;
-	g_BhopButtonCount = 0;  
+	g_BhopButtonCount = 0; 
 }
 
 public OnConfigsExecuted()
@@ -1617,10 +1631,10 @@ public OnClientPostAdminCheck(client)
 	g_AdminMenuLastPage[client] = 0;
 	g_OptionsMenuLastPage[client] = 0;	
 	g_MenuLevel[client] = -1;
-	g_UspDrops[client] = 0;
 	g_Challenge_WinRatio[client] = 0;
 	g_Challenge_PointsRatio[client] = 0;
 	g_CurrentCp[client] = -1;
+	g_AttackCounter[client] = 0;
 	g_SpecTarget[client] = -1;
 	g_CounterCp[client] = 0;
 	g_OverallCp[client] = 0;
@@ -1665,7 +1679,8 @@ public OnClientPostAdminCheck(client)
 	g_bColorChat[client]=true; 
 	g_bShowSpecs[client]=true;
 	g_bAutoBhopClient[client]=true;
-
+	g_bStartWithUsp[client] = false;
+	
 	if (IsFakeClient(client))
 		return;	
 		
@@ -2027,6 +2042,17 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			for(new client = 1; client <= MAXPLAYERS; client++)
 				if (IsValidEntity(client))
 					SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
+		}
+	}	
+	if(convar == g_hAttackSpamProtection)
+	{
+		if(newValue[0] == '1')
+		{
+			g_bAttackSpamProtection = true;
+		}
+		else
+		{	
+			g_bAttackSpamProtection = false;
 		}
 	}	
 	if(convar == g_hCleanWeapons)

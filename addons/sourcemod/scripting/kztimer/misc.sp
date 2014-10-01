@@ -215,7 +215,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
-	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !usp, !challenge, !surrender, !goto, !spec,");
+	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
 	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop)");
@@ -366,19 +366,20 @@ public GetCountry(client)
 	}
 }
 
-public StripWeapons(client) 
+stock StripAllWeapons(client)
 {
-	new weapons;
-	for (new i = 0; i < 4; i++)
+	new iEnt;
+	for (new i = 0; i <= 5; i++)
 	{
-		if (i < 4 && (weapons = GetPlayerWeaponSlot(client, i)) != -1 && (weapons = GetPlayerWeaponSlot(client, i)) != 2) 
-		{
-			RemovePlayerItem(client, weapons);	
-		}
-		GivePlayerItem(client, "weapon_knife");	
+		if (i != 2)
+			while ((iEnt = GetPlayerWeaponSlot(client, i)) != -1)
+			{
+				RemovePlayerItem(client, iEnt);
+				RemoveEdict(iEnt);
+			}
 	}
-	if (IsFakeClient(client))
-		GivePlayerItem(client, "weapon_usp_silencer");		
+	if (GetPlayerWeaponSlot(client, 2) == -1)
+		GivePlayerItem(client, "weapon_knife");
 }
 
 public PlayButtonSound(client)
@@ -1133,11 +1134,11 @@ public SetPlayerRank(client)
 		}
 		else
 			if (StrEqual(szSteamId,"STEAM_1:1:73507922") && !vip && !mapper)
-				Format(g_pr_chat_coloredrank[client], 32, "%s %cKZTIMER CREATOR%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
+				Format(g_pr_chat_coloredrank[client], 32, "%s %cDEV%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
 	}
 	else
 		if (StrEqual(szSteamId,"STEAM_1:1:73507922") && !vip && !mapper)
-			Format(g_pr_chat_coloredrank[client], 32, "%s %cKZTIMER CREATOR%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);	
+			Format(g_pr_chat_coloredrank[client], 32, "%s %cDEV%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);	
 	
 }
 
@@ -1445,16 +1446,6 @@ public PerformBan(client, String:szbantype[16])
 	}
 }
 
-public GiveUsp(client)
-{
-	if(!IsValidClient(client) || !IsPlayerAlive(client))
-		return;		
-	g_UspDrops[client]++;
-	GivePlayerItem(client, "weapon_usp_silencer");
-	if (!g_bPreStrafe && !g_bProMode)
-		PrintToChat(client, "%t", "Usp1", MOSSGREEN,WHITE);
-	PrintToChat(client, "%t", "Usp2", MOSSGREEN,WHITE);
-}
 	
 Float:GetVSpeed(Float:favVEL[3])
 {
@@ -1831,14 +1822,17 @@ public SpeedCap(client)
 
 public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 {
-	if (g_LastButton[client] != IN_USE && buttons & IN_USE && (g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0))
+	if (g_LastButton[client] != IN_USE && buttons & IN_USE && ((g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0) || IsFakeClient(client)))
 	{
 		new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
 		new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
 		if (distance1 < 80.0 && speed < 251.0)
 		{
-			CL_OnStartTimerPress(client);
-			g_fLastTimeButtonSound[client] = GetEngineTime();
+			if (!IsFakeClient(client))
+			{
+				CL_OnStartTimerPress(client);
+				g_fLastTimeButtonSound[client] = GetEngineTime();
+			}
 		}
 		else
 			if (distance2 < 80.0)
