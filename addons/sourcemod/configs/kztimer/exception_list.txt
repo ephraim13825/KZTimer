@@ -1,2 +1,2 @@
-// The climbers menu of kztimer keeps updating and blocking 3rd party menus!
+// The climbers menu of KZTimer blocks menus of other plugins.
 // Here you are able to add exceptions for sm commands. (e.g. sm_knife)
