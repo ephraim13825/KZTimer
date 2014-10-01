@@ -6,12 +6,10 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 
 
 **Please read the following information carefully (!!):**
-- Tickrate 102.4 is optimal for kreedzing (see below)
-- Ranking system is based on your mapcycle.txt file
-- A very large sqlite database can cause server lags (i prefer a mysql database)
+- Tickrate 102.4 is optimal for kreedzing (see below why)
+- Ranking system is based on your mapcycle.txt file (keep it always up to date)
+- A very large sqlite database might cause server lags (i prefer a mysql database)
 - The climbers menu of KZTimer blocks menus of other plugins. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
-- Knife plugins in combination with KZTimer might cause server crashes!
-
 
 
 *Why tickrate 102.4?*
