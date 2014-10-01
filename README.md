@@ -32,6 +32,19 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 
+v1.55
+- fixed redundant calculation of points for challenge winners 
+- fixed displaying of the top 5 challengers with 10000+ points
+- fixed weapons stripper method (knife plugins should work again) 
+- fixed the viewmodel of tp and pro replay bots
+- added kz_attack_spam_protection (max 40 shots, +5 new/extra shots per minute)
+- added log off (prevents server crashes because of datatable warnings on servers without the cleaner extention) and sv_infinite_ammo 2 to cfg/sourcemod/kztimer/main.cfg
+- added client option 'start weapon' USP/Knife
+- added hookmod detection (stops the timer when you use a hook command)
+- added low fps check (fps_max < 120 results in a kick)  - thx to HtC^w
+- minor optimizations
+
+
 v1.54
 - added admin command sm_refreshprofile <steamid>
 - added server cvar kz_ranking_extra_points_firsttime (Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time) 
