@@ -40,7 +40,7 @@ v1.55
 - added kz_attack_spam_protection (max 40 shots, +5 new/extra shots per minute)
 - added log off (prevents server crashes because of datatable warnings on servers without the cleaner extention) and sv_infinite_ammo 2 to cfg/sourcemod/kztimer/main.cfg
 - added client option 'start weapon' USP/Knife
-- added hookmod detection (stops the timer when you use a hook command)
+- added hookmod detection 
 - added low fps check (fps_max < 120 results in a kick)  - thx to HtC^w
 - minor optimizations
 
