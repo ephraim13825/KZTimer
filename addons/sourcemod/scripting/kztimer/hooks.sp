@@ -482,7 +482,6 @@ public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const Stri
 	if (IsValidClient(client) && !IsFakeClient(client) && !g_bKickStatus[client])
 	{
 		new fps_max = StringToInt(cvarValue);  
-		g_bKickStatus[client]=false;
 		if (g_bfpsCheck)
 		{		    
 			if (fps_max < 120 || fps_max > 300 || fps_max<=0)

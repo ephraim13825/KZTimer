@@ -93,6 +93,9 @@ public Action:MainTimer2(Handle:timer)
 		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;
 		
+		if (!IsFakeClient(i) && !g_bKickStatus[i])
+			QueryClientConVar(i, "fps_max", ConVarQueryFinished:FPSCheck, i);
+		
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
@@ -173,7 +176,7 @@ public Action:KickPlayer(Handle:Timer, any:client)
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		decl String:szReason[64];
-		Format(szReason, 64, "Please set your fps_max between 120 and 300 or 0!");		
+		Format(szReason, 64, "Please set your fps_max between 120 and 300");		
 		KickClient(client, "%s", szReason);
 	}
 }
@@ -183,7 +186,7 @@ public Action:KickPlayer2(Handle:Timer, any:client)
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		decl String:szReason[64];
-		Format(szReason, 64, "Please set your fps_max bigger than 120 or 0!");		
+		Format(szReason, 64, "Please set your fps_max greater than or equal to 120");		
 		KickClient(client, "%s", szReason);
 	}
 }
