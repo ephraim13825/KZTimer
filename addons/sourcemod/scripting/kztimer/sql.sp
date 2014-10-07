@@ -2427,7 +2427,7 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 				DrawPanelText(panel, "-");
 				DrawPanelText(panel, " ");
 				DrawPanelText(panel, "Pro time:");
-				DrawPanelText(panel, g_szTime[client]);
+				DrawPanelText(panel, szVrTime);
 				DrawPanelText(panel, szVrRank);
 				DrawPanelText(panel, " ");
 				DrawPanelItem(panel, "exit");
