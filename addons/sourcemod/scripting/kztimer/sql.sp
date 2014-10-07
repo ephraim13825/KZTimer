@@ -861,7 +861,7 @@ public ContinueRecalc(client)
 		//ON CONNECT
 		if (!IsValidClient(client))
 			return;
-		new Float: diff = GetEngineTime() - g_fMapStartTime;
+		new Float: diff = GetEngineTime() - g_fMapStartTime + 1.5;
 		if (GetClientTime(client) < diff)
 		{
 			CalculatePlayerRank(client); 	
