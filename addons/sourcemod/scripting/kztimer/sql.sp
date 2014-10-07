@@ -2423,10 +2423,10 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 				Format(szVrTime, 256, "Time: %s", g_szTime[client]);
 
 				Format(szVrRank, 32, "Rank: %i of %i", rank,count1);
-				DrawPanelText(panel, "TP Record:");
+				DrawPanelText(panel, "TP time:");
 				DrawPanelText(panel, "-");
 				DrawPanelText(panel, " ");
-				DrawPanelText(panel, "Pro Record:");
+				DrawPanelText(panel, "Pro time:");
 				DrawPanelText(panel, g_szTime[client]);
 				DrawPanelText(panel, szVrRank);
 				DrawPanelText(panel, " ");
@@ -2510,12 +2510,12 @@ public SQL_ViewRecordCallback5(Handle:owner, Handle:hndl, const String:error[], 
 			Format(szVrRank, 32, "Rank: %i of %i", rank,count1); 
 			Format(szVrRankPro, 32, "Rank: %i of %i", rankPro,countPro); 
 					          
-			DrawPanelText(panel, "TP Record:");
+			DrawPanelText(panel, "TP time:");
 			DrawPanelText(panel, szVrTime);
 			DrawPanelText(panel, szVrTeleports);
 			DrawPanelText(panel, szVrRank);
 			DrawPanelText(panel, " ");
-			DrawPanelText(panel, "Pro Record:");
+			DrawPanelText(panel, "Pro time:");
 			DrawPanelText(panel, szVrTimePro);
 			DrawPanelText(panel, szVrRankPro);
 			DrawPanelText(panel, " ");
