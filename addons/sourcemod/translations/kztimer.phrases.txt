@@ -308,7 +308,7 @@
 	"NoRecordTop"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] No records found."
+		"en"        "[{1}KZ{2}] No times found."
 	}
 	"PrUpdateStarted"
 	{
@@ -413,42 +413,42 @@
 	"PlayerHasNoMapRecords"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] {3} has no local map records."
+		"en"        "[{1}KZ{2}] {3} has no local map times."
 	}
 	"NoTpRecords"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Local TP Records found on {3}"
+		"en"        "[{1}KZ{2}] No Local TP times found on {3}"
 	}
 	"NoGlobalRecords64"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Global Records (tickrate 64) found on {3}"
+		"en"        "[{1}KZ{2}] No Global times (tickrate 64) found on {3}"
 	}
 	"NoGlobalRecords102"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Global Records (tickrate 102.4) found on {3}"
+		"en"        "[{1}KZ{2}] No Global times (tickrate 102.4) found on {3}"
 	}
 	"NoGlobalRecordsProMode"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Global Records (ProMode) found on {3}"
+		"en"        "[{1}KZ{2}] No Global times (ProMode) found on {3}"
 	}
 	"NoGlobalRecords128"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Global Records (tickrate 128) found on {3}"
+		"en"        "[{1}KZ{2}] No Global times (tickrate 128) found on {3}"
 	}
 	"NoTopRecords"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Local Records found on {3}"
+		"en"        "[{1}KZ{2}] No Local times found on {3}"
 	}
 	"NoProRecords"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] No Local Pro Records found on {3}"
+		"en"        "[{1}KZ{2}] No Local Pro times found on {3}"
 	}
 	"AdminSetButton"
 	{

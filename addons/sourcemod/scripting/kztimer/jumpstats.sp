@@ -572,7 +572,7 @@ public Postthink(client)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
 		
 	//vertical jump
-	if (fGroundDiff2 > 1.8 || fGroundDiff2 < -1.8 || fGroundDiff != 0.0)
+	if (fGroundDiff2 > 1.82 || fGroundDiff2 < -1.82 || fGroundDiff != 0.0)
 	{	
 		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>vertical</font>");
 		PostThinkPost(client, ground_frames);

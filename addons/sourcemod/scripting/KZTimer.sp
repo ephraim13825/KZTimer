@@ -19,7 +19,7 @@
 #include <calladmin>
 #include <hgr>
 
-#define VERSION "1.55"
+#define VERSION "1.56"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -576,9 +576,9 @@ new g_Sound_Type[MAXPLAYERS+1];
 new g_TpRecordCount[MAXPLAYERS+1];
 new g_ProRecordCount[MAXPLAYERS+1];
 new g_FinishingType[MAXPLAYERS+1];
-new g_Challenge_WinRatio[MAXPLAYERS+1];
+new g_Challenge_WinRatio[MAX_PR_PLAYERS];
 new g_CountdownTime[MAXPLAYERS+1];
-new g_Challenge_PointsRatio[MAXPLAYERS+1];
+new g_Challenge_PointsRatio[MAX_PR_PLAYERS];
 new g_CurrentCp[MAXPLAYERS+1];
 new g_CounterCp[MAXPLAYERS+1];
 new g_OverallCp[MAXPLAYERS+1];
@@ -628,6 +628,7 @@ new const String:MAPPERS_PATH[] = "configs/kztimer/mapmakers.txt";
 new const String:KZ_REPLAY_PATH[] = "data/kz_replays/";
 new const String:ANTICHEAT_LOG_PATH[] = "logs/kztimer_anticheat.log";
 new const String:EXCEPTION_LIST_PATH[] = "configs/kztimer/exception_list.txt";
+new const String:BLOCKED_LIST_PATH[] = "configs/kztimer/hidden_chat_commands.txt";
 new const String:CP_FULL_SOUND_PATH[] = "sound/quake/wickedsick.mp3";
 new const String:CP_RELATIVE_SOUND_PATH[] = "*quake/wickedsick.mp3";
 new const String:PRO_FULL_SOUND_PATH[] = "sound/quake/holyshit.mp3";
@@ -644,9 +645,7 @@ new const String:PROJUMP_RELATIVE_SOUND_PATH[] = "*quake/perfect.mp3";
 new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog",
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
-new String:BlockedChatText[][] = {"!usp","!help","!helpmenu","!menu","!cpmenu","!checkpoint","!gocheck","!unstuck", "!ljblock",  "!flashlight",
-	"!stuck","!r","!prev","!undo","!next","!start","!stop","!pause","!adv", "!info", "!colorchat", "!cpmessage", "!sound", "!menusound", "!hide", "!hidespecs", "!showtime", 
-	"!disablegoto", "!sync", "!bhop", "!speed", "!showkeys", "!measure"};
+new String:g_BlockedChatText[256][256];
 new String:EntityList[][] = {"jail_teleport","logic_timer", "team_round_timer", "logic_relay"};
 new String:g_szReplay_PlayerName[MAXPLAYERS+1][MAX_RECORD_NAME_LENGTH];
 
@@ -834,11 +833,11 @@ public OnPluginStart()
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
 
-	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "10.0", "Gives players x extra points for improving their time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "10.0", "Gives players x extra points for improving their time. That makes it a easier to rank up.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints    = GetConVarInt(g_hExtraPoints);
 	HookConVarChange(g_hExtraPoints, OnSettingChanged);	
 
-	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "25.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up. (NOTE: This can distort the actual skill level of players)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "25.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints2    = GetConVarInt(g_hExtraPoints2);
 	HookConVarChange(g_hExtraPoints2, OnSettingChanged);	
 	
@@ -941,7 +940,7 @@ public OnPluginStart()
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "350.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "265.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "268.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "270.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "240.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "285.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1026,6 +1025,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_next", Client_Next,"[KZTimer] goto next checkpoint");
 	RegConsoleCmd("sm_bhop", Client_AutoBhop,"[KZTimer] on/off autobhop (only mg_,surf_ and bhop_ maps supported)");
 	RegConsoleCmd("sm_undo", Client_Undo,"[KZTimer] undoes your last telepoint");
+	RegConsoleCmd("sm_help2", Client_RankingSystem,"[KZTimer] Explanation of the KZTimer ranking system");
 	RegConsoleCmd("sm_flashlight", Client_Flashlight,"[KZTimer] on/off flashlight");
 	RegConsoleCmd("sm_prev", Client_Prev,"[KZTimer] goto previous checkpoint");
 	RegConsoleCmd("sm_ljblock", Client_Ljblock,"[KZTimer] registers a lj block");
@@ -1068,8 +1068,9 @@ public OnPluginStart()
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
 	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kz admin panel");
 	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, ADMIN_LEVEL, "[KZTimer] Recalculates player profile for given steam id");
-	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times (drops table playertimes) - requires z flag");
-	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL2, "[KZTimer] Resets the player point system (drops table playerrank - requires z flag)");
+	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMIN_LEVEL2, "[KZTimer] Resets all player challenges (drops table challenges) - requires z flag");
+	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets all player times (drops table playertimes) - requires z flag");
+	RegAdminCmd("sm_resetranks", Admin_DropPlayerRanks, ADMIN_LEVEL2, "[KZTimer] Resets the all player points  (drops table playerrank - requires z flag)");
 	RegAdminCmd("sm_resetmaptimes", Admin_ResetMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets player times for given map - requires z flag");
 	RegAdminCmd("sm_resetplayerchallenges", Admin_ResetChallenges, ADMIN_LEVEL2, "[KZTimer] Resets (won) challenges for given steamid - requires z flag");
 	RegAdminCmd("sm_resetplayertimes", Admin_ResetRecords, ADMIN_LEVEL2, "[KZTimer] Resets tp & pro map times (+extrapoints) for given steamid with or without given map - requires z flag");
@@ -1166,11 +1167,11 @@ public OnPluginStart()
 	}
 	if (fileHandle != INVALID_HANDLE)
 		CloseHandle(fileHandle);
-		
-	//hook radio commands
-	for(new i; i < sizeof(RadioCMDS); i++)
-		AddCommandListener(BlockRadio, RadioCMDS[i]);
 	
+
+	//hook radio commands
+	for(new y; y < sizeof(RadioCMDS); y++)
+		AddCommandListener(BlockRadio, RadioCMDS[y]);
 	
 	//create .nav files
 	CreateNavFiles();
@@ -1221,10 +1222,10 @@ public OnPluginStart()
 	}
 
 	// 
-	for(new i=1;i<=MaxClients;i++)
+	for(new z=1;z<=MaxClients;z++)
 	{
-		if(IsClientInGame(i))
-			OnClientPutInServer(i);
+		if(IsClientInGame(z))
+			OnClientPutInServer(z);
 	}
 
 	if(g_bLateLoaded) 
@@ -1299,12 +1300,29 @@ public OnAllPluginsLoaded()
 
 public OnMapStart()
 {	
-	//test
 	LoadTranslations("kztimer.phrases");	
 	
 	if (g_Server_Tickrate != 102 && g_bProMode)
 		ServerCommand("kz_pro_mode 0");
 	
+	//blocked chat commands
+	for (new x = 0; x < 256; x++)
+		Format(g_BlockedChatText[x],sizeof(g_BlockedChatText), "");
+	
+	decl String:sPath[PLATFORM_MAX_PATH];
+	decl String:line[64];	
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", BLOCKED_LIST_PATH);
+	new u = 0;
+	new Handle:fileHandle2=OpenFile(sPath,"r");	
+	while(!IsEndOfFile(fileHandle2)&&ReadFileLine(fileHandle2,line,sizeof(line)))
+	{
+		TrimString(line);
+		Format(g_BlockedChatText[u],sizeof(g_BlockedChatText), "%s", line);
+		u++;
+	}
+	if (fileHandle2 != INVALID_HANDLE)
+		CloseHandle(fileHandle2);
+		
 	// [CS:GO] Team Limit Bypass by Zephyrus
 	//https://forums.alliedmods.net/showthread.php?t=219812
 	g_TSpawns=-1;
@@ -1629,8 +1647,6 @@ public OnClientPostAdminCheck(client)
 	g_AdminMenuLastPage[client] = 0;
 	g_OptionsMenuLastPage[client] = 0;	
 	g_MenuLevel[client] = -1;
-	g_Challenge_WinRatio[client] = 0;
-	g_Challenge_PointsRatio[client] = 0;
 	g_CurrentCp[client] = -1;
 	g_AttackCounter[client] = 0;
 	g_SpecTarget[client] = -1;
@@ -1808,7 +1824,12 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		if(newValue[0] == '1')
 			g_bPreStrafe = true;
 		else
+		{
+			for (new i = 1; i <= MaxClients; i++)
+				if (IsValidClient(i))	
+					SetEntPropFloat(i, Prop_Send, "m_flVelocityModifier", 1.0);				
 			g_bPreStrafe = false;
+		}
 	}	
 	if(convar == g_hNoClipS)
 	{

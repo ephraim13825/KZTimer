@@ -222,14 +222,14 @@ public Action:Say_Hook(client, const String:command[], argc)
 		}
 		
 		//blocked commands
-		for(new i; i < sizeof(BlockedChatText); i++)
+		for(new i = 0; i < sizeof(g_BlockedChatText); i++)
 		{
-			if (StrEqual(BlockedChatText[i],sText,true))
+			if (StrEqual(g_BlockedChatText[i],sText,true))
 			{
 				g_bSayHook[client]=false;
 				return Plugin_Handled;			
 			}
-		}	
+		}
 		
 		//chat trigger?
 		if((IsChatTrigger() && sText[0] == '/') || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT ||  GetUserFlagBits(client) & ADMFLAG_GENERIC)))

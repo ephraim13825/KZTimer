@@ -380,13 +380,8 @@ public CL_OnEndTimerPress(client)
 					for (new k = 1; k <= MaxClients; k++)
 						if (IsValidClient(k))
 							PrintToChat(k, "%t", "ChallengeW", RED,WHITE,MOSSGREEN,szName,WHITE,MOSSGREEN,szNameOpponent,WHITE); 			
-					g_Challenge_WinRatio[client]++;	
-					g_Challenge_WinRatio[i]--;		
 					if (g_Challenge_Bet[client]>0)
-					{
-						g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;
-						g_Challenge_PointsRatio[i] -= g_Challenge_Bet[i] * g_pr_PointUnit;							
-						g_pr_showmsg[i] = true;
+					{										
 						new lostpoints = g_Challenge_Bet[client] * g_pr_PointUnit;
 						for (new j = 1; j <= MaxClients; j++)
 							if (IsValidClient(j))

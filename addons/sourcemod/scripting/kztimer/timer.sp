@@ -242,6 +242,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 {
 	new bool:oppenent=false;
 	decl String:szSteamId[32];
+	decl String:szSteamIdx[128];
 	decl String:szName[32];
 	decl String:szNameTarget[32];
 	if (g_bChallenge[client] && IsValidClient(client) && !IsFakeClient(client))
@@ -263,7 +264,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 						SetEntityRenderColor(client, 255,255,255,255);
 						SetEntityRenderColor(i, 255,255,255,255);
 						PrintToChat(client, "%t", "ChallengeAborted",RED,WHITE,GREEN,szNameTarget,WHITE);
-						PrintToChat(i, "%t", "ChallengeAborted", RED,WHITE,GREEN,szName,WHITE);
+						PrintToChat(i, "%t", "ChallengeAborted",RED,WHITE,GREEN,szName,WHITE);
 						SetEntityMoveType(client, MOVETYPE_WALK);
 						SetEntityMoveType(i, MOVETYPE_WALK);
 					}				
@@ -279,18 +280,17 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			db_insertPlayerChallenge(client);
 			
 			//new points
-			g_Challenge_WinRatio[client]++;
-			if (g_Challenge_Bet[client]>0)
-				g_Challenge_PointsRatio[client] += g_Challenge_Bet[client] * g_pr_PointUnit;	
 			g_pr_showmsg[client]=true;
 			CreateTimer(0.5, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
+			
 			//db opponent
-			db_selectRankedPlayer(g_szChallenge_OpponentID[client], g_Challenge_Bet[client]);
+			Format(szSteamIdx,128,"%s",g_szChallenge_OpponentID[client]);
+			RecalcPlayerRank(64,szSteamIdx);
 			
 			//chat msgs
 			if (IsValidClient(client))
 				PrintToChat(client, "%t", "ChallengeWon",RED,WHITE,YELLOW,WHITE);
-			
+					
 			KillTimer(timer);
 			return Plugin_Handled;
 		}

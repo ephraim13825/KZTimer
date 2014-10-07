@@ -214,7 +214,7 @@ public PrintConsoleInfo(client)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
-	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
+	PrintToConsole(client, "!help, !help2, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
@@ -226,24 +226,14 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Deaths: Teleports");
 	PrintToConsole(client, "MVP Stars: Number of finished map runs on the current map");
 	PrintToConsole(client, " ");
-	PrintToConsole(client, "How does the ranking system work?");		
-	PrintToConsole(client, "The System depends mostly on your map and jumpstats ranks.");	
-	PrintToConsole(client, "Once you finished a map, you can get only points by improving your rank!");	
-	PrintToConsole(client, "Furthermore, you can lose points when others have beaten your map ranks.");	
-	PrintToConsole(client, " ");
-	PrintToConsole(client, "Calculation:");
-	PrintToConsole(client, "TP Time: Rank percentage * 100 (extra bonus: Top 20 rankings, max. 400p for #1)");	
-	PrintToConsole(client, "PRO Time (without teleports): Rank percentage * 200 (extra bonus: Top 20 rankings, max. 600p for #1)");
-	PrintToConsole(client, "Extra points for time improvements: %ip (default 0)", g_ExtraPoints);	
-	PrintToConsole(client, "Extra points for finishing a map for the first time: tp time = %ip, pro time = %ip (default 0)", g_ExtraPoints2,(g_ExtraPoints2*2));	
-	PrintToConsole(client, "JumpStats: Rank percentage (Top 20) * 500");	
+	PrintToConsole(client, "Menu formatting is optimized for 1920x1080");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Skill groups:");
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Percentage[1],g_szSkillGroups[2], g_pr_rank_Percentage[2],g_szSkillGroups[3], g_pr_rank_Percentage[3],g_szSkillGroups[4], g_pr_rank_Percentage[4]);
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Percentage[5], g_szSkillGroups[6],g_pr_rank_Percentage[6], g_szSkillGroups[7], g_pr_rank_Percentage[7], g_szSkillGroups[8], g_pr_rank_Percentage[8]);
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");		
 	PrintToConsole(client, "KZTimer Global Edition available at http://steamcommunity.com/groups/KZTIMER");
-	PrintToConsole(client, "-> This version provides sharing of map records across KZTimer servers!");
+	PrintToConsole(client, "-> global version provides sharing of world records across KZTimer servers!");
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
 	PrintToConsole(client," ");
 }
@@ -1553,8 +1543,8 @@ public Prestrafe(client, mouse_ang, &buttons)
 		
 		if (g_Server_Tickrate == 128)
 		{
-			MaxFrameCount = 80;	
-			IncSpeed = 0.00145;
+			MaxFrameCount = 75;	
+			IncSpeed = 0.00135;
 			if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
 				IncSpeed = 0.001;			
 			DecSpeed = 0.006;

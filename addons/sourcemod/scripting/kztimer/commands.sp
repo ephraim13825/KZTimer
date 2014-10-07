@@ -402,14 +402,9 @@ public Action:Client_Surrender (client, args)
 					//win ratio
 					SetEntityMoveType(client, MOVETYPE_WALK);
 					SetEntityMoveType(i, MOVETYPE_WALK);
-					g_Challenge_WinRatio[client]--;
-					g_Challenge_WinRatio[i]++;
 					
 					if (g_Challenge_Bet[client] > 0)
 					{
-						g_Challenge_PointsRatio[client]-= g_Challenge_Bet[client]*g_pr_PointUnit;
-						g_Challenge_PointsRatio[i]+= g_Challenge_Bet[i]*g_pr_PointUnit;
-						g_pr_showmsg[i] = true;
 						g_pr_showmsg[client] = true;
 						PrintToChat(i, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
 						PrintToChat(client, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
@@ -1368,6 +1363,13 @@ public GoToMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	}
 }
 
+public Action:Client_RankingSystem(client, args)
+{
+	PrintToChat(client,"[%cKZ%c]%c Loading html page.. (requires cl_disablehtmlmotd 0)", MOSSGREEN,WHITE,LIMEGREEN);
+	ShowMOTDPanel(client, "rankingsystem" ,"http://kuala-lumpur-court-8417.pancakeapps.com/ranking_index.html", 2);
+	return Plugin_Handled;
+}
+
 public GotoMethod(client, i)
 {	
 	if (!IsValidClient(client) || IsFakeClient(client))
@@ -2162,7 +2164,8 @@ public HelpPanel(client)
 	Format(title, 64, "KZ Timer Help (1/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, title);
 	DrawPanelText(panel, " ");
-	DrawPanelText(panel, "!helpmenu - opens this menu");
+	DrawPanelText(panel, "!help - opens this menu");
+	DrawPanelText(panel, "!help2 - explanation of the ranking system");
 	DrawPanelText(panel, "!menu - climbers menu");
 	DrawPanelText(panel, "!options - options menu");	
 	DrawPanelText(panel, "!top - top menu");
@@ -2206,7 +2209,7 @@ public HelpPanel2(client)
 	DrawPanelText(panel, "!challenge - allows you to start a race against others");	
 	DrawPanelText(panel, "!spec [<name>] - select a player you want to watch");	
 	DrawPanelText(panel, "!goto [<name>] - teleports you to a given player");
-	DrawPanelText(panel, "!compare [<name>] - compare your challenge/race results with a given player");
+	DrawPanelText(panel, "!compare [<name>] - compare your challenge results with a given player");
 	DrawPanelText(panel, "!showsettings - shows kztimer plugin settings");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
@@ -2288,21 +2291,21 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);
 	PrintToConsole(client, "kz_country_tag %b", g_bCountry);
 	PrintToConsole(client, "kz_custom_models %b", g_bPlayerSkinChange);	
-	PrintToConsole(client, "kz_dist_min_lj %.1f", g_dist_good_lj);
-	PrintToConsole(client, "kz_dist_pro_lj %.1f", g_dist_pro_lj);
-	PrintToConsole(client, "kz_dist_leet_lj %.1f", g_dist_leet_lj);
-	PrintToConsole(client, "kz_dist_min_bhop %.1f", g_dist_good_bhop);
-	PrintToConsole(client, "kz_dist_pro_bhop %.1f", g_dist_pro_bhop);
-	PrintToConsole(client, "kz_dist_leet_bhop %.1f", g_dist_leet_bhop);
-	PrintToConsole(client, "kz_dist_min_multibhop %.1f", g_dist_good_multibhop);
-	PrintToConsole(client, "kz_dist_pro_multibhop %.1f", g_dist_pro_multibhop);
-	PrintToConsole(client, "kz_dist_leet_multibhop %.1f", g_dist_leet_multibhop);
-	PrintToConsole(client, "kz_dist_min_dropbhop %.1f", g_dist_good_dropbhop);
-	PrintToConsole(client, "kz_dist_pro_dropbhop %.1f", g_dist_pro_dropbhop);
-	PrintToConsole(client, "kz_dist_leet_dropbhop %.1f", g_dist_leet_dropbhop);
-	PrintToConsole(client, "kz_dist_min_wj %.1f", g_dist_good_weird);
-	PrintToConsole(client, "kz_dist_pro_wj %.1f", g_dist_pro_weird);
-	PrintToConsole(client, "kz_dist_leet_wj %.1f", g_dist_leet_weird);
+	PrintToConsole(client, "kz_dist_min_lj %.1f (gray msg)", g_dist_good_lj);
+	PrintToConsole(client, "kz_dist_pro_lj %.1f (green msg)", g_dist_pro_lj);
+	PrintToConsole(client, "kz_dist_leet_lj %.1f (red msg)", g_dist_leet_lj);
+	PrintToConsole(client, "kz_dist_min_bhop %.1f (...)", g_dist_good_bhop);
+	PrintToConsole(client, "kz_dist_pro_bhop %.1f (...)", g_dist_pro_bhop);
+	PrintToConsole(client, "kz_dist_leet_bhop %.1f (...)", g_dist_leet_bhop);
+	PrintToConsole(client, "kz_dist_min_multibhop %.1f (...)", g_dist_good_multibhop);
+	PrintToConsole(client, "kz_dist_pro_multibhop %.1f (...)", g_dist_pro_multibhop);
+	PrintToConsole(client, "kz_dist_leet_multibhop %.1f (...)", g_dist_leet_multibhop);
+	PrintToConsole(client, "kz_dist_min_dropbhop %.1f (...)", g_dist_good_dropbhop);
+	PrintToConsole(client, "kz_dist_pro_dropbhop %.1f (...)", g_dist_pro_dropbhop);
+	PrintToConsole(client, "kz_dist_leet_dropbhop %.1f (...)", g_dist_leet_dropbhop);
+	PrintToConsole(client, "kz_dist_min_wj %.1f (...)", g_dist_good_weird);
+	PrintToConsole(client, "kz_dist_pro_wj %.1f (...)", g_dist_pro_weird);
+	PrintToConsole(client, "kz_dist_leet_wj %.1f (...)", g_dist_leet_weird);
 	PrintToConsole(client, "kz_fps_check %b", g_bfpsCheck);	
 	PrintToConsole(client, "kz_godmode %b", g_bgodmode);
 	PrintToConsole(client, "kz_goto %b", g_bGoToServer);

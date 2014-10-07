@@ -34,7 +34,7 @@ public Action:Admin_KzPanel(client, args)
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
 		PrintToConsole(client,"\nCOMMANDS:\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
-		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table - BE CAREFUL!!!)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
+		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table - BE CAREFUL!!!)\n sm_resetchallenges (Drops challenges table - BE CAREFUL!!!)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
 		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table - BE CAREFUL!!!)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
 		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)");
 		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
@@ -533,6 +533,12 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 public Action:Admin_DropAllMapRecords(client, args)
 {
 	db_dropPlayer(client);
+	return Plugin_Handled;
+}
+
+public Action:Admin_DropChallenges(client, args)
+{
+	db_dropChallenges(client);
 	return Plugin_Handled;
 }
 
