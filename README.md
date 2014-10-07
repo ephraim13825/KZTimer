@@ -1,4 +1,4 @@
-#KZTimer 1.55 Final Version
+#KZTimer 1.56 Final Version
 
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
@@ -30,6 +30,12 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 
 Changelog
 =======
+
+v1.56
+- fixed wrong ground speed after disabling kz_prestrafe (thx to Chuckles)
+- fixed vertical jump bug on multi-bhop jumps (thx to GnagarN)
+- added client command !help2 (explanation of the ranking system) 
+- added sourcemod/configs/kztimer/hidden_chat_commands.txt (list of hidden chat commands -> this list was hard coded)
 
 v1.55
 - fixed redundant calculation of points for challenge winners 
