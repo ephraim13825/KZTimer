@@ -31,6 +31,13 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 
+v1.57
+- fixed player freezing after round restart
+- fixed the abuse of +hook to get a further longjump
+- fixed the abuse of custom entities (i won't go into detail here)
+- fixed a pause bug in combination with kz_auto_timer 1
+- minor bug fixes
+
 v1.56
 - fixed wrong ground speed after disabling kz_prestrafe (thx to Chuckles)
 - fixed vertical jump bug on multi-bhop jumps (thx to GnagarN)
