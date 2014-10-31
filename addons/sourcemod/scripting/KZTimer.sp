@@ -19,7 +19,15 @@
 #include <calladmin>
 #include <hgr>
 
-#define VERSION "1.56"
+/*
+ - fixed player freezing after round restart
+ - fixed the abuse of +hook to get a further longjump
+ - fixed the abuse of custom entities (i won't go into detail here)
+ - fixed a pause bug in combination with kz_auto_timer 1
+ - minor bug fixes
+*/
+
+#define VERSION "1.57"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -825,7 +833,7 @@ public OnPluginStart()
 	g_bCountry     = GetConVarBool(g_hCountry);
 	HookConVarChange(g_hCountry, OnSettingChanged);
 	
-	g_hAutoBhop 	= CreateConVar("kz_auto_bhop", "1", "on/off - AutoBhop on bhop_ and surf_ maps (climb maps are not supported)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoBhop 	= CreateConVar("kz_auto_bhop", "0", "on/off - AutoBhop on bhop_ and surf_ maps (climb maps are not supported)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoBhop     = GetConVarBool(g_hAutoBhop);
 	HookConVarChange(g_hAutoBhop, OnSettingChanged);
 
@@ -906,13 +914,13 @@ public OnPluginStart()
 		g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "275.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_good_dropbhop  = CreateConVar("kz_dist_min_dropbhop", "240.0", "Minimum distance for drop bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_pro_dropbhop  = CreateConVar("kz_dist_pro_dropbhop", "290.0", "Minimum distance for drop bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-		g_hdist_leet_dropbhop   = CreateConVar("kz_dist_leet_dropbhop", "297.0", "Minimum distance for drop bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+		g_hdist_leet_dropbhop   = CreateConVar("kz_dist_leet_dropbhop", "295.0", "Minimum distance for drop bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_good_bhop  = CreateConVar("kz_dist_min_bhop", "240.0", "Minimum distance for bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "290.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "295.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 		g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 		g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "330.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-		g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "340.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
+		g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "338.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 	}
 	else
 	{
@@ -920,30 +928,30 @@ public OnPluginStart()
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "360.0", "Max counted pre speed for bhop,dropbhop  (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "240.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "268.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "273.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "265.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "270.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "255.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "283.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "288.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "285.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_dropbhop  = CreateConVar("kz_dist_min_dropbhop", "275.0", "Minimum distance for drop bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_dropbhop  = CreateConVar("kz_dist_pro_dropbhop", "320.0", "Minimum distance for drop bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_dropbhop   = CreateConVar("kz_dist_leet_dropbhop", "325.0", "Minimum distance for drop bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_bhop  = CreateConVar("kz_dist_min_bhop", "280.0", "Minimum distance for bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "327.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "333.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "325.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "330.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "340.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "345.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "325.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
 			}
 		else
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "350.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "235.0", "Minimum distance for longjumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "265.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "270.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_pro_lj   	= CreateConVar("kz_dist_pro_lj", "262.0", "Minimum distance for longjumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
+			g_hdist_leet_lj    	= CreateConVar("kz_dist_leet_lj", "267.0", "Minimum distance for longjumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "240.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "280.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
-			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "285.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_pro_weird  = CreateConVar("kz_dist_pro_wj", "282.0", "Minimum distance for weird jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
+			g_hdist_leet_weird   = CreateConVar("kz_dist_leet_wj", "283.0", "Minimum distance for weird jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_dropbhop  = CreateConVar("kz_dist_min_dropbhop", "285.0", "Minimum distance for drop bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_pro_dropbhop  = CreateConVar("kz_dist_pro_dropbhop", "310.0", "Minimum distance for drop bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_dropbhop   = CreateConVar("kz_dist_leet_dropbhop", "315.0", "Minimum distance for drop bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -951,10 +959,10 @@ public OnPluginStart()
 			g_hdist_pro_bhop  = CreateConVar("kz_dist_pro_bhop", "315.0", "Minimum distance for bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "320.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "340.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "345.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "338.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
+			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "343.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
 		}
-	}	
+	}
 		
 	g_fBanDuration    = GetConVarFloat(g_hBanDuration);
 	HookConVarChange(g_hBanDuration, OnSettingChanged);	
@@ -1162,8 +1170,11 @@ public OnPluginStart()
 	new Handle:fileHandle=OpenFile(sPath,"r");		
 	while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
 	{
-		TrimString(line);
-		AddCommandListener(Command_ext_Menu, line);
+		if ((StrContains(line,"//",true) == -1))
+		{
+			TrimString(line);
+			AddCommandListener(Command_ext_Menu, line);
+		}
 	}
 	if (fileHandle != INVALID_HANDLE)
 		CloseHandle(fileHandle);
@@ -1462,7 +1473,7 @@ public OnConfigsExecuted()
 	{
 		if (mapListSerial == -1)
 		{
-			SetFailState("<KZTIMER> Mapcycle not found.");
+			SetFailState("<KZTIMER> Mapcycle.txt is empty or does not exists.");
 		}
 	}
 	for (new i = 0; i < GetArraySize(g_MapList); i++)
@@ -1482,6 +1493,18 @@ public OnConfigsExecuted()
 	//skillgroups
 	SetSkillGroups();
 
+	//get mapname
+	GetCurrentMap(g_szMapName, MAX_MAP_LENGTH);
+	Format(g_szMapPath, sizeof(g_szMapPath), "maps/%s.bsp", g_szMapName); 	
+			
+	//workshop fix
+	new String:mapPieces[6][128];
+	new lastPiece = ExplodeString(g_szMapName, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
+	Format(g_szMapName, sizeof(g_szMapName), "%s", mapPieces[lastPiece-1]); 
+   
+	//get map tag
+	ExplodeString(g_szMapName, "_", g_szMapTag, 2, 32);
+	
 	//map config
 	decl String:szPath[256];
 	Format(szPath, sizeof(szPath), "sourcemod/kztimer/map_types/%s_.cfg",g_szMapTag[0]);

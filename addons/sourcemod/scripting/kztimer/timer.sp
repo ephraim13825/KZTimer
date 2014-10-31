@@ -12,9 +12,31 @@ public Action:UpdatePlayerProfile(Handle:timer, any:client)
 		db_updateStat(client);	
 }
 
+public Action:SetPlayerWeapons(Handle:timer, any:client)
+{
+	if ((GetClientTeam(client) > 1) && IsValidClient(client))
+	{			
+		StripAllWeapons(client);
+		if (!IsFakeClient(client))
+			GivePlayerItem(client, "weapon_usp_silencer");
+		if (!g_bStartWithUsp[client])
+		{
+			new weapon = GetPlayerWeaponSlot(client, 2);
+			if (weapon != -1 && !IsFakeClient(client))
+				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+		}
+	}	
+}
+
 public Action:HyperscrollWarningTimer(Handle:timer, any:client)
 {
 	g_bHyperscrollWarning[client] = true;
+}
+
+public Action:StartTimer(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))	
+		CL_OnStartTimerPress(client);
 }
 
 public Action:MoveTypeNoneTimer(Handle:timer, any:client)

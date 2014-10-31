@@ -402,10 +402,9 @@ public Action:Client_Surrender (client, args)
 					//win ratio
 					SetEntityMoveType(client, MOVETYPE_WALK);
 					SetEntityMoveType(i, MOVETYPE_WALK);
-					
 					if (g_Challenge_Bet[client] > 0)
 					{
-						g_pr_showmsg[client] = true;
+						g_pr_showmsg[i] = true;
 						PrintToChat(i, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
 						PrintToChat(client, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
 						new lostpoints = g_Challenge_Bet[client] * g_pr_PointUnit;
@@ -2385,9 +2384,9 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Hide Players  -  Disabled", "Hide players  -  Disabled");			
 	//2
 	if (g_bColorChat[client])	
-		AddMenuItem(optionmenu, "Color chat  -  Enabled", "Color chat  -  Enabled");
+		AddMenuItem(optionmenu, "Color chat  -  Enabled", "Color chat (jumpstats)  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Color chat  -  Disabled", "Color chat  -  Disabled");
+		AddMenuItem(optionmenu, "Color chat  -  Disabled", "Color chat (jumpstats) -  Disabled");
 	//3
 	if (g_bCPTextMessage[client])
 		AddMenuItem(optionmenu, "CP chat message  -  Enabled", "Checkpoint chat message  -  Enabled");
@@ -2410,9 +2409,9 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Strafe Sync  -  Disabled", "Strafe sync in chat  -  Disabled");			
 	//7	
 	if (g_bShowTime[client])
-		AddMenuItem(optionmenu, "Show Timer  -  Enabled", "Show timer  -  Enabled");
+		AddMenuItem(optionmenu, "Show Timer  -  Enabled", "Show timer text  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Show Timer  -  Disabled", "Show timer  -  Disabled");			
+		AddMenuItem(optionmenu, "Show Timer  -  Disabled", "Show timer text  -  Disabled");			
 	//8
 	if (g_bShowSpecs[client])
 		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Enabled");

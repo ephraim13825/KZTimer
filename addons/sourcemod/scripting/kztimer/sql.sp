@@ -328,7 +328,7 @@ public db_setupDatabase()
         
 	if(g_hDb == INVALID_HANDLE)
 	{
-		SetFailState("[KZTimer] Unable to connect to database (%s)");
+		SetFailState("[KZTimer] Unable to connect to database (%s)", szError);
 		return;
 	}
         

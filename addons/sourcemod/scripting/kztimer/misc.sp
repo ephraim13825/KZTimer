@@ -3191,7 +3191,7 @@ public CreateNavFiles()
 	new mapListSerial = -1;
 	if (ReadMapList(g_MapList,	mapListSerial, "mapcyclefile", MAPLIST_FLAG_CLEARARRAY|MAPLIST_FLAG_NO_DEFAULT) == INVALID_HANDLE)
 		if (mapListSerial == -1)
-			SetFailState("<KZTIMER> Mapcycle not found.");
+			return;
 
 	for (new i = 0; i < GetArraySize(g_MapList); i++)
 	{

@@ -23,139 +23,125 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if(client != 0)
 	{	
-		if (!g_bRoundEnd)
-		{	
-			g_fStartCommandUsed_LastTime[client] = GetEngineTime();
-			g_js_bPlayerJumped[client] = false;
-			g_bSlowDownCheck[client] = false;
-			g_SpecTarget[client] = -1;	
-			g_bOnGround[client] = true;
-			g_MouseAbsCount[client] = 0;
-			g_SpeedRefreshCount[client] = 0;
-			
-			//strip weapons
-			if ((GetClientTeam(client) > 1))
-			{			
-				StripAllWeapons(client);
-				if (!IsFakeClient(client))
-					GivePlayerItem(client, "weapon_usp_silencer");
-				if (!g_bStartWithUsp[client])
-				{
-					new weapon = GetPlayerWeaponSlot(client, 2);
-					if (weapon != -1 && !IsFakeClient(client))
-						 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-				}
-			}	
-			
-			
-			//godmode
-			if (g_bgodmode || IsFakeClient(client))
-				SetEntProp(client, Prop_Data, "m_takedamage", 0, 1);
-			else
-				SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
-				
-			//NoBlock
-			if(g_bNoBlock || IsFakeClient(client))
-				SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
-			else
-				SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
-								
-			//botmimic2		
-			if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsFakeClient(client))
-			{
-				g_BotMimicTick[client] = 0;
-				g_CurrentAdditionalTeleportIndex[client] = 0;
-			}	
-			
-			if (IsFakeClient(client))	
-			{
-				if (client==g_InfoBot)
-					CS_SetClientClanTag(client, ""); 	
-				else
-					CS_SetClientClanTag(client, "LOCALHOST"); 	
-				return Plugin_Continue;
-			}
-			
-			//fps Check
-			QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
-			
-			//change player skin
-			if (g_bPlayerSkinChange && (GetClientTeam(client) > 1))
-			{
-				SetEntPropString(client, Prop_Send, "m_szArmsModel", g_sArmModel);
-				SetEntityModel(client,  g_sPlayerModel);
-			}		
-			
-			//1st spawn?
-			if (g_bFirstTeamJoin[client])		
-			{
-				CreateTimer(1.5, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-				CreateTimer(15.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-				CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
-				CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
-				g_bFirstTeamJoin[client] = false;
-			}
-
-			//1st spawn & t/ct
-			if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))		
-			{
-				StartRecording(client);
-				CreateTimer(1.5, CenterMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
-				g_bFirstSpawn[client] = false;
-			}
-			
-			//get start pos for challenge
-			GetClientAbsOrigin(client, g_fSpawnPosition[client]);
-			
-			//restore position (before spec or last session) && Climbers Menu
-			if ((GetClientTeam(client) > 1))
-			{
-				if (g_bRestoreC[client])
-				{			
-					g_bPositionRestored[client] = true;
-					TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
-					g_bRestoreC[client]  = false;
-				}
-				else
-					if (g_bRespawnPosition[client])
-					{
-						TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
-						g_bRespawnPosition[client] = false;
-					}		
-					else
-						if (g_bAutoTimer)
-							CL_OnStartTimerPress(client);
-						else
-						{
-							g_bTimeractivated[client] = false;	
-							g_fStartTime[client] = -1.0;
-							g_fCurrentRunTime[client] = -1.0;	
-						}			
-				CreateTimer(0.0, ClimbersMenuTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-			}
-	
-			
-			//hide radar
-			CreateTimer(0.0, HideRadar, client,TIMER_FLAG_NO_MAPCHANGE);
-			
-			//set clantag
-			CreateTimer(1.5, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);	
-					
-			//set speclist
-			Format(g_szPlayerPanelText[client], 512, "");		
-			
-			if (g_bClimbersMenuwasOpen[client] && (GetClientTeam(client) > 1))
-			{
-				g_bClimbersMenuwasOpen[client] = false;
-				ClimbersMenu(client);
-			}
-
-			//get speed & origin
-			g_fLastSpeed[client] = GetSpeed(client);
-			GetClientAbsOrigin(client, g_fLastPosition[client]);				
-		}
+		g_fStartCommandUsed_LastTime[client] = GetEngineTime();
+		g_js_bPlayerJumped[client] = false;
+		g_bSlowDownCheck[client] = false;
+		g_SpecTarget[client] = -1;	
+		g_bOnGround[client] = true;
+		g_MouseAbsCount[client] = 0;
+		g_SpeedRefreshCount[client] = 0;
+		g_bPause[client] = false;
+		SetEntityMoveType(client, MOVETYPE_WALK);
+		SetEntityRenderMode(client, RENDER_NORMAL);
+		
+		//strip weapons
+		CreateTimer(0.1, SetPlayerWeapons, client,TIMER_FLAG_NO_MAPCHANGE);	
+		
+		//godmode
+		if (g_bgodmode || IsFakeClient(client))
+			SetEntProp(client, Prop_Data, "m_takedamage", 0, 1);
 		else
-			CreateTimer(0.1, MoveTypeNoneTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+			SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
+			
+		//NoBlock
+		if(g_bNoBlock || IsFakeClient(client))
+			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
+		else
+			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
+							
+		//botmimic2		
+		if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsFakeClient(client))
+		{
+			g_BotMimicTick[client] = 0;
+			g_CurrentAdditionalTeleportIndex[client] = 0;
+		}	
+		
+		if (IsFakeClient(client))	
+		{
+			if (client==g_InfoBot)
+				CS_SetClientClanTag(client, ""); 	
+			else
+				CS_SetClientClanTag(client, "LOCALHOST"); 	
+			return Plugin_Continue;
+		}
+		
+		//fps Check
+		QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
+		
+		//change player skin
+		if (g_bPlayerSkinChange && (GetClientTeam(client) > 1))
+		{
+			SetEntPropString(client, Prop_Send, "m_szArmsModel", g_sArmModel);
+			SetEntityModel(client,  g_sPlayerModel);
+		}		
+		
+		//1st spawn?
+		if (g_bFirstTeamJoin[client])		
+		{
+			CreateTimer(1.5, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(15.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
+			CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
+			g_bFirstTeamJoin[client] = false;
+		}
+
+		//1st spawn & t/ct
+		if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))		
+		{
+			StartRecording(client);
+			CreateTimer(1.5, CenterMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
+			g_bFirstSpawn[client] = false;
+		}
+		
+		//get start pos for challenge
+		GetClientAbsOrigin(client, g_fSpawnPosition[client]);
+		
+		//restore position (before spec or last session) && Climbers Menu
+		if ((GetClientTeam(client) > 1))
+		{
+			if (g_bRestoreC[client])
+			{			
+				g_bPositionRestored[client] = true;
+				TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+				g_bRestoreC[client]  = false;
+			}
+			else
+				if (g_bRespawnPosition[client])
+				{
+					TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+					g_bRespawnPosition[client] = false;
+				}		
+				else
+					if (g_bAutoTimer)
+						CreateTimer(0.1, StartTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
+					else
+					{
+						g_bTimeractivated[client] = false;	
+						g_fStartTime[client] = -1.0;
+						g_fCurrentRunTime[client] = -1.0;	
+					}			
+			CreateTimer(0.0, ClimbersMenuTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+		}
+
+		
+		//hide radar
+		CreateTimer(0.0, HideRadar, client,TIMER_FLAG_NO_MAPCHANGE);
+		
+		//set clantag
+		CreateTimer(1.5, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);	
+				
+		//set speclist
+		Format(g_szPlayerPanelText[client], 512, "");		
+		
+		if (g_bClimbersMenuwasOpen[client] && (GetClientTeam(client) > 1))
+		{
+			g_bClimbersMenuwasOpen[client] = false;
+			ClimbersMenu(client);
+		}
+
+		//get speed & origin
+		g_fLastSpeed[client] = GetSpeed(client);
+		GetClientAbsOrigin(client, g_fLastPosition[client]);				
 	}
 	return Plugin_Continue;
 }
@@ -596,7 +582,10 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		if (g_bHookMod)
 		{
 			if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
+			{
+				g_js_bPlayerJumped[client] = false;
 				g_bTimeractivated[client] = false;
+			}
 		}
 		
 		//jumpstats/timer
@@ -614,7 +603,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		BhopHackAntiCheat(client, buttons);
 		StrafeHackAntiCheat(client, ang, buttons);
 		//ljblock
-		if (g_js_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_JUMP)))
+		if (!g_js_bPlayerJumped[client] && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_JUMP)))
 		{
 			decl Float:temp[3], Float: pos[3];
 			GetClientAbsOrigin(client,pos);
