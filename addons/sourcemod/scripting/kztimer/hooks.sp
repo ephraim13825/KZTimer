@@ -35,7 +35,19 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		SetEntityRenderMode(client, RENDER_NORMAL);
 		
 		//strip weapons
-		CreateTimer(0.1, SetPlayerWeapons, client,TIMER_FLAG_NO_MAPCHANGE);	
+		//CreateTimer(0.0, SetPlayerWeapons, client,TIMER_FLAG_NO_MAPCHANGE);
+		if ((GetClientTeam(client) > 1) && IsValidClient(client))
+		{			
+			StripAllWeapons(client);
+			if (!IsFakeClient(client))
+				GivePlayerItem(client, "weapon_usp_silencer");
+			if (!g_bStartWithUsp[client])
+			{
+				new weapon = GetPlayerWeaponSlot(client, 2);
+				if (weapon != -1 && !IsFakeClient(client))
+					 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+			}
+		}	
 		
 		//godmode
 		if (g_bgodmode || IsFakeClient(client))
