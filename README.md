@@ -1,4 +1,4 @@
-#KZTimer 1.57 Final Version
+#KZTimer 1.58 Final Version
 
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
@@ -30,6 +30,11 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 
 Changelog
 =======
+
+v1.58
+- fixed missing viewmodel after somebody uses !spec
+- fixed "custom entities detected" glitch
+- minor bug fixes
 
 v1.57
 - fixed player freezing after round restart
