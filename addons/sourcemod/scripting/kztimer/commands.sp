@@ -774,8 +774,7 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			{
 				ChangeClientTeam(param1, 1);
 				SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", playerid);  
-				SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);
-				SetEntProp(param1, Prop_Send, "m_bDrawViewmodel", 1);							
+				SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);						
 			}
 		}
 		else
@@ -794,8 +793,7 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 					{
 						ChangeClientTeam(param1, 1);
 						SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", i);  
-						SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);
-						SetEntProp(param1, Prop_Send, "m_bDrawViewmodel", 1);					
+						SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);			
 					}
 				}			
 			}

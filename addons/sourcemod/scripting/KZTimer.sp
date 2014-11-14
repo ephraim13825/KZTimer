@@ -19,15 +19,7 @@
 #include <calladmin>
 #include <hgr>
 
-/*
- - fixed player freezing after round restart
- - fixed the abuse of +hook to get a further longjump
- - fixed the abuse of custom entities (i won't go into detail here)
- - fixed a pause bug in combination with kz_auto_timer 1
- - minor bug fixes
-*/
-
-#define VERSION "1.57"
+#define VERSION "1.58"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
