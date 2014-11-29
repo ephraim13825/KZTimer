@@ -132,12 +132,6 @@ public CL_OnStartTimerPress(client)
 		new bool: act = g_bTimeractivated[client];
 		g_fLastTimeButtonSound[client] = GetEngineTime();
 		g_bTimeractivated[client] = true;		
-		if(g_PlayerStates[client][bOn])
-		{
-			g_PlayerStates[client][bOn] = false;
-			ComputeStrafes(client);
-		}
-
 			
 		//valid players
 		if (!IsFakeClient(client))
@@ -171,8 +165,8 @@ public CL_OnStartTimerPress(client)
 				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
 				Format(szProTime, 32, "%s (#%i/%i)", g_szTime[client],g_MapRankPro[client],g_MapTimesCountPro);
 			}
-			CreateTimer(2.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 			g_bOverlay[client]=true;
+			g_fLastOverlay[client] = GetEngineTime()-2.5;
 			if (act)
 				PrintHintText(client,"%t", "TimerStarted1", szProTime,szTpTime);
 			else
@@ -185,8 +179,7 @@ public CL_OnStartTimerPress(client)
 public CL_OnEndTimerPress(client)
 {
 	g_fLastTimeButtonSound[client] = GetEngineTime();
-	g_bOverlay[client]=true;
-	CreateTimer(4.0, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+
 	//sound
 	if (g_bMapButtons && !IsFakeClient(client))
 	{
@@ -249,7 +242,9 @@ public CL_OnEndTimerPress(client)
 	//Final time
 	g_fFinalTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];			
 	FormatTimeFloat(client, g_fFinalTime[client], 3);
-	Format(g_szNewTime[client], 32, "%s", g_szTime[client]);	
+	Format(g_szNewTime[client], 32, "%s", g_szTime[client]);
+	g_bOverlay[client]=true;
+	g_fLastOverlay[client] = GetEngineTime();
 	PrintHintText(client,"%t", "TimerStopped", g_szNewTime[client]);
 	
 	//calc difference
@@ -415,12 +410,4 @@ public CL_OnEndTimerPress(client)
 	
 	//delete tmp entry
 	db_deleteTmp(client);
-	
-	//Credits: Antistrafe hack by Zipcore
-	//https://forums.alliedmods.net/showthread.php?t=230851
-	if(g_PlayerStates[client][bOn])
-	{
-		g_PlayerStates[client][bOn] = false;
-		ComputeStrafes(client);
-	}
 }

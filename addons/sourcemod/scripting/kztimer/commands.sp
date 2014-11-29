@@ -507,12 +507,9 @@ public Action:Client_Undo(client, args)
 		if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
 			return Plugin_Handled;
 		g_bValidTeleport[client]=true;
-		if (!g_bAllowCpOnBhopPlattforms)
-		{
-			g_bUndo[client]	= true;
-			g_bUndoTimer[client] = true;
-			g_fLastUndo[client] = GetEngineTime();
-		}	
+		g_bUndo[client]	= true;
+		g_bUndoTimer[client] = true;
+		g_fLastUndo[client] = GetEngineTime();
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 		g_js_LeetJump_Count[client] = 0;
 	}
@@ -1616,13 +1613,7 @@ public Action:Client_Stop(client, args)
 		g_fStartTime[client] = -1.0;
 		g_fCurrentRunTime[client] = -1.0;		
 		PrintToChat(client, "%t", "TimerStopped1",MOSSGREEN,WHITE);
-		
-		//zipcore anti strafe hack
-		if(g_PlayerStates[client][bOn])
-		{
-			g_PlayerStates[client][bOn] = false;
-			ComputeStrafes(client);
-		}
+	
 	}
 	return Plugin_Handled;
 }
@@ -1756,7 +1747,9 @@ public TeleClient(client,pos)
 		{			
 			SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 			
-
+			if (g_fPlayerCords[client][actual][0] == 0.0 && g_fPlayerCords[client][actual][1] && g_fPlayerCords[client][actual][2])
+				PrintToChat(client, "[%cKZ%c] %cFailed!", MOSSGREEN,WHITE,RED);
+				
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			g_bValidTeleport[client]=true;
@@ -1836,11 +1829,10 @@ public ClimbersMenu(client)
 	{
 		GetcurrentRunTime(client);
 		SetMenuTitle(g_hclimbersmenu[client], g_szMenuTitleRun[client]);
-				
-		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu1", client, g_OverallCp[client]);
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu1_1", client, g_OverallCp[client]);
 		AddMenuItem(g_hclimbersmenu[client], "!save", buffer);
-		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu2", client, g_OverallTp[client]);	
-		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);
+		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu2_1", client, g_OverallTp[client]);	
+		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);				
 		if (g_bAdvancedClimbersMenu[client])
 		{	
 			if (g_OverallCp[client] > 1)
@@ -1891,14 +1883,14 @@ public ClimbersMenu(client)
 			AddMenuItem(g_hclimbersmenu[client], "!restart", buffer);
 		}
 	}
-	else 
+	else
 	{
 		Format(title, 128, "%T", "ClimbersMenu10", client, g_szPlayerPanelText[client],GetSpeed(client));
 		SetMenuTitle(g_hclimbersmenu[client], title);
 		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu11", client);
 		AddMenuItem(g_hclimbersmenu[client], "!save", buffer);
 		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu12", client);
-		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);
+		AddMenuItem(g_hclimbersmenu[client], "!tele", buffer);	
 		if (g_bAdvancedClimbersMenu[client])
 		{	
 			Format(title, 128, "%T", "ClimbersMenu10", client, g_szPlayerPanelText[client],GetSpeed(client));
@@ -2163,8 +2155,8 @@ public HelpPanel(client)
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!help - opens this menu");
 	DrawPanelText(panel, "!help2 - explanation of the ranking system");
-	DrawPanelText(panel, "!menu - climbers menu");
-	DrawPanelText(panel, "!options - options menu");	
+	DrawPanelText(panel, "!menu - checkpoint menu");
+	DrawPanelText(panel, "!options - player options menu");	
 	DrawPanelText(panel, "!top - top menu");
 	DrawPanelText(panel, "!latest - latest local records");
 	DrawPanelText(panel, "!profile [<name>] - player profile");
@@ -2268,6 +2260,13 @@ public HelpPanel3Handler(Handle:menu, MenuAction:action, param1, param2)
 	}
 }
 
+public Action:Client_GlobalCheck(client, args) 
+{
+	PrintToChat(client, "[%cKZ%c] %cGlobal records are disabled. Reason: This KZTimer version does not provide global records!",MOSSGREEN,WHITE,RED);
+		
+	return Plugin_Handled;
+}
+
 public ShowSrvSettings(client)
 {
 	PrintToConsole(client, " ");
@@ -2281,10 +2280,9 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_auto_timer %i", g_bAutoTimer);
 	PrintToConsole(client, "kz_autoheal %i", g_Autohealing_Hp);
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
+	PrintToConsole(client, "kz_bhop_multi_touching %b", g_bMultiTouching);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
-	PrintToConsole(client, "kz_checkpoints_on_bhop_plattforms %b", g_bAllowCpOnBhopPlattforms);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
-	PrintToConsole(client, "kz_colored_chatranks %b", g_bColoredChatRanks);
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);
 	PrintToConsole(client, "kz_country_tag %b", g_bCountry);
 	PrintToConsole(client, "kz_custom_models %b", g_bPlayerSkinChange);	
@@ -2303,7 +2301,6 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_dist_min_wj %.1f (...)", g_dist_good_weird);
 	PrintToConsole(client, "kz_dist_pro_wj %.1f (...)", g_dist_pro_weird);
 	PrintToConsole(client, "kz_dist_leet_wj %.1f (...)", g_dist_leet_weird);
-	PrintToConsole(client, "kz_fps_check %b", g_bfpsCheck);	
 	PrintToConsole(client, "kz_godmode %b", g_bgodmode);
 	PrintToConsole(client, "kz_goto %b", g_bGoToServer);
 	PrintToConsole(client, "kz_info_bot %b", g_bInfoBot);
@@ -2312,15 +2309,12 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_prespeed_cap %.1f (speed-limiter)", g_fBhopSpeedCap);
 	PrintToConsole(client, "kz_map_end %b", g_bMapEnd);
 	PrintToConsole(client, "kz_max_prespeed_bhop_dropbhop %.1f", g_fMaxBhopPreSpeed);
-	PrintToConsole(client, "kz_multiplayer_bhop %b", g_bMultiplayerBhop);
 	PrintToConsole(client, "kz_noblock %b", g_bNoBlock);
 	PrintToConsole(client, "kz_pause %b", g_bPauseServerside);
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
-	PrintToConsole(client, "kz_pro_mode %b", g_bProMode);
 	PrintToConsole(client, "kz_ranking_extra_points_firsttime %i", g_ExtraPoints2);
 	PrintToConsole(client, "kz_ranking_extra_points_improvements %i", g_ExtraPoints);
-	PrintToConsole(client, "kz_recalc_top100_on_mapstart %b", g_bRecalcTop100);	
 	PrintToConsole(client, "kz_replay_bot %b", g_bReplayBot);
 	PrintToConsole(client, "kz_restore %b", g_bRestore);
 	PrintToConsole(client, "kz_settings_enforcer %b", g_bEnforcer);
@@ -2372,29 +2366,29 @@ public OptionMenu(client)
 	new Handle:optionmenu = CreateMenu(OptionMenuHandler);
 	SetMenuTitle(optionmenu, "Options Menu");
 	if (g_bAdvancedClimbersMenu[client])
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Advanced climbers menu  -  Enabled");
+		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Advanced checkpoint menu  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Disabled", "Advanced climbers menu  -  Disabled");
+		AddMenuItem(optionmenu, "Advanced climbers menu  -  Disabled", "Advanced checkpoint menu  -  Disabled");
 	//1
 	if (g_bHide[client])
-		AddMenuItem(optionmenu, "Hide Players  -  Enabled", "Hide players  -  Enabled");
+		AddMenuItem(optionmenu, "Hide Players  -  Enabled", "Hide other players  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Hide Players  -  Disabled", "Hide players  -  Disabled");			
+		AddMenuItem(optionmenu, "Hide Players  -  Disabled", "Hide other players  -  Disabled");			
 	//2
 	if (g_bColorChat[client])	
 		AddMenuItem(optionmenu, "Color chat  -  Enabled", "Color chat (jumpstats)  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Color chat  -  Disabled", "Color chat (jumpstats) -  Disabled");
+		AddMenuItem(optionmenu, "Color chat  -  Disabled", "Color chat (jumpstats;except yours) -  Disabled");
 	//3
 	if (g_bCPTextMessage[client])
-		AddMenuItem(optionmenu, "CP chat message  -  Enabled", "Checkpoint chat message  -  Enabled");
+		AddMenuItem(optionmenu, "CP chat message  -  Enabled", "Checkpoint done chat message  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "CP chat message  -  Disabled", "Checkpoint chat message  -  Disabled");
+		AddMenuItem(optionmenu, "CP chat message  -  Disabled", "Checkpoint done chat message  -  Disabled");
 	//4
 	if (g_bClimbersMenuSounds[client])
-		AddMenuItem(optionmenu, "Climbers menu sound  -  Enabled", "Climbers menu sounds  -  Enabled");
+		AddMenuItem(optionmenu, "Climbers menu sound  -  Enabled", "Checkpoint menu sounds  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Climbers menu sound  -  Disabled", "Climbers menu sounds -  Disabled");
+		AddMenuItem(optionmenu, "Climbers menu sound  -  Disabled", "Checkpoint menu sounds -  Disabled");
 	//5
 	if (g_bEnableQuakeSounds[client])
 		AddMenuItem(optionmenu, "Quake sounds - Enabled", "Quake sounds - Enabled");

@@ -592,7 +592,7 @@ public Postthink(client)
 	if (ground_frames > 11 && fGroundDiff == 0.0 && fJump_Height <= 67.0 && g_js_fJump_Distance[client] < 300.0 && g_js_fMax_Speed_Final[client] > 200.0) 
 	{	
 		//strafe hack block (aimware is pretty smart :/) (1/2)
-		if (g_bPreStrafe || g_bProMode)
+		if (g_bPreStrafe)
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 265.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 270.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 275.0)) 
 			{
@@ -628,7 +628,7 @@ public Postthink(client)
 		//prestrafe on/off
 		decl String:szVr[16];
 		new bool: prestrafe;
-		if (!g_bPreStrafe && !g_bProMode)	
+		if (!g_bPreStrafe)	
 		{
 			g_js_fPreStrafe[client] = g_js_fTakeOff_Speed[client];
 			Format(szVr, 16, "TakeOff");
@@ -817,7 +817,7 @@ public Postthink(client)
 	
 		g_js_MultiBhop_Count[client]++;	
 		//strafe hack block (aimware is pretty smart :/)
-		if (((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 380.0))
+		if ((g_js_fPreStrafe[client] > g_fBhopSpeedCap) || ((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 365.0))
 		{
 			PostThinkPost(client, ground_frames);
 			return;		
@@ -829,7 +829,6 @@ public Postthink(client)
 			PostThinkPost(client, ground_frames);
 			return;
 		}
-			
 		
 		//format bhop count
 		decl String:szBhopCount[255];

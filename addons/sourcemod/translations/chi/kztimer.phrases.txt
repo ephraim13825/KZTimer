@@ -330,11 +330,6 @@
 		"#format"   "{1:c},{2:c}"
 		"chi"        "[{1}KZ{2}] 重新计算停止!"
 	}
-	"SteamGroup"
-	{
-		"#format"   "{1:c},{2:c}"
-		"chi"        "[{1}KZ{2}] http://steamcommunity.com/groups/kztimer"
-	}
 	"NewGlobalRecord102Pro"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c}"
@@ -940,16 +935,26 @@
 		"#format"   "{1:c},{2:c},{3:c},{4:.3f},{5:c},{6:c},{7:c},{8:c},{9:c}"
 		"chi"       "[{1}KZ{2}] 你的空中速度超出{6}300.0{7}. (当前速度: {3}{4}{5}) {8}WJ{9}"
 	}
-	"ClimbersMenu1"
+	"ClimbersMenu1_2"
 	{
 		"#format"   "{1:i}"
 		"chi"       "存点 #{1}"
 	}
-	"ClimbersMenu2"
+	"ClimbersMenu2_2"
 	{
 		"#format"   "{1:i}"
 		"chi"       "读点 #{1}"
 	}
+	"ClimbersMenu1_1"
+	{
+		"#format"   "{1:i}"
+		"chi"       "存点 #{1}"
+	}
+	"ClimbersMenu2_1"
+	{
+		"#format"   "{1:i}"
+		"chi"       "读点 #{1}"
+	}		
 	"ClimbersMenu3"
 	{
 		"chi"       "前个存点"
@@ -988,6 +993,14 @@
 		"chi"       "存点"
 	}
 	"ClimbersMenu12"
+	{
+		"chi"       "读点"
+	}
+	"ClimbersMenu13"
+	{
+		"chi"       "存点"
+	}
+	"ClimbersMenu14"
 	{
 		"chi"       "读点"
 	}

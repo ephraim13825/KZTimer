@@ -28,20 +28,10 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 	}	
 }
 
-public Action:HyperscrollWarningTimer(Handle:timer, any:client)
-{
-	g_bHyperscrollWarning[client] = true;
-}
-
 public Action:StartTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))	
 		CL_OnStartTimerPress(client);
-}
-
-public Action:MoveTypeNoneTimer(Handle:timer, any:client)
-{
-	SetEntityMoveType(client, MOVETYPE_NONE);
 }
 
 public Action:BhopCheck(Handle:timer, any:client)
@@ -67,56 +57,106 @@ public Action:AttackTimer(Handle:timer)
 	}
 }
 
-public Action:CheckRemainingTime(Handle:timer)
+public Action:KZTimer1(Handle:timer)
 {
-	new Handle:hTmp;	
-	hTmp = FindConVar("mp_timelimit");
-	new iTimeLimit = GetConVarInt(hTmp);			
-	if (hTmp != INVALID_HANDLE)
-		CloseHandle(hTmp);	
-	if (g_bMapEnd && iTimeLimit > 0)
-	{
-		new timeleft;
-		GetMapTimeLeft(timeleft);		
-		switch(timeleft)
-		{
-			case 1800: PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
-			case 1200: PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
-			case 600:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
-			case 300:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
-			case 120:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
-			case 60:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 
-			case 30:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 
-			case 15:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 		
-			case -1:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,3); 	
-			case -2:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,2); 	
-			case -3:
-			{
-				if (!g_bRoundEnd)
+	if (g_bRoundEnd)
+		return Plugin_Continue;
+	for (new client = 1; client <= MaxClients; client++)
+	{		
+		if (IsValidClient(client))
+		{			
+			if(IsPlayerAlive(client))
+			{				
+				//1st team join + in-game
+				if (g_bFirstTeamJoin[client])		
 				{
-					g_bRoundEnd=true;			
-					ServerCommand("mp_ignore_round_win_conditions 0");
-					PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 	
-					CreateTimer(1.0, TerminateRoundTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
+					CreateTimer(0.0, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+					CreateTimer(10.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
+					CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
+					g_bFirstTeamJoin[client] = false;
+				}
+				CenterHudAlive(client);			
+				
+				//bhop plattform
+				if (GetEntityFlags(client) & FL_ONGROUND)
+					g_js_TotalGroundFrames[client]++;
+				else
+					g_js_TotalGroundFrames[client]=0;
+				if (g_js_TotalGroundFrames[client] > 1 && g_bOnBhopPlattform[client])
+					g_bOnBhopPlattform[client] = false;
+						
+				//Wall check (JumpStats)
+				SurfCheck(client);
+			}
+			else
+				CenterHudDead(client);		
+		}
+	}	
+	return Plugin_Continue;		
+}
+
+public Action:KZTimer2(Handle:timer)
+{
+	if (g_bRoundEnd)
+		return Plugin_Continue;
+		
+	if (g_bMapEnd)
+	{
+		new Handle:hTmp;	
+		hTmp = FindConVar("mp_timelimit");
+		new iTimeLimit = GetConVarInt(hTmp);			
+		if (hTmp != INVALID_HANDLE)
+			CloseHandle(hTmp);	
+		if (iTimeLimit > 0)
+		{
+			new timeleft;
+			GetMapTimeLeft(timeleft);		
+			switch(timeleft)
+			{
+				case 1800: PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
+				case 1200: PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
+				case 600:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
+				case 300:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
+				case 120:  PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
+				case 60:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 
+				case 30:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 
+				case 15:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 		
+				case -1:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,3); 	
+				case -2:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,2); 	
+				case -3:
+				{
+					if (!g_bRoundEnd)
+					{
+						g_bRoundEnd=true;			
+						ServerCommand("mp_ignore_round_win_conditions 0");
+						PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 	
+						CreateTimer(1.0, TerminateRoundTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
+					}
 				}
 			}
 		}
 	}
-} 
 
-public Action:MainTimer2(Handle:timer)
-{
-	if (g_bRoundEnd)
-		return Plugin_Continue;
-
+	//settings enforcer
+	if (g_bEnforcer)		
+		ServerCommand("kz_prespeed_cap 380.0;sv_staminalandcost 0;sv_maxspeed 320; sv_staminajumpcost 0; sv_gravity 800; sv_airaccelerate 100; sv_friction 4.5;sv_accelerate 6.0;sv_maxvelocity 2000;sv_cheats 0"); 
+	
+	//info bot name
 	SetInfoBotName(g_InfoBot);	
+	
+
 	for (new i = 1; i <= MaxClients; i++)
 	{	
 		if (!IsValidClient(i) || i == g_InfoBot)
-			continue;
-		
+			continue;	
+
 		if (!IsFakeClient(i) && !g_bKickStatus[i])
 			QueryClientConVar(i, "fps_max", ConVarQueryFinished:FPSCheck, i);
+
+		//overlay check
+		if (g_bOverlay[i] && GetEngineTime()-g_fLastOverlay[i] > 5.0)
+			g_bOverlay[i] = false;
 		
 		//Scoreboard			
 		if (!g_bPause[i]) 
@@ -138,13 +178,29 @@ public Action:MainTimer2(Handle:timer)
 			if (!IsFakeClient(i) && !g_pr_Calculating[i])
 				CreateTimer(0.0, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
-				
-		//Last Cords & Angles
+		
+		
 		if (IsPlayerAlive(i)) 
-		{
+		{	
+			//spec hud
+			SpecListMenuAlive(i);					
+			
+			//challenge check
+			if (g_bChallenge_Request[i])
+			{
+				new Float:time= GetEngineTime() - g_fChallenge_RequestTime[i];
+				if (time>20.0)
+				{
+					PrintToChat(i, "%t", "ChallengeRequestExpired", RED,WHITE,YELLOW);
+					g_bChallenge_Request[i] = false;
+				}
+			}
+			//Last Cords & Angles
 			GetClientAbsOrigin(i,g_fPlayerCordsLastPosition[i]);
 			GetClientEyeAngles(i,g_fPlayerAnglesLastPosition[i]);
 		}
+		else
+			SpecListMenuDead(i);
 	}
 	
 	//clean weapons on ground
@@ -172,38 +228,7 @@ public Action:CreateMapButtons(Handle:timer)
 	db_selectMapButtons();
 }
 
-public Action:OnDeathTimer(Handle:Timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))
-	{
-		new team = GetClientTeam(client);
-		if ( team != 1)
-		{	
-			if (g_bClimbersMenuOpen[client])
-				g_bClimbersMenuwasOpen[client] = true;
-			
-			//kill timer
-			if (g_bTimeractivated[client] && (GetClientTeam(client) > 1)  && !g_bSpectate[client])
-			{
-				g_bTimeractivated[client] = false;
-				g_fStartTime[client] = -1.0;
-				g_fCurrentRunTime[client] = -1.0;
-			}		
-		}
-	}
-}
-
 public Action:KickPlayer(Handle:Timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))
-	{
-		decl String:szReason[64];
-		Format(szReason, 64, "Please set your fps_max between 120 and 300");		
-		KickClient(client, "%s", szReason);
-	}
-}
-
-public Action:KickPlayer2(Handle:Timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
@@ -364,65 +389,20 @@ public Action:SetClanTag(Handle:timer, any:client)
 	//new rank
 	if (oldrank && g_bPointSystem)
 		if (!StrEqual(g_pr_rankname[client], old_pr_rankname, false) && IsValidClient(client))
-		{
-			if (g_bColoredChatRanks)
-				CPrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,GRAY, g_pr_chat_coloredrank[client]);
-			else
-				PrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,RED, g_pr_rankname[client]);
-		}
-}
-
-public Action:ResetSlowdownTimer(Handle:timer, any:client)
-{
-	g_bSlowDownCheck[client]=false;	
-}
-
-public Action:SettingsEnforcerTimer(Handle:timer)
-{
-	if (g_bEnforcer && !g_bProMode)		
-		ServerCommand("kz_prespeed_cap 380.0;sv_staminalandcost 0;sv_maxspeed 320; sv_staminajumpcost 0; sv_gravity 800; sv_airaccelerate 100; sv_friction 4.8;sv_accelerate 6.5;sv_maxvelocity 2000;sv_cheats 0"); 	
-	else
-	if (g_bEnforcer && g_bProMode)		
-		ServerCommand("sv_airaccelerate 100;sv_staminalandcost 0.0;sv_staminajumpcost 0.0;sv_stopspeed 75;sv_maxspeed 320; sv_gravity 800; sv_friction 4;sv_accelerate 5;sv_maxvelocity 2000;sv_cheats 0");
-	return Plugin_Continue;
+			CPrintToChat(client,"%t","SkillGroup", MOSSGREEN, WHITE, GRAY,GRAY, g_pr_chat_coloredrank[client]);
 }
 
 public Action:TerminateRoundTimer(Handle:timer)
 {
-	//PrintToChatAll("[%cMAP%c] 0..",LIGHTRED,WHITE);
 	CS_TerminateRound(1.0, CSRoundEnd_CTWin, true);
 }
 
 
-public Action:MainTimer(Handle:timer)
-{
-	if (g_bRoundEnd)
-		return Plugin_Continue;
-	for (new client = 1; client <= MaxClients; client++)
-	{		
-		if (IsValidClient(client))
-		{			
-			if(IsPlayerAlive(client))
-			{
-				InfoTimerAlive(client);
-				AliveMainTimer(client);	
-			}
-			else
-				DeadHud(client);				
-		}
-	}	
-	return Plugin_Continue;		
-}
 
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client) && !StrEqual(g_sWelcomeMsg,""))
 		CPrintToChat(client, "%s", g_sWelcomeMsg);
-}
-
-public Action:OverlayTimer(Handle:timer, any:client)
-{
-	g_bOverlay[client]=false;
 }
 
 public Action:HelpMsgTimer(Handle:timer, any:client)
@@ -473,22 +453,23 @@ public Action:CenterMsgTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
-		if (g_bRestoreCMsg[client])
+		if (g_bRestorePositionMsg[client])
 		{
-			CreateTimer(3.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 			g_bOverlay[client]=true;
+			g_fLastOverlay[client] = GetEngineTime();
 			PrintHintText(client,"%t", "PositionRestored");
 		}
 		
-		if (!g_bAutoTimer && IsPlayerAlive(client) && !g_bRestoreCMsg[client])
+		if (!g_bAutoTimer && IsPlayerAlive(client) && !g_bRestorePositionMsg[client])
 		{
-			CreateTimer(3.5, OverlayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+			g_fLastOverlay[client] = GetEngineTime();
 			g_bOverlay[client]=true;
 			PrintHintText(client,"%t", "TimerStartReminder");
 		}
-		g_bRestoreCMsg[client]=false;
+		g_bRestorePositionMsg[client]=false;
 	}
 }
+
 
 public Action:ClimbersMenuTimer(Handle:timer, any:client)
 {
@@ -519,28 +500,3 @@ public Action:HideRadar(Handle:timer, any:client)
 	}
 }
 
-public Action:OpenMapTimes(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))
-	{
-		decl String:szSteamId[32];
-		GetClientAuthString(client, szSteamId, 32);		
-		db_viewRecord(client, szSteamId, g_szMapName);
-	}
-}
-
-// Credits: Team Limit Bypass by Zephyrus
-//https://forums.alliedmods.net/showthread.php?t=219812
-public Action:Timer_OnMapStart(Handle:timer, any:data)
-{
-	
-	g_TSpawns=0;
-	g_CTSpawns=0;
-
-	new ent = -1;
-	while((ent = FindEntityByClassname(ent, "info_player_counterterrorist")) != -1) ++g_CTSpawns;
-	ent = -1;
-	while((ent = FindEntityByClassname(ent, "info_player_terrorist")) != -1) ++g_TSpawns;
-
-	return Plugin_Stop;
-}

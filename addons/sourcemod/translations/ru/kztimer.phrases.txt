@@ -342,11 +342,6 @@
 		"#format"   "{1:c},{2:c},{3:c},{4:s}"
 		"ru"        "[{1}KZ{2}] Для справки, напиши {3}!helpmenu{4} в чат"
 	}
-	"SteamGroup"
-	{
-		"#format"   "{1:c},{2:c}"
-		"ru"        "[{1}KZ{2}] http://steamcommunity.com/groups/kztimer/"
-	}
 	"NewGlobalRecord102Pro"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c}"
@@ -968,15 +963,25 @@
 		"#format"   "{1:c},{2:c},{3:c},{4:.3f},{5:c},{6:c},{7:c},{8:c},{9:c}"
 		"ru"       "[{1}KZ{2}] Твой престрейф слишком большой. ({3}{4}{5}/{6}300.0{7} max) {8}WJ{9}"
 	}
-	"ClimbersMenu1"
+	"ClimbersMenu1_1"
 	{
 		"#format"   "{1:i}"
 		"ru"       "Чекпоинт #{1}"
 	}
-	"ClimbersMenu2"
+	"ClimbersMenu2_1"
 	{
 		"#format"   "{1:i}"
 		"ru"       "Телепорт #{1}"
+	}
+	"ClimbersMenu1_2"
+	{
+		"#format"   "{1:i}"
+		"ru"       "СП #{1}"
+	}
+	"ClimbersMenu2_2"
+	{
+		"#format"   "{1:i}"
+		"ru"       "ТП #{1}"
 	}
 	"ClimbersMenu3"
 	{
@@ -1016,6 +1021,14 @@
 		"ru"       "Чекпоинт"
 	}
 	"ClimbersMenu12"
+	{
+		"ru"       "Телепорт"
+	}
+	"ClimbersMenu13"
+	{
+		"ru"       "Чекпоинт"
+	}
+	"ClimbersMenu14"
 	{
 		"ru"       "Телепорт"
 	}
@@ -1118,5 +1131,5 @@
 	{
 		"#format"   "{1:c},{2:c},{3:i},{4:c}"
 		"ru"        " {1}[{2}{3} блок{4}]"
-	}
+	}		
 }

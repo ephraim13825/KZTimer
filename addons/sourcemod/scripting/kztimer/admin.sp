@@ -58,7 +58,7 @@ public KzAdminMenu(client)
 	Format(szTmp, sizeof(szTmp), "KZ Timer %s Admin Menu\nNoclip: bind KEY +noclip",VERSION); 	
 	SetMenuTitle(adminmenu, szTmp);
 	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers)
-		AddMenuItem(adminmenu, "[1.] Recalculate player rankings", "[1.] Recalculate player rankings",ITEMDRAW_DISABLED);
+		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
 	else
 	{	
 		if (!g_pr_RankingRecalc_InProgress)
@@ -71,9 +71,9 @@ public KzAdminMenu(client)
 	AddMenuItem(adminmenu, "[4.] Set stop button", "[4.] Set stop button");
 	AddMenuItem(adminmenu, "[5.] Remove buttons", "[5.] Remove buttons");
 	if (g_bEnforcer)
-		Format(szTmp, sizeof(szTmp), "[6.] Settings enforcer  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[6.] KZ settings enforcer  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[6.] Settings enforcer  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[6.] KZ settings enforcer  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bgodmode)
 		Format(szTmp, sizeof(szTmp), "[7.] Godmode  -  Enabled"); 	
@@ -96,9 +96,9 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[10.] Autorespawn  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bCleanWeapons)
-		Format(szTmp, sizeof(szTmp), "[11.] Clean weapons  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[11.] Strip weapons  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[11.] Clean weapons  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[11.] Strip weapons  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bRestore)
 		Format(szTmp, sizeof(szTmp), "[12.] Restore function  -  Enabled"); 	
@@ -135,96 +135,76 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[18.] Prestrafe  -  Disabled"); 	
 	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bfpsCheck)
-		Format(szTmp, sizeof(szTmp), "[19.] FPS check  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[19.] FPS check  -  Disabled"); 				
-	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bPointSystem)
-		Format(szTmp, sizeof(szTmp), "[20.] Player point system  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[19.] Player point system  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[20.] Player point system  -  Disabled"); 	
+		Format(szTmp, sizeof(szTmp), "[19.] Player point system  -  Disabled"); 	
 	AddMenuItem(adminmenu, szTmp, szTmp);			
 	if (g_bCountry)
-		Format(szTmp, sizeof(szTmp), "[21.] Player country tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[20.] Player country tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[21.] Player country tag  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[20.] Player country tag  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bPlayerSkinChange)
-		Format(szTmp, sizeof(szTmp), "[22.] Allows custom models  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[21.] Allow custom models  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[22.] Allows custom models  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[21.] Allow custom models  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bNoClipS)
-		Format(szTmp, sizeof(szTmp), "[23.] +noclip  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[22.] +noclip  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[23.] +noclip (admin/vip excluded)  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[22.] +noclip (admin/vip excluded)  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bJumpStats)
-		Format(szTmp, sizeof(szTmp), "[24.] Jumpstats  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[24.] Jumpstats  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBhop)
-		Format(szTmp, sizeof(szTmp), "[25.] AutoBhop (only surf_/bhop_ maps)  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[24.] AutoBhop (only surf_/bhop_ maps)  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[25.] AutoBhop  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[24.] AutoBhop  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBan)
-		Format(szTmp, sizeof(szTmp), "[26.] AntiCheat auto-ban  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[25.] AntiCheat auto-ban  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[26.] AntiCheat auto-ban  -  Disabled"); 			
-	AddMenuItem(adminmenu, szTmp, szTmp);
-	if (g_bMultiplayerBhop)
-		Format(szTmp, sizeof(szTmp), "[27.] Multiplayer bunnyhop  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[27.] Multiplayer bunnyhop  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[25.] AntiCheat auto-ban  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAdminClantag)
-		Format(szTmp, sizeof(szTmp), "[28.] Admin clan tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[26.] Admin clan tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[28.] Admin clan tag  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[26.] Admin clan tag  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bVipClantag)
-		Format(szTmp, sizeof(szTmp), "[29.] VIP clan tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[27.] VIP clan tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[29.] VIP clan tag  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[27.] VIP clan tag  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);		
 	if (g_bMapEnd)
-		Format(szTmp, sizeof(szTmp), "[30.] Allow map changes  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[28.] Allow map changes  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[30.] Allow map changes  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[28.] Allow map changes  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bConnectMsg)
-		Format(szTmp, sizeof(szTmp), "[31.] Connect message  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[29.] Connect message  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[31.] Connect message  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bColoredChatRanks)
-		Format(szTmp, sizeof(szTmp), "[32.] Colored chat ranks  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[32.] Colored chat ranks  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bAllowCpOnBhopPlattforms)
-		Format(szTmp, sizeof(szTmp), "[33.] Checkpoints on bhop plattforms  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[33.] Checkpoints on bhop plattforms  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[29.] Connect message  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bInfoBot)
-		Format(szTmp, sizeof(szTmp), "[34.] Info bot  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[30.] Info bot  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[34.] Info bot  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bProMode)
-		Format(szTmp, sizeof(szTmp), "[35.] Pro mode  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[35.] Pro mode  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);			
-	if (g_bAttackSpamProtection)
-		Format(szTmp, sizeof(szTmp), "[36.] Attack spam protection  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[36.] Attack spam protection  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[30.] Info bot  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);		
+	if (g_bAttackSpamProtection)
+		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bMultiTouching)
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop multi touching  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop multi touching  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
 	if (g_AdminMenuLastPage[client] < 6)
@@ -265,7 +245,7 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 			}
 			else
 			{
-				for(new i = 66; i < MAX_PR_PLAYERS; i++) 
+				for(new i = 66; i <	MAX_PR_PLAYERS; i++) 
 					g_bProfileRecalc[i]=false;	
 				g_bTop100Refresh = false;
 				g_bManualRecalc = false;
@@ -384,129 +364,101 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		}	
 		if(param2 == 18)
 		{
-			if (!g_bfpsCheck)
-				ServerCommand("kz_fps_check 1");
-			else
-				ServerCommand("kz_fps_check 0");
-		}
-		if(param2 == 19)
-		{
 			if (!g_bPointSystem)
 				ServerCommand("kz_point_system 1");
 			else
 				ServerCommand("kz_point_system 0");
 		}	
-		if(param2 == 20)
+		if(param2 == 19)
 		{
 			if (!g_bCountry)
 				ServerCommand("kz_country_tag 1");
 			else
 				ServerCommand("kz_country_tag 0");
 		}	
-		if(param2 == 21)
+		if(param2 == 20)
 		{
 			if (!g_bPlayerSkinChange)
 				ServerCommand("kz_custom_models 1");
 			else
 				ServerCommand("kz_custom_models 0");
 		}	
-		if(param2 == 22)
+		if(param2 == 21)
 		{
 			if (!g_bNoClipS)
 				ServerCommand("kz_noclip 1");
 			else
 				ServerCommand("kz_noclip 0");
 		}
-		if(param2 == 23)
+		if(param2 == 22)
 		{
 			if (!g_bJumpStats)
 				ServerCommand("kz_jumpstats 1");
 			else
 				ServerCommand("kz_jumpstats 0");
 		}	
-		if(param2 == 24)
+		if(param2 == 23)
 		{
 			if (!g_bAutoBhop)
 				ServerCommand("kz_auto_bhop 1");
 			else
 				ServerCommand("kz_auto_bhop 0");
 		}			
-		if(param2 == 25)
+		if(param2 == 24)
 		{
 			if (!g_bAutoBan)
 				ServerCommand("kz_anticheat_auto_ban 1");
 			else
 				ServerCommand("kz_anticheat_auto_ban 0");
 		}
-		if(param2 == 26)
-		{
-			if (!g_bMultiplayerBhop)
-				ServerCommand("kz_multiplayer_bhop 1");
-			else
-				ServerCommand("kz_multiplayer_bhop 0");
-		}	
-		if(param2 == 27)
+		if(param2 == 25)
 		{
 			if (!g_bAdminClantag)
 				ServerCommand("kz_admin_clantag 1");
 			else
 				ServerCommand("kz_admin_clantag 0");
 		}	
-		if(param2 == 28)
+		if(param2 == 26)
 		{
 			if (!g_bVipClantag)
 				ServerCommand("kz_vip_clantag 1");
 			else
 				ServerCommand("kz_vip_clantag 0");
 		}	
-		if(param2 == 29)
+		if(param2 == 27)
 		{
 			if (!g_bMapEnd)
 				ServerCommand("kz_map_end 1");
 			else
 				ServerCommand("kz_map_end 0");
 		}	
-		if(param2 == 30)
+		if(param2 == 28)
 		{
 			if (!g_bConnectMsg)
 				ServerCommand("kz_connect_msg 1");
 			else
 				ServerCommand("kz_connect_msg 0");
 		}	
-		if(param2 == 31)
-		{
-			if (!g_bColoredChatRanks)
-				ServerCommand("kz_colored_chatranks 1");
-			else
-				ServerCommand("kz_colored_chatranks 0");
-		}
-		if(param2 == 32)
-		{
-			if (!g_bAllowCpOnBhopPlattforms)
-				ServerCommand("kz_checkpoints_on_bhop_plattforms 1");
-			else
-				ServerCommand("kz_checkpoints_on_bhop_plattforms 0");
-		}
-		if(param2 == 33)
+		if(param2 == 29)
 		{
 			if (!g_bInfoBot)
 				ServerCommand("kz_info_bot 1");
 			else
 				ServerCommand("kz_info_bot 0");
 		}	
-		if(param2 == 34)
-		{
-			if (!g_bProMode)
-				ServerCommand("kz_pro_mode 1");
-			else
-				ServerCommand("kz_pro_mode 0");
-		}
-		if(param2 == 35)
+		if(param2 == 30)
 		{
 			if (!g_bAttackSpamProtection)
 				ServerCommand("kz_attack_spam_protection 1");
 			else
 				ServerCommand("kz_attack_spam_protection 0");
+		}
+		if(param2 == 31)
+		{
+			if (!g_bMultiTouching)
+				ServerCommand("kz_bhop_multi_touching 1");
+			else
+				ServerCommand("kz_bhop_multi_touching 0");
 		}
 		g_AdminMenuLastPage[param1] = param2;
 		if (menu != INVALID_HANDLE)

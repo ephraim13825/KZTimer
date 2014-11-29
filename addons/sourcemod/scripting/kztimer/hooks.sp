@@ -12,6 +12,12 @@ public Action:Event_OnFire(Handle:event, const String:name[], bool:dontBroadcast
 			if (g_AttackCounter[client] < 41)
 			{
 				g_AttackCounter[client]++;
+				if (StrContains(weapon,"grenade",true) != -1 || StrContains(weapon,"flash",true) != -1)
+				{
+					g_AttackCounter[client] = g_AttackCounter[client] + 9;
+					if (g_AttackCounter[client] > 41)
+						g_AttackCounter[client] = 41;
+				}
 			}
 		}
 	}
@@ -25,17 +31,14 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 	{	
 		g_fStartCommandUsed_LastTime[client] = GetEngineTime();
 		g_js_bPlayerJumped[client] = false;
-		g_bSlowDownCheck[client] = false;
 		g_SpecTarget[client] = -1;	
 		g_bOnGround[client] = true;
 		g_MouseAbsCount[client] = 0;
-		g_SpeedRefreshCount[client] = 0;
 		g_bPause[client] = false;
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityRenderMode(client, RENDER_NORMAL);
 		
 		//strip weapons
-		//CreateTimer(0.0, SetPlayerWeapons, client,TIMER_FLAG_NO_MAPCHANGE);
 		if ((GetClientTeam(client) > 1) && IsValidClient(client))
 		{			
 			StripAllWeapons(client);
@@ -86,16 +89,6 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 			SetEntPropString(client, Prop_Send, "m_szArmsModel", g_sArmModel);
 			SetEntityModel(client,  g_sPlayerModel);
 		}		
-		
-		//1st spawn?
-		if (g_bFirstTeamJoin[client])		
-		{
-			CreateTimer(1.5, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-			CreateTimer(15.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-			CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
-			CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
-			g_bFirstTeamJoin[client] = false;
-		}
 
 		//1st spawn & t/ct
 		if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))		
@@ -249,11 +242,7 @@ public Action:Say_Hook(client, const String:command[], argc)
 		else
 		{
 			decl String:szChatRank[64];
-			if (g_bColoredChatRanks)
-				Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);
-			else
-				Format(szChatRank, 64, "%s",g_pr_rankname[client]);
-			
+			Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);	
 			
 			if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
 			{						
@@ -320,6 +309,7 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 	new team = GetEventInt(event, "team");
 	if(team == 1)
 	{
+		SpecListMenuDead(client);
 		if (!g_bFirstSpawn[client])
 		{
 			GetClientAbsOrigin(client,g_fPlayerCordsRestore[client]);
@@ -333,7 +323,7 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 				g_fStartPauseTime[client] = g_fStartPauseTime[client] - g_fPauseTime[client];	
 		}
 		g_bSpectate[client] = true;
-		PrintToChat(client, "%t", "SpecInfo",MOSSGREEN,WHITE,GREEN,WHITE);
+		//PrintToChat(client, "%t", "SpecInfo",MOSSGREEN,WHITE,GREEN,WHITE);
 		if (g_bPause[client])
 			g_bPauseWasActivated[client]=true;
 		g_bPause[client]=false;
@@ -341,18 +331,6 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 	return Plugin_Continue;
 }
 
-public OnMapVoteStarted()
-{
-   	for(new client = 1; client <= MAXPLAYERS; client++)
-	{
-		g_bMenuOpen[client] = true;
-		if (g_bClimbersMenuOpen[client])
-			g_bClimbersMenuwasOpen[client]=true;
-		else
-			g_bClimbersMenuwasOpen[client]=false;		
-		g_bClimbersMenuOpen[client] = false;
-	}
-}
 
 public Action:Hook_SetTransmit(entity, client) 
 { 
@@ -411,25 +389,46 @@ public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 	return Plugin_Continue;
 }  
 
+
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	g_bRoundEnd=true;
+		
+	//Unhook ent stuff
+	new ent = -1;
+	SDKUnhook(0,SDKHook_Touch,Touch_Wall);	
+	while((ent = FindEntityByClassname(ent,"func_breakable")) != -1)
+		SDKUnhook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_illusionary")) != -1)
+		SDKUnhook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_wall")) != -1)
+		SDKUnhook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent, "trigger_push")) != -1)
+		SDKUnhook(ent,SDKHook_Touch,Push_Touch);
 	return Plugin_Continue;
 }
 
 // OnRoundRestart
 public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	FindNHookWalls();
-	HookTrigger();
-	g_bRoundEnd=false;
-	db_selectMapButtons();
-	OnPluginPauseChange(false);
-	return Plugin_Continue; 
-}
+	//hook ent stuff
+	new ent = -1;
+	SDKHook(0,SDKHook_Touch,Touch_Wall);	
+	while((ent = FindEntityByClassname(ent,"func_breakable")) != -1)
+		SDKHook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_illusionary")) != -1)
+		SDKHook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent,"func_wall")) != -1)
+		SDKHook(ent,SDKHook_Touch,Touch_Wall);
+	ent = -1;
+	while((ent = FindEntityByClassname(ent, "trigger_push")) != -1)
+		SDKHook(ent,SDKHook_Touch,Push_Touch);
 
-public Action:Event_OnRoundStart2(Handle:event, const String:name[], bool:dontBroadcast)
-{
 	new iEnt;
 	for(new i = 0; i < sizeof(EntityList); i++)
 	{
@@ -438,6 +437,47 @@ public Action:Event_OnRoundStart2(Handle:event, const String:name[], bool:dontBr
 			AcceptEntityInput(iEnt, "Disable");
 			AcceptEntityInput(iEnt, "Kill");
 		}
+	}
+		
+	g_bRoundEnd=false;
+	db_selectMapButtons();
+	OnPluginPauseChange(false);
+	return Plugin_Continue; 
+}
+
+public OnPlayerThink(entity)
+{
+	SetEntPropEnt(entity, Prop_Send, "m_bSpotted", 0); 
+}
+
+
+//Credits: Timer by zipcore
+//https://github.com/Zipcore/Timer/
+public Action:Touch_Wall(ent,client)
+{
+	if(IsValidClient(client))
+	{
+		if(!(GetEntityFlags(client)&FL_ONGROUND)  && g_js_bPlayerJumped[client])
+		{
+			new Float:origin[3], Float:temp[3];
+			GetGroundOrigin(client, origin);
+			GetClientAbsOrigin(client, temp);
+			if(temp[2] - origin[2] <= 0.2)
+			{
+				ResetJump(client);
+			}
+		}
+	}
+	return Plugin_Continue;
+}
+
+//Credits: Timer by zipcore
+//https://github.com/Zipcore/Timer/
+public Action:Push_Touch(ent,client)
+{
+	if(IsValidClient(client) && g_js_bPlayerJumped[client])
+	{
+		ResetJump(client);
 	}
 	return Plugin_Continue;
 }
@@ -468,35 +508,17 @@ public Action:Hook_OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &d
 	return Plugin_Continue;
 }
 
-//hide enemies from radar
-public Hook_Radar(client)
-{
-	SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0); 
-}
-
 //fpscheck
 public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const String:cvarName[], const String:cvarValue[])
 {
 	if (IsValidClient(client) && !IsFakeClient(client) && !g_bKickStatus[client])
 	{
-		new fps_max = StringToInt(cvarValue);  
-		if (g_bfpsCheck)
-		{		    
-			if (fps_max < 120 || fps_max > 300 || fps_max<=0)
-			{
-				CreateTimer(10.0, KickPlayer, client, TIMER_FLAG_NO_MAPCHANGE);
-				PrintToChat(client, "%t", "KickMsg", DARKRED,WHITE,RED,WHITE,fps_max);
-				g_bKickStatus[client]=true;
-			}
-		}
-		if (!g_bKickStatus[client])
-		{			  
-			if (fps_max > 0 && fps_max < 120)
-			{
-				CreateTimer(10.0, KickPlayer2, client, TIMER_FLAG_NO_MAPCHANGE);
-				g_bKickStatus[client]=true;
-			}
-		}
+		new fps_max = StringToInt(cvarValue);  	  
+		if (fps_max > 0 && fps_max < 120)
+		{
+			CreateTimer(10.0, KickPlayer, client, TIMER_FLAG_NO_MAPCHANGE);
+			g_bKickStatus[client]=true;
+		}	
 	}
 }
 
@@ -536,22 +558,20 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	if (g_js_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
 		g_js_GroundFrames[client]++;
 
-	if (g_js_GroundFrames[client] > 10 && g_bOnBhopPlattform[client])
+	if (g_js_GroundFrames[client] > 15 && g_bOnBhopPlattform[client] && !g_js_bPlayerJumped[client])
 		g_bOnBhopPlattform[client] = false;
 		
 	//some methods..	
 	if(IsPlayerAlive(client))	
 	{	
-		MenuRefresh(client);
-		g_SpeedRefreshCount[client]++;
-		if (g_SpeedRefreshCount[client] >= 8)
-		{
-			g_SpeedRefreshCount[client] = 0;
-			g_fSpeed[client] = GetSpeed(client);
-		}
+		//menu refreshing
+		MenuTitleRefreshing(client);	
+		
+		//get player speed
+		g_fSpeed[client] = GetSpeed(client);
 		
 		//undo check
-		if(!g_bAllowCpOnBhopPlattforms && (g_bUndo[client] || g_bUndoTimer[client]))
+		if(g_bUndo[client] || g_bUndoTimer[client])
 		{
 			buttons &= ~IN_JUMP;
 			buttons &= ~IN_DUCK;
@@ -565,14 +585,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
+		
 		//movement modifications
-		if (!g_bProMode && !IsFakeClient(client))	
-			SpeedCap(client);	
-		else
-		{
-			ProMode_Slowdown(client);
-			ProMode_SpeeCap(client);
-		}
+		SpeedCap(client);	
 		AutoBhopFunction(client, buttons);
 		Prestrafe(client,mouse[0], buttons);
 
@@ -591,6 +606,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}
 		}
 		
+		//hook mod enabled?
 		if (g_bHookMod)
 		{
 			if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
@@ -600,7 +616,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}
 		}
 		
-		//jumpstats/timer
+		//several methods
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
 		NoClipCheck(client);
@@ -611,10 +627,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
 		CalcLastJumpHeight(client, buttons, origin);		
-		//anticheat
 		BhopHackAntiCheat(client, buttons);
-		StrafeHackAntiCheat(client, ang, buttons);
-		//ljblock
+
+		//LJ Blocks
 		if (!g_js_bPlayerJumped[client] && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_JUMP)))
 		{
 			decl Float:temp[3], Float: pos[3];
@@ -643,7 +658,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	}
 		
 	
-	// postthink jumpstats (landing)	
+	// jumpstats (landing)	
 	if(GetEntityFlags(client) & FL_ONGROUND && !g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
 	{		
 		GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
@@ -652,11 +667,12 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			Postthink(client);
 	}	
 				
-	//reset/save current values
+	// reset/save current values
 	if (GetEntityFlags(client) & FL_ONGROUND)
+	{
 		g_fLastPositionOnGround[client] = origin;
-	if (GetEntityFlags(client) & FL_ONGROUND)
-		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];		
+		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];
+	}
 	if (!(GetEntityFlags(client) & FL_ONGROUND) && g_js_bPlayerJumped[client] == false)
 		g_js_GroundFrames[client] = 0;			
 	g_fLastAngles[client] = ang;
@@ -669,34 +685,25 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-	new Float:time = GetEngineTime();	
+
+	new Float: flEngineTime = GetEngineTime()
 	//noclip check
-	new Float:last = time - g_fLastTimeNoClipUsed[client];
-	if (last < 4.0)
+	new Float:flDiff = flEngineTime - g_fLastTimeNoClipUsed[client];
+	if (flDiff < 4.0)
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, Float:{0.0,0.0,-100.0});
-	
-	g_fLastJump[client] = time;
+	g_fLastJump[client] = flEngineTime;
+	g_fAirTime[client] = flEngineTime;
 	new bool:touchwall = WallCheck(client);	
-	g_fAirTime[client] = GetEngineTime();
 	if (g_bJumpStats && !touchwall)
 		Prethink(client, Float:{0.0,0.0,0.0},0.0);
 }
 			
-public OnEntityCreated(client, const String:classname[]) 
-{ 
-	if (IsValidClient(client))
-	{	
-		if(StrEqual(classname, "player"))   
-			SDKHook(client, SDKHook_StartTouch, OnTouch);
-	}
-}
-
 public Hook_PostThinkPost(entity)
 {
 	SetEntProp(entity, Prop_Send, "m_bInBuyZone", 0);
 } 
 
-public OnTouch(client, other)
+public Hook_OnTouch(client, other)
 {
 	if (IsValidClient(client) && IsPlayerAlive(client))
 	{
@@ -713,11 +720,51 @@ public OnTouch(client, other)
 	}
 }  
 
+public Action:Event_JoinTeamFailed(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	if(!client || !IsClientInGame(client))
+		return Plugin_Continue;
+	new EJoinTeamReason:m_eReason = EJoinTeamReason:GetEventInt(event, "reason");
+	new m_iTs = GetTeamClientCount(CS_TEAM_T);
+	new m_iCTs = GetTeamClientCount(CS_TEAM_CT);
+	switch(m_eReason)
+	{
+		case k_OneTeamChange:
+		{
+			return Plugin_Continue;
+		}
+
+		case k_TeamsFull:
+		{
+			if(m_iCTs == g_CTSpawns && m_iTs == g_TSpawns)
+				return Plugin_Continue;
+		}
+		case k_TTeamFull:
+		{
+			if(m_iTs == g_TSpawns)
+				return Plugin_Continue;
+		}
+		case k_CTTeamFull:
+		{
+			if(m_iCTs == g_CTSpawns)
+				return Plugin_Continue;
+		}
+		default:
+		{
+			return Plugin_Continue;
+		}
+	}
+	ChangeClientTeam(client, g_SelectedTeam[client]);
+
+	return Plugin_Handled;
+}
+
 public Teleport_OnStartTouch(const String:output[], caller, client, Float:delay)
 {
 	if (IsValidClient(client))
-	{
-		if (!g_bAllowCpOnBhopPlattforms && (GetEntityFlags(client) & FL_ONGROUND))
+	{	
+		if (GetEntityFlags(client) & FL_ONGROUND)
 			g_bOnBhopPlattform[client]=true;
 		g_bValidTeleport[client]=true;
 	}
@@ -855,105 +902,4 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 			}
 		}
 	}
-}
-
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
-FindNHookWalls()
-{
-	SDKHook(0,SDKHook_Touch,Touch_Wall);
-	new ent = -1;
-	while((ent = FindEntityByClassname(ent,"func_breakable")) != -1)
-
-	SDKHook(ent,SDKHook_Touch,Touch_Wall);
-
-	ent = -1;
-	while((ent = FindEntityByClassname(ent,"func_illusionary")) != -1)
-
-	SDKHook(ent,SDKHook_Touch,Touch_Wall);
-
-	ent = -1;
-	while((ent = FindEntityByClassname(ent,"func_wall")) != -1)
-	SDKHook(ent,SDKHook_Touch,Touch_Wall);
-}
-
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
-public Action:Touch_Wall(ent,client)
-{
-	if(IsValidClient(client))
-	{
-		if(!(GetEntityFlags(client)&FL_ONGROUND)  && g_js_bPlayerJumped[client])
-		{
-			new Float:origin[3], Float:temp[3];
-			GetGroundOrigin(client, origin);
-			GetClientAbsOrigin(client, temp);
-			if(temp[2] - origin[2] <= 0.2)
-			{
-				ResetJump(client);
-			}
-		}
-	}
-	return Plugin_Continue;
-}
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
-HookTrigger()
-{
-	new ent = -1;
-	while((ent = FindEntityByClassname(ent, "trigger_push")) != -1)
-		SDKHook(ent,SDKHook_Touch,Push_Touch);
-}
-
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
-public Action:Push_Touch(ent,client)
-{
-	if(IsValidClient(client) && g_js_bPlayerJumped[client])
-	{
-		ResetJump(client);
-	}
-	return Plugin_Continue;
-}
-
-// Credits: Team Limit Bypass by Zephyrus
-//https://forums.alliedmods.net/showthread.php?t=219812
-public Action:Event_JoinTeamFailed(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if(!client || !IsClientInGame(client))
-		return Plugin_Continue;
-	new EJoinTeamReason:m_eReason = EJoinTeamReason:GetEventInt(event, "reason");
-	new m_iTs = GetTeamClientCount(CS_TEAM_T);
-	new m_iCTs = GetTeamClientCount(CS_TEAM_CT);
-	switch(m_eReason)
-	{
-		case k_OneTeamChange:
-		{
-			return Plugin_Continue;
-		}
-
-		case k_TeamsFull:
-		{
-			if(m_iCTs == g_CTSpawns && m_iTs == g_TSpawns)
-				return Plugin_Continue;
-		}
-		case k_TTeamFull:
-		{
-			if(m_iTs == g_TSpawns)
-				return Plugin_Continue;
-		}
-		case k_CTTeamFull:
-		{
-			if(m_iCTs == g_CTSpawns)
-				return Plugin_Continue;
-		}
-		default:
-		{
-			return Plugin_Continue;
-		}
-	}
-	ChangeClientTeam(client, g_SelectedTeam[client]);
-
-	return Plugin_Handled;
 }

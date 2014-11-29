@@ -494,12 +494,12 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 			if (SQL_FetchFloat(hndl, 0) == -1.0 && SQL_FetchFloat(hndl, 1) == -1.0 && SQL_FetchFloat(hndl, 2) == -1.0) 
 			{
 				g_bRestoreC[client] = false;
-				g_bRestoreCMsg[client] = false;
+				g_bRestorePositionMsg[client] = false;
 			}
 			else
 			{
 				g_bRestoreC[client] = true;
-				g_bRestoreCMsg[client]=true;
+				g_bRestorePositionMsg[client]=true;
 			}
 		}
 	}
@@ -654,7 +654,7 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 					Format(szVr, 255, "WJ:            %.3f       %i      %.2f   %.2f  %.1f    %i%c", wjrecord,wjstrafes,wjpre,wjmax,wjheight,wjsync,PERCENT);	
 				AddMenuItem(menu, szVr, szVr);	
 			}	
-			if (ljtrue && !g_bPreStrafe && !g_bProMode)
+			if (ljtrue && !g_bPreStrafe)
 				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %cLJ PRE%c = TakeOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW,WHITE);	
 			//SetMenuPagination(menu, 5);
 			SetMenuPagination(menu, MENU_NO_PAGINATION); 
