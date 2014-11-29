@@ -31,7 +31,6 @@ This function doesn't work for maps which use 1 entity for more than 1 bhop bloc
 - new native methods: KZTimer_EmulateStartButtonPress, KZTimer_EmulateStopButtonPress and KZTimer_GetCurrentTime (These methods allow players to create start and end zones with 3rd party plugins or a 'stage addon' for KZTimer)
 - removed unnecessary server cvars (cleanup): kz_recalc_top100_on_mapstart, kz_pro_mode, kz_fps_check (< 120 fps check remains), kz_multiplayer_bhop, kz_colored_chatranks and kz_checkpoints_on_bhop_plattforms (colored chat ranks and multiplayer bhop hard-coded enabled and kz_checkpoints_on_bhop_plattforms hard-coded disabled from now on)
 - map chooser plugin is not longer required to run KZTimer
-- new kz config name KZTimerGlobal.cfg
 - updated all language files
 - minor performance tweaks
 
