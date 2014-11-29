@@ -1,4 +1,4 @@
-#KZTimer 1.58 Final Version
+#KZTimer 1.59 Final Version
 
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
@@ -19,6 +19,20 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 
 Changelog
 =======
+
+- fixed a minor multibhop bug
+- fixed he/flash grenade attack spamming by adding "1 he/flash counts like 9 shots" to kz_attack_spam_protection
+- increased USP weapon speed to 250.0 even if kz_prestrafe is disabled
+- added auto-creation of spawn points (32 per team) on map start (spawnpoints7 plugin is not longer necessary)
+- added server cvar kz_bhop_multi_touching (on/off - Allows players to touch a single bhop block more than once (0 required for global records)
+Addtional information: KZTimer compares your last bhop block with the current block when "disabled". If you touch a block twice you will be teleported back to the start of the section.
+This function doesn't work for maps which use 1 entity for more than 1 bhop block because these blocks share the same entity/block id. Fault of the mapper.. e.g. bhop_areaportal_v1
+- new native methods: KZTimer_EmulateStartButtonPress, KZTimer_EmulateStopButtonPress and KZTimer_GetCurrentTime (These methods allow players to create start and end zones with 3rd party plugins or a 'stage addon' for KZTimer)
+- removed unnecessary server cvars (cleanup): kz_recalc_top100_on_mapstart, kz_pro_mode, kz_fps_check (< 120 fps check remains), kz_multiplayer_bhop, kz_colored_chatranks and kz_checkpoints_on_bhop_plattforms (colored chat ranks and multiplayer bhop hard-coded enabled and kz_checkpoints_on_bhop_plattforms hard-coded disabled from now on)
+- map chooser plugin is not longer required to run KZTimer
+- new kz config name KZTimerGlobal.cfg
+- updated all language files
+- minor performance tweaks
 
 v1.58
 - fixed missing viewmodel after somebody uses !spec
