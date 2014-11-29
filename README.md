@@ -20,6 +20,7 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 
+v1.59
 - fixed a minor multibhop bug
 - fixed he/flash grenade attack spamming by adding "1 he/flash counts like 9 shots" to kz_attack_spam_protection
 - increased USP weapon speed to 250.0 even if kz_prestrafe is disabled
