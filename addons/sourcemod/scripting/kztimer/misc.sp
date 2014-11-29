@@ -1759,26 +1759,29 @@ public MenuTitleRefreshing(client)
 	if (GetClientMenu(client) == MenuSource_None)
 	{
 		g_bMenuOpen[client] = false;
-		g_bClimbersMenuOpen[client] = false;
+		g_bClimbersMenuOpen[client] = false;		
 	}	
 
 	//Timer Panel
 	if (!g_bSayHook[client])
 	{
-		//refresh ClimbersMenu when timer active
 		if (g_bTimeractivated[client])
 		{
 			if (g_bClimbersMenuOpen[client] == false)
 				PlayerPanel(client);
-			else	
-				if (g_bClimbersMenuOpen[client] && !g_bMenuOpen[client])
-					ClimbersMenu(client);
-				else
-					if (g_bClimbersMenuwasOpen[client]  && !g_bMenuOpen[client])
-					{
-						g_bClimbersMenuwasOpen[client]=false;
-						ClimbersMenu(client);	
-					}
+		}
+		
+		//refresh ClimbersMenu when timer active
+		if (g_bTimeractivated[client])
+		{
+			if (g_bClimbersMenuOpen[client] && !g_bMenuOpen[client])
+				ClimbersMenu(client);
+			else
+				if (g_bClimbersMenuwasOpen[client]  && !g_bMenuOpen[client])
+				{
+					g_bClimbersMenuwasOpen[client]=false;
+					ClimbersMenu(client);	
+				}
 			//Check Time
 			if (g_fCurrentRunTime[client] > g_fPersonalRecordPro[client] && !g_bMissedProBest[client] && g_OverallTp[client] == 0 && !g_bPause[client])
 			{
@@ -2195,8 +2198,9 @@ public CenterHudAlive(client)
 			{
 				g_bClimbersMenuwasOpen[client]=false;
 				ClimbersMenu(client);	
-			}	
-		PlayerPanel(client);			
+			}
+			else			
+				PlayerPanel(client);			
 	}
 		
 	if (g_bInfoPanel[client])
