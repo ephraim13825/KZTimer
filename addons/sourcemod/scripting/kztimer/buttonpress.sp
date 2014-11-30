@@ -11,6 +11,7 @@ public ButtonPress(const String:name[], caller, activator, Float:delay)
 	GetEntPropString(caller, Prop_Data, "m_iName", targetname, sizeof(targetname));
 	if(StrEqual(targetname,"climb_startbutton"))
 	{
+		g_bLegitButtons[activator] = true;
 		Call_StartForward(hStartPress);
 		Call_PushCell(activator);
 		Call_Finish();
@@ -37,24 +38,27 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 	new Float: speed = GetSpeed(activator);
 	if(StrEqual(targetname,"climb_startbuttonx") && speed < 251.0)
 	{		
+		g_bLegitButtons[activator] = false;
 		Call_StartForward(hStartPress);
 		Call_PushCell(activator);
 		Call_Finish();
 	} 
 	else if(StrEqual(targetname,"climb_endbuttonx")) 
 	{
+		g_bLegitButtons[activator] = false;
 		Call_StartForward(hEndPress);
 		Call_PushCell(activator);
 		Call_Finish();
 	}
 }  
-
 // - Climb Button OnStartPress -
 public CL_OnStartTimerPress(client)
 {	
 	if (!IsFakeClient(client))
-	{
-		if (g_bNewReplay[client] || !(GetEntityFlags(client) & FL_ONGROUND))
+	{	
+		if (g_bNewReplay[client])
+			return;
+		if (!(GetEntityFlags(client) & FL_ONGROUND) && g_bLegitButtons[client])
 			return;
 	}
 		

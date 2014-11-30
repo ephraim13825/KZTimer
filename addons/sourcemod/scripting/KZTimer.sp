@@ -361,6 +361,7 @@ new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
 new bool:g_bLoaded[MAXPLAYERS+1];
+new bool:g_bLegitButtons[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
 new bool:g_bLjStarDest[MAXPLAYERS + 1];
 new bool:g_bLJBlockValidJumpoff[MAXPLAYERS + 1];
@@ -644,7 +645,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	hStartPress = CreateGlobalForward("CL_OnStartTimerPress", ET_Ignore, Param_Cell);
 	hEndPress = CreateGlobalForward("CL_OnEndTimerPress", ET_Ignore, Param_Cell);
 	CreateNative("KZTimer_GetTimerStatus", Native_GetTimerStatus);
-	CreateNative("KZTimer_StopPanelRefreshing", Native_StopUpdatingOfClimbersMenu);
+	CreateNative("KZTimer_StopUpdatingOfClimbersMenu", Native_StopUpdatingOfClimbersMenu);
 	CreateNative("KZTimer_StopTimer", Native_StopTimer);
 	CreateNative("KZTimer_EmulateStartButtonPress", Native_EmulateStartButtonPress);
 	CreateNative("KZTimer_EmulateStopButtonPress", Native_EmulateStopButtonPress);
@@ -2328,13 +2329,16 @@ public Native_GetCurrentTime(Handle:plugin, numParams)
 	
 public Native_EmulateStartButtonPress(Handle:plugin, numParams)
 {
+	g_bLegitButtons[GetNativeCell(1)] = false;
 	CL_OnStartTimerPress(GetNativeCell(1));
 }
 	
 public Native_EmulateStopButtonPress(Handle:plugin, numParams)
 {
+	g_bLegitButtons[GetNativeCell(1)] = false;
 	CL_OnEndTimerPress(GetNativeCell(1))
-}	
+}		
+
 
 //MACRODOX BHOP PROTECTION
 //https://forums.alliedmods.net/showthread.php?p=1678026

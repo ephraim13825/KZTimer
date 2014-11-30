@@ -730,8 +730,7 @@ public SpecPlayer(client,args)
 				{
 					ChangeClientTeam(client, 1);
 					SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", i);  
-					SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
-					SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);	
+					SetEntProp(client, Prop_Send, "m_iObserverMode", 4);	
 					return;
 				}
 			}

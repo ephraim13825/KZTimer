@@ -26,7 +26,7 @@ public __pl_KZTimer_SetNTVOptional()
 {
 	MarkNativeAsOptional("KZTimer_GetTimerStatus");
 	MarkNativeAsOptional("KZTimer_StopTimer");
-	MarkNativeAsOptional("KZTimer_StopPanelRefreshing");
+	MarkNativeAsOptional("KZTimer_StopUpdatingOfClimbersMenu");
 	MarkNativeAsOptional("KZTimer_EmulateStartButtonPress");	
 	MarkNativeAsOptional("KZTimer_EmulateStopButtonPress");
 	MarkNativeAsOptional("KZTimer_GetCurrentTime");
