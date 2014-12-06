@@ -4,11 +4,12 @@ Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
 
 **Please read the following information carefully (!!):**
+- Download includes DHooks2 Extention, Cleaner Extention and latest GeoIP database
 - Ranking system is based on your mapcycle.txt file (keep it always up to date)
 - A very large sqlite database might cause server lags (i prefer a mysql database)
 - The climbers menu of KZTimer blocks menus of other plugins. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
 - You can give map makers a mapper tag which allows them to get access to noclip. (addons\sourcemod\configs\kztimer\mapmakers.txt )
-
+- Datatable warnings are harmless as long as server logging is disabled
 
 **About KZTimer**
 - SQLite & MySQL support
