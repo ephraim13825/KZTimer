@@ -2279,7 +2279,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_auto_timer %i", g_bAutoTimer);
 	PrintToConsole(client, "kz_autoheal %i", g_Autohealing_Hp);
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
-	PrintToConsole(client, "kz_bhop_multi_touching %b", g_bMultiTouching);
+	PrintToConsole(client, "kz_bhop_single_touch %b", g_bSingleTouching);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);

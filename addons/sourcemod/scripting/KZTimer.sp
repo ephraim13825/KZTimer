@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.59"
+#define VERSION "1.6"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -227,8 +227,8 @@ new Handle:g_hPlayerSkinChange = INVALID_HANDLE;
 new bool:g_bPlayerSkinChange;
 new Handle:g_hJumpStats = INVALID_HANDLE;
 new bool:g_bJumpStats;
-new Handle:g_hMultiTouching = INVALID_HANDLE;
-new bool:g_bMultiTouching;
+new Handle:g_hSingleTouching = INVALID_HANDLE;
+new bool:g_bSingleTouching;
 new Handle:g_hCountry = INVALID_HANDLE;
 new bool:g_bCountry;
 new Handle:g_hAutoRespawn = INVALID_HANDLE;
@@ -738,9 +738,9 @@ public OnPluginStart()
 	g_bPauseServerside    = GetConVarBool(g_hPauseServerside);
 	HookConVarChange(g_hPauseServerside, OnSettingChanged);
 
-	g_hMultiTouching    = CreateConVar("kz_bhop_multi_touching", "0", "on/off - Allows players to touch a single bhop block more than once. KZTimer compares your last bhop block with the current block when disabled. If you touch a block twice you will be teleported back to the start of the section. This function doesn't work for maps which use 1 entity for more than 1 bhop block because these blocks share the same entity/block id. Fault of the mapper.. e.g. bhop_areaportal_v1", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_bMultiTouching    = GetConVarBool(g_hMultiTouching);
-	HookConVarChange(g_hMultiTouching, OnSettingChanged);
+	g_hSingleTouching    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a bhop block multiple times. KZTimer compares your last bhop block with the current block when disabled. If you touch a block twice you will be teleported back to the start of the section. This function doesn't work for maps which use 1 entity for more than 1 bhop block because these blocks share the same entity/block id. Fault of the mapper.. e.g. bhop_areaportal_v1", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bSingleTouching    = GetConVarBool(g_hSingleTouching);
+	HookConVarChange(g_hSingleTouching, OnSettingChanged);
 	
 	g_hcvarRestore    = CreateConVar("kz_restore", "1", "on/off - Restoring of time and last position after reconnect", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bRestore        = GetConVarBool(g_hcvarRestore);
@@ -2078,12 +2078,12 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 			g_bJumpStats = false;
 	}	
-	if(convar == g_hMultiTouching)
+	if(convar == g_hSingleTouching)
 	{
 		if(newValue[0] == '1')		
-			g_bMultiTouching = true;
+			g_bSingleTouching = true;
 		else
-			g_bMultiTouching = false;
+			g_bSingleTouching = false;
 	}	
 	if(convar == g_hAutoBhop)
 	{

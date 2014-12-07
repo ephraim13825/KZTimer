@@ -243,11 +243,16 @@ public SetServerTags()
 {
 	new Handle:CvarHandle;	
 	CvarHandle = FindConVar("sv_tags");
-	decl String:szServerTags[1024];
-	GetConVarString(CvarHandle, szServerTags, 1024);
+	decl String:szServerTags[2048];
+	GetConVarString(CvarHandle, szServerTags, 2048);
+	if (StrContains(szServerTags,"KZTimer",true) == -1)
+	{
+		Format(szServerTags, 2048, "%s, KZTimer",szServerTags);
+		SetConVarString(CvarHandle, szServerTags);		
+	}
 	if (StrContains(szServerTags,"KZTimer 1.",true) == -1 && StrContains(szServerTags,"Tickrate",true) == -1)
 	{
-		Format(szServerTags, 1024, "%s, KZTimer %s, Tickrate %i",szServerTags,VERSION,g_Server_Tickrate);
+		Format(szServerTags, 2048, "%s, KZTimer %s, Tickrate %i",szServerTags,VERSION,g_Server_Tickrate);
 		SetConVarString(CvarHandle, szServerTags);
 	}
 	if (CvarHandle != INVALID_HANDLE)
@@ -2450,15 +2455,16 @@ public PerformStats(client, target)
 	}
 }
 
-//Credits: Macrodox by Inami
+//MACRODOX BHOP PROTECTION
 //https://forums.alliedmods.net/showthread.php?p=1678026
 public GetClientStats(client, String:string[], length)
 {
+	new Float:perf =  g_fafAvgPerfJumps[client] * 100;
 	new String:map[128];
 	new String:szName[64];
 	GetClientName(client,szName,64);
 	GetCurrentMap(map, 128);
-	Format(string, length, "%cPlayer%c: %s - %cLast bhops%c: %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i (%cAvg%c: %.1f/%.1f %cPerf%c: %.2f)",	
+	Format(string, 512, "%cPlayer%c: %s - %cScroll pattern%c: %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %cAvg jumps/speed%c: %.1f/%.1f %cperfect jump ratio%c: %.2f%c",	
 	LIMEGREEN,
 	WHITE,
 	szName,
@@ -2490,68 +2496,66 @@ public GetClientStats(client, String:string[], length)
     g_aaiLastJumps[client][23],
     g_aaiLastJumps[client][24],
     g_aaiLastJumps[client][25],
-    g_aaiLastJumps[client][26],
-    g_aaiLastJumps[client][27],
-    g_aaiLastJumps[client][28],
-    g_aaiLastJumps[client][29],
-	GRAY,
+	LIMEGREEN,
 	WHITE,
     g_fafAvgJumps[client],
     g_fafAvgSpeed[client],
-	GRAY,
+	LIMEGREEN,
 	WHITE,
-    g_fafAvgPerfJumps[client]);
+    perf,
+	PERCENT);
 }
 
-//Credits: Macrodox by Inami
+//MACRODOX BHOP PROTECTION - modified by 1NutWunDeR
 //https://forums.alliedmods.net/showthread.php?p=1678026
 public GetClientStatsLog(client, String:string[], length)
 {
-    new Float:origin[3];
-    GetEntPropVector(client, Prop_Send, "m_vecOrigin", origin);
-    new String:map[128];
-    GetCurrentMap(map, 128);
-    Format(string, length, "%L Avg bhop ground frames: %f Avg bhop speed: %f Perfection: %f %s %f %f %f Last: %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
-    client,
-    g_fafAvgJumps[client],
-    g_fafAvgSpeed[client],
-    g_fafAvgPerfJumps[client],
-    map,
-    origin[0],
-    origin[1],
-    origin[2],
-    g_aaiLastJumps[client][0],
-    g_aaiLastJumps[client][1],
-    g_aaiLastJumps[client][2],
-    g_aaiLastJumps[client][3],
-    g_aaiLastJumps[client][4],
-    g_aaiLastJumps[client][5],
-    g_aaiLastJumps[client][6],
-    g_aaiLastJumps[client][7],
-    g_aaiLastJumps[client][8],
-    g_aaiLastJumps[client][9],
-    g_aaiLastJumps[client][10],
-    g_aaiLastJumps[client][11],
-    g_aaiLastJumps[client][12],
-    g_aaiLastJumps[client][13],
-    g_aaiLastJumps[client][14],
-    g_aaiLastJumps[client][15],
-    g_aaiLastJumps[client][16],
-    g_aaiLastJumps[client][17],
-    g_aaiLastJumps[client][18],
-    g_aaiLastJumps[client][19],
-    g_aaiLastJumps[client][20],
-    g_aaiLastJumps[client][21],
-    g_aaiLastJumps[client][22],
-    g_aaiLastJumps[client][23],
-    g_aaiLastJumps[client][24],
-    g_aaiLastJumps[client][25],
-    g_aaiLastJumps[client][26],
-    g_aaiLastJumps[client][27],
-    g_aaiLastJumps[client][28],
-    g_aaiLastJumps[client][29]);
+	new Float:perf =  g_fafAvgPerfJumps[client] * 100;
+	new Float:origin[3];
+	GetEntPropVector(client, Prop_Send, "m_vecOrigin", origin);
+	new String:map[128];
+	GetCurrentMap(map, 128);
+	Format(string, length, "%L Avg scroll pattern: %f Avg speed: %f Perfect jump ratio: %.2f%c %s %f %f %f Scroll pattern (last jumps): %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
+	client,
+	g_fafAvgJumps[client],
+	g_fafAvgSpeed[client],
+	perf,
+	PERCENT,
+	map,
+	origin[0],
+	origin[1],
+	origin[2],
+	g_aaiLastJumps[client][0],
+	g_aaiLastJumps[client][1],
+	g_aaiLastJumps[client][2],
+	g_aaiLastJumps[client][3],
+	g_aaiLastJumps[client][4],
+	g_aaiLastJumps[client][5],
+	g_aaiLastJumps[client][6],
+	g_aaiLastJumps[client][7],
+	g_aaiLastJumps[client][8],
+	g_aaiLastJumps[client][9],
+	g_aaiLastJumps[client][10],
+	g_aaiLastJumps[client][11],
+	g_aaiLastJumps[client][12],
+	g_aaiLastJumps[client][13],
+	g_aaiLastJumps[client][14],
+	g_aaiLastJumps[client][15],
+	g_aaiLastJumps[client][16],
+	g_aaiLastJumps[client][17],
+	g_aaiLastJumps[client][18],
+	g_aaiLastJumps[client][19],
+	g_aaiLastJumps[client][20],
+	g_aaiLastJumps[client][21],
+	g_aaiLastJumps[client][22],
+	g_aaiLastJumps[client][23],
+	g_aaiLastJumps[client][24],
+	g_aaiLastJumps[client][25],
+	g_aaiLastJumps[client][26],
+	g_aaiLastJumps[client][27],
+	g_aaiLastJumps[client][28],
+	g_aaiLastJumps[client][29]);
 }
-
 //MultiPlayer Bunnyhop
 //https://forums.alliedmods.net/showthread.php?p=808724
 public Teleport(client, bhop)
@@ -2879,7 +2883,7 @@ public Entity_Touch(bhop,client)
 
 public Entity_Touch2(bhop,client) 
 {
-	if(0 < client <= MaxClients && !g_bMultiTouching  && !IsFakeClient(client)) 
+	if(0 < client <= MaxClients && g_bSingleTouching  && !IsFakeClient(client)) 
 	{		
 		g_bOnBhopPlattform[client]=true;			
 		if (bhop == g_LastGroundEnt[client] && (GetEngineTime() - g_fLastTimeBhopBlock[client]) <= 0.9)

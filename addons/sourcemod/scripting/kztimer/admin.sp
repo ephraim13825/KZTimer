@@ -200,10 +200,10 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bMultiTouching)
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop multi touching  -  Enabled"); 	
+	if (g_hSingleTouching)
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop multi touching  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -455,7 +455,7 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		}
 		if(param2 == 31)
 		{
-			if (!g_bMultiTouching)
+			if (!g_hSingleTouching)
 				ServerCommand("kz_bhop_multi_touching 1");
 			else
 				ServerCommand("kz_bhop_multi_touching 0");
