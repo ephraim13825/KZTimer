@@ -1,5 +1,3 @@
-#KZTimer 1.59 Final Version
-
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
 
