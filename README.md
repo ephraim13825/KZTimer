@@ -21,6 +21,9 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 
+v1.6
+- renamed server cvar kz_bhop_multi_touching to kz_bhop_single_touch
+
 v1.59
 - fixed a minor multibhop bug
 - fixed he/flash grenade attack spamming by adding "1 he/flash counts like 9 shots" to kz_attack_spam_protection
