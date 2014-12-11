@@ -738,7 +738,7 @@ public OnPluginStart()
 	g_bPauseServerside    = GetConVarBool(g_hPauseServerside);
 	HookConVarChange(g_hPauseServerside, OnSettingChanged);
 
-	g_hSingleTouching    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a bhop block multiple times. KZTimer compares your last bhop block with the current block when disabled. If you touch a block twice you will be teleported back to the start of the section. This function doesn't work for maps which use 1 entity for more than 1 bhop block because these blocks share the same entity/block id. Fault of the mapper.. e.g. bhop_areaportal_v1", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hSingleTouching    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a single bhop block multiple times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bSingleTouching    = GetConVarBool(g_hSingleTouching);
 	HookConVarChange(g_hSingleTouching, OnSettingChanged);
 	
