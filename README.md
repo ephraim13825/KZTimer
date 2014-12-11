@@ -18,7 +18,7 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 
 Changelog
 =======
-
+<SPOILER>
 v1.6
 - renamed server cvar kz_bhop_multi_touching to kz_bhop_single_touch
 
@@ -232,3 +232,4 @@ v1.30
 - fixed some minor issues for workshop maps
 - -> fixed: Exception list is not loaded.
 - -> fixed: Timer freezes, gets stuck and when you stop the time it sometimes takes 10 seconds to register.
+</SPOILER>
