@@ -690,15 +690,15 @@ public OnPluginStart()
 	//Convars	
 	CreateConVar("kztimer_version", VERSION, "kztimer Version.", FCVAR_DONTRECORD|FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 
-	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - shows a player connect message with country and disconnect message in chat", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - Enables a player connect message with country and disconnect message in chat", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
 		
-	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - maps wont change after the time has run out if disabled. mp_ignore_round_win_conditions is set to 1 and prevents map/round endings (mp_timelimit must be > 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - Allows map changes on after the timelimit has run out (mp_timelimit must be greater than 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMapEnd     = GetConVarBool(g_hMapEnd);
 	HookConVarChange(g_hMapEnd, OnSettingChanged);
 	
-	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
 	
@@ -706,7 +706,7 @@ public OnPluginStart()
 	g_bPreStrafe     = GetConVarBool(g_hPreStrafe);
 	HookConVarChange(g_hPreStrafe, OnSettingChanged);	
 
-	g_hInfoBot	  = CreateConVar("kz_info_bot", "0", "on/off - provides information about nextmap and timeleft in his player name (requires .nav files for each map. Those files can be blank!)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hInfoBot	  = CreateConVar("kz_info_bot", "0", "on/off - provides information about nextmap and timeleft in his player name", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bInfoBot     = GetConVarBool(g_hInfoBot);
 	HookConVarChange(g_hInfoBot, OnSettingChanged);		
 	
@@ -730,7 +730,7 @@ public OnPluginStart()
 	g_bGoToServer     = GetConVarBool(g_hGoToServer);
 	HookConVarChange(g_hGoToServer, OnSettingChanged);	
 	
-	g_hcvargodmode = CreateConVar("kz_godmode", "1", "on/off - Godmode (immortal)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hcvargodmode = CreateConVar("kz_godmode", "1", "on/off - unlimited hp", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bgodmode     = GetConVarBool(g_hcvargodmode);
 	HookConVarChange(g_hcvargodmode, OnSettingChanged);
 
@@ -746,7 +746,7 @@ public OnPluginStart()
 	g_bRestore        = GetConVarBool(g_hcvarRestore);
 	HookConVarChange(g_hcvarRestore, OnSettingChanged);
 	
-	g_hcvarNoBlock    = CreateConVar("kz_noblock", "1", "on/off - Player blocking", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hcvarNoBlock    = CreateConVar("kz_noblock", "1", "on/off - Player no blocking", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bNoBlock        = GetConVarBool(g_hcvarNoBlock);
 	HookConVarChange(g_hcvarNoBlock, OnSettingChanged);	
 	
@@ -754,7 +754,7 @@ public OnPluginStart()
 	g_bAttackSpamProtection       = GetConVarBool(g_hAttackSpamProtection);
 	HookConVarChange(g_hAttackSpamProtection, OnSettingChanged);
 	
-	g_hAllowCheckpoints = CreateConVar("kz_checkpoints", "1", "on/off - Allows player to make checkpoints", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAllowCheckpoints = CreateConVar("kz_checkpoints", "1", "on/off - Allows player to do checkpoints", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAllowCheckpoints     = GetConVarBool(g_hAllowCheckpoints);
 	HookConVarChange(g_hAllowCheckpoints, OnSettingChanged);	
 	
@@ -762,7 +762,7 @@ public OnPluginStart()
 	g_bEnforcer     = GetConVarBool(g_hEnforcer);
 	HookConVarChange(g_hEnforcer, OnSettingChanged);
 	
-	g_hAutoRespawn = CreateConVar("kz_autorespawn", "1", "on/off - Players respawn if they die", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoRespawn = CreateConVar("kz_autorespawn", "1", "on/off - Auto respawn", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoRespawn     = GetConVarBool(g_hAutoRespawn);
 	HookConVarChange(g_hAutoRespawn, OnSettingChanged);	
 
@@ -770,11 +770,11 @@ public OnPluginStart()
 	g_bRadioCommands     = GetConVarBool(g_hRadioCommands);
 	HookConVarChange(g_hRadioCommands, OnSettingChanged);	
 	
-	g_hAutohealing_Hp 	= CreateConVar("kz_autoheal", "50", "Set HP amount for autohealing (only active when kz_godmode 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hAutohealing_Hp 	= CreateConVar("kz_autoheal", "50", "Sets HP amount for autohealing (requires kz_godmode 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_Autohealing_Hp     = GetConVarInt(g_hAutohealing_Hp);
 	HookConVarChange(g_hAutohealing_Hp, OnSettingChanged);	
 	
-	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Remove all weapons on the ground", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hCleanWeapons 	= CreateConVar("kz_clean_weapons", "1", "on/off - Removes all weapons on the ground", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bCleanWeapons     = GetConVarBool(g_hCleanWeapons);
 	HookConVarChange(g_hCleanWeapons, OnSettingChanged);
 
@@ -1012,8 +1012,8 @@ public OnPluginStart()
 	RegConsoleCmd("sm_profile", Client_Profile, "[KZTimer] opens a player profile");
 	RegConsoleCmd("sm_rank", Client_Profile, "[KZTimer] opens a player profile");
 	RegConsoleCmd("sm_options", Client_OptionMenu, "[KZTimer] opens options menu");
-	RegConsoleCmd("sm_top", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
-	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
+	RegConsoleCmd("sm_top", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
+	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
@@ -1028,7 +1028,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_bhopcheck", Command_Stats, "[KZTimer] checks bhop stats for a given player");
 	RegConsoleCmd("+noclip", NoClip, "[KZTimer] Player noclip on");
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
-	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer admin panel");
+	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer admin menu");
 	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, ADMIN_LEVEL, "[KZTimer] Recalculates player profile for given steam id");
 	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMIN_LEVEL2, "[KZTimer] Resets all player challenges (drops table challenges) - requires z flag");
 	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets all player times (drops table playertimes) - requires z flag");

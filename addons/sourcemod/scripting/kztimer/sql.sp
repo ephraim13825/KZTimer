@@ -859,7 +859,7 @@ public ContinueRecalc(client)
 	else
 	{
 		//ON CONNECT
-		if (!IsValidClient(client))
+		if (!IsValidClient(client) && IsFakeClient(client))
 			return;
 		new Float: diff = GetEngineTime() - g_fMapStartTime + 1.5;
 		if (GetClientTime(client) < diff)
@@ -1702,7 +1702,8 @@ public SQL_ViewAllRecordsCallback3(Handle:owner, Handle:hndl, const String:error
 		
 		CloseHandle(pack);
 		FormatTimeFloat(client,time,3);
-		PrintToConsole(client,"%s, Time: %s (%s), Teleports: %i, Rank: %i/%i", szMapName, g_szTime[client], szRecord_type, teleports,rank,count);
+		if (IsValidClient(client))
+			PrintToConsole(client,"%s, Time: %s (%s), Teleports: %i, Rank: %i/%i", szMapName, g_szTime[client], szRecord_type, teleports,rank,count);
 	}
 }	
 		

@@ -6,6 +6,12 @@ public Action:RefreshAdminMenu(Handle:timer, any:client)
 		KzAdminMenu(client);
 }
 
+public Action:UpdatePlayerProfile(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))	
+		db_updateStat(client);	
+}
+
 public Action:SetPlayerWeapons(Handle:timer, any:client)
 {
 	if ((GetClientTeam(client) > 1) && IsValidClient(client))
@@ -20,12 +26,6 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
 		}
 	}	
-}
-	
-public Action:UpdatePlayerProfile(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))	
-		db_updateStat(client);	
 }
 
 public Action:StartTimer(Handle:timer, any:client)
@@ -145,6 +145,7 @@ public Action:KZTimer2(Handle:timer)
 	//info bot name
 	SetInfoBotName(g_InfoBot);	
 	
+
 	for (new i = 1; i <= MaxClients; i++)
 	{	
 		if (!IsValidClient(i) || i == g_InfoBot)
@@ -156,20 +157,7 @@ public Action:KZTimer2(Handle:timer)
 		//overlay check
 		if (g_bOverlay[i] && GetEngineTime()-g_fLastOverlay[i] > 5.0)
 			g_bOverlay[i] = false;
-
-		//force settings
-		if (g_bTimeractivated[i])
-		{
-			if (StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz"))
-				SetEntPropFloat(i, Prop_Data, "m_flLaggedMovementValue", 1.0);
-			//exception for monsterjam		
-			if (g_hDbGlobal != INVALID_HANDLE)
-			{
-				if (StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz"))
-					SetEntPropFloat(i, Prop_Data, "m_flGravity", 0.0);	
-			}
-		}
-	
+		
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
@@ -195,16 +183,8 @@ public Action:KZTimer2(Handle:timer)
 		if (IsPlayerAlive(i)) 
 		{	
 			//spec hud
-			SpecListMenuAlive(i);
+			SpecListMenuAlive(i);					
 			
-			//AutBhop check
-			if (g_bAutoBhop2 && g_bTimeractivated[i])
-				g_bAutoBhopWasActive[i] = true;
-
-			if (!g_bSingleTouching && g_bTimeractivated[i])
-				g_bMultiplayerBhop2[i] = true;
-
-				
 			//challenge check
 			if (g_bChallenge_Request[i])
 			{
@@ -215,15 +195,6 @@ public Action:KZTimer2(Handle:timer)
 					g_bChallenge_Request[i] = false;
 				}
 			}
-			
-			//Last Cords & Angles
-			if (g_bCountEntities)
-			{
-				//entitycount *** see mapstart() .. an earlier check doenst count the correct number of valid map entities..
-				g_bCountEntities=false;
-				CreateTimer(1.0, EntityCount);
-			}	
-			
 			//Last Cords & Angles
 			GetClientAbsOrigin(i,g_fPlayerCordsLastPosition[i]);
 			GetClientEyeAngles(i,g_fPlayerAnglesLastPosition[i]);
@@ -249,37 +220,9 @@ public Action:KZTimer2(Handle:timer)
 			}
 		}
 	}
-	if (g_bEntityCheck)
-	{
-		new String:classname[32];
-		new ent_count = 0;
-		for (new i; i < GetEntityCount(); i++)
-		{
-			if (IsValidEdict(i) && GetEntityClassname(i, classname, 32) && (StrContains(classname, "prop") != -1))
-			{
-				ent_count++;
-			}
-		}
-		if (ent_count > g_EntityCount)
-			g_bEntityCheck = false;
-	}
 	return Plugin_Continue;
 }
 
-public Action:EntityCount(Handle:timer)
-{
-	g_EntityCount = 0;
-	new String:classname[32];
-	for (new i; i < GetEntityCount(); i++)
-	{
-		if (IsValidEdict(i) && GetEntityClassname(i, classname, 32) && (StrContains(classname, "prop") != -1))
-		{
-			g_EntityCount++;
-		}
-	}
-	g_bEntityCheck = true;
-}
-			
 public Action:CreateMapButtons(Handle:timer)
 {
 	db_selectMapButtons();
@@ -294,6 +237,7 @@ public Action:KickPlayer(Handle:Timer, any:client)
 		KickClient(client, "%s", szReason);
 	}
 }
+
 
 
 //challenge start countdown
@@ -450,9 +394,10 @@ public Action:SetClanTag(Handle:timer, any:client)
 
 public Action:TerminateRoundTimer(Handle:timer)
 {
-
 	CS_TerminateRound(1.0, CSRoundEnd_CTWin, true);
 }
+
+
 
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
@@ -524,6 +469,7 @@ public Action:CenterMsgTimer(Handle:timer, any:client)
 		g_bRestorePositionMsg[client]=false;
 	}
 }
+
 
 public Action:ClimbersMenuTimer(Handle:timer, any:client)
 {
