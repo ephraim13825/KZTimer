@@ -19,6 +19,9 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 <SPOILER>
+v1.61
+- fixed the abuse of internal color tags in chat (e.g. say {DARKRED} LOLOL {YELLOW} ^.^) - thx2 nebs and chuckles
+
 v1.6
 - renamed server cvar kz_bhop_multi_touching to kz_bhop_single_touch
 
