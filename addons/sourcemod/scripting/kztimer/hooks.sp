@@ -191,7 +191,23 @@ public Action:Say_Hook(client, const String:command[], argc)
 		StripQuotes(sText);
 		new team = GetClientTeam(client);		
 		TrimString(sText); 
-
+		
+		ReplaceString(sText,1024,"{darkred}","",false);
+		ReplaceString(sText,1024,"{green}","",false);
+		ReplaceString(sText,1024,"{lightgreen}","",false);
+		ReplaceString(sText,1024,"{blue}","",false);
+		ReplaceString(sText,1024,"{olive}","",false);
+		ReplaceString(sText,1024,"{lime}","",false);
+		ReplaceString(sText,1024,"{red}","",false);
+		ReplaceString(sText,1024,"{purple}","",false);
+		ReplaceString(sText,1024,"{grey}","",false);
+		ReplaceString(sText,1024,"{yellow}","",false);
+		ReplaceString(sText,1024,"{lightblue}","",false);
+		ReplaceString(sText,1024,"{steelblue}","",false);
+		ReplaceString(sText,1024,"{darkblue}","",false);
+		ReplaceString(sText,1024,"{pink}","",false);
+		ReplaceString(sText,1024,"{lightred}","",false);
+		
 		//empty message
 		if(StrEqual(sText, " ") || StrEqual(sText, ""))
 		{

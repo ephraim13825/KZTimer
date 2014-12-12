@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.6"
+#define VERSION "1.61"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
