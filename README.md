@@ -19,6 +19,16 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 <SPOILER>
+v1.62
+- fixed a start/stop timer bug @thx to HtC^w/Amber
+- fixed kz_country_tag 0 + timer bug
+- fixed kz_checkpoints 0 + player profile formatting bug
+- fixed prestrafe bug
+- added client command !aclog (prints in console the anticheat log of kztimer)
+- added kz_challenge_points - Allows players to bet points on challenges (default: 1)
+- updated a few language phrases
+- code optimizations
+
 v1.61
 - fixed the abuse of internal color tags in chat (e.g. say {DARKRED} LOLOL {YELLOW} ^.^) - thx2 nebs and chuckles
 
