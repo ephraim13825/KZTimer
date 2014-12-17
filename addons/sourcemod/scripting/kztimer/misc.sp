@@ -1297,7 +1297,24 @@ stock Action:PrintSpecMessageAll(client)
 	StripQuotes(szTextToAll);
 	if (StrEqual(szTextToAll,"") || StrEqual(szTextToAll," ") || StrEqual(szTextToAll,"  "))
 		return Plugin_Handled;
-
+	
+	ReplaceString(szTextToAll,1024,"{darkred}","",false);
+	ReplaceString(szTextToAll,1024,"{green}","",false);
+	ReplaceString(szTextToAll,1024,"{lightgreen}","",false);
+	ReplaceString(szTextToAll,1024,"{blue}","",false);
+	ReplaceString(szTextToAll,1024,"{olive}","",false);
+	ReplaceString(szTextToAll,1024,"{lime}","",false);
+	ReplaceString(szTextToAll,1024,"{red}","",false);
+	ReplaceString(szTextToAll,1024,"{purple}","",false);
+	ReplaceString(szTextToAll,1024,"{grey}","",false);
+	ReplaceString(szTextToAll,1024,"{yellow}","",false);
+	ReplaceString(szTextToAll,1024,"{lightblue}","",false);
+	ReplaceString(szTextToAll,1024,"{steelblue}","",false);
+	ReplaceString(szTextToAll,1024,"{darkblue}","",false);
+	ReplaceString(szTextToAll,1024,"{pink}","",false);
+	ReplaceString(szTextToAll,1024,"{lightred}","",false);
+	
+	
 	decl String:szChatRank[64];
 	Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);
 				
