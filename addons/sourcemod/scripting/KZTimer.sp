@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.61"
+#define VERSION "1.62"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -48,15 +48,13 @@
 #define HIDE_RADAR (1 << 12)
 #define HIDE_ROUNDTIME ( 1<<13 )
 #define ASSISTS_OFFSET_FROM_FRAGS 4 
-#define MAX_MAPS 1000
-#define MAX_PR_PLAYERS 10000
+#define MAX_PR_PLAYERS 20000
 #define MAX_STRAFES 100
-#define MAX_STRAFES2 5000
 #define STRAFE_A 1
 #define STRAFE_D 2
 #define STRAFE_W 3
 #define STRAFE_S 4
-#define MAX_BHOPBLOCKS 5000
+#define MAX_BHOPBLOCKS 1024
 #define BLOCK_TELEPORT 0.05
 #define BLOCK_COOLDOWN 0.1		
 #define SF_BUTTON_DONTMOVE (1<<0)		
@@ -219,6 +217,8 @@ new Handle:g_hRadioCommands = INVALID_HANDLE;
 new bool:g_bRadioCommands;
 new Handle:g_hInfoBot = INVALID_HANDLE;
 new bool:g_bInfoBot;
+new Handle:g_hChallengePoints = INVALID_HANDLE;
+new bool:g_bChallengePoints;
 new Handle:g_hGoToServer = INVALID_HANDLE;
 new bool:g_bGoToServer;
 new Handle:g_hAttackSpamProtection = INVALID_HANDLE;
@@ -340,6 +340,7 @@ new Float:g_fLastPosition[MAXPLAYERS + 1][3];
 new Float:g_fLastAngles[MAXPLAYERS + 1][3];
 new Float:g_fSpeed[MAXPLAYERS+1];
 new Float:g_fLastTimeBhopBlock[MAXPLAYERS+1];
+new Float:g_fclientAngle[MAXPLAYERS+1]
 new Float:g_fLastHeight[MAXPLAYERS+1];
 new Float:g_fRecordTime;
 new Float:g_fRecordTimePro;
@@ -367,10 +368,10 @@ new bool:g_bLjStarDest[MAXPLAYERS + 1];
 new bool:g_bLJBlockValidJumpoff[MAXPLAYERS + 1];
 new bool:g_js_bFuncMoveLinear[MAXPLAYERS+1];
 new bool:g_bUndoTimer[MAXPLAYERS+1];
+new bool:g_bHyperscroll[MAXPLAYERS+1]; 
 new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bChallenge_Checkpoints[MAXPLAYERS+1];
-new bool:g_bHyperscrollWarning[MAXPLAYERS+1];
 new bool:g_bTopMenuOpen[MAXPLAYERS+1]; 
 new bool:g_bNoClipUsed[MAXPLAYERS+1];
 new bool:g_bMenuOpen[MAXPLAYERS+1];
@@ -378,7 +379,6 @@ new bool:g_bRespawnAtTimer[MAXPLAYERS+1];
 new bool:g_bPause[MAXPLAYERS+1];
 new bool:g_bPauseWasActivated[MAXPLAYERS+1];
 new bool:g_bOverlay[MAXPLAYERS+1];
-new bool:g_bChallengeIngame[MAXPLAYERS+1];
 new bool:g_bLastButtonJump[MAXPLAYERS+1];
 new bool:g_js_bPlayerJumped[MAXPLAYERS+1];
 new bool:g_bSpectate[MAXPLAYERS+1];
@@ -389,7 +389,7 @@ new bool:g_bTop100Refresh;
 new bool:g_bClientOwnReason[MAXPLAYERS+1];
 new bool:g_bMissedTpBest[MAXPLAYERS+1];
 new bool:g_bMissedProBest[MAXPLAYERS+1];
-new bool:g_bRestoreC[MAXPLAYERS+1]; 
+new bool:g_bRestorePosition[MAXPLAYERS+1]; 
 new bool:g_bRestorePositionMsg[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuOpen[MAXPLAYERS+1];  
 new bool:g_bNoClip[MAXPLAYERS+1]; 
@@ -525,6 +525,7 @@ new g_js_LeetJump_Count[MAXPLAYERS+1];
 new g_js_MultiBhop_Count[MAXPLAYERS+1];
 new g_js_Last_Ground_Frames[MAXPLAYERS+1];
 new g_SelectedTeam[MAXPLAYERS+1];
+new g_clientAFKTime[MAXPLAYERS+1];
 new g_LastGroundEnt[MAXPLAYERS+1];
 new g_BotMimicRecordTickCount[MAXPLAYERS+1] = {0,...};
 new g_BotActiveWeapon[MAXPLAYERS+1] = {-1,...};
@@ -535,8 +536,6 @@ new g_OriginSnapshotInterval[MAXPLAYERS+1];
 new g_BotMimicTick[MAXPLAYERS+1] = {0,...};
 new g_BlockDist[MAXPLAYERS + 1];
 new g_aiJumps[MAXPLAYERS+1] = {0, ...};
-new g_aiPattern[MAXPLAYERS+1] = {0, ...};
-new g_aiPatternhits[MAXPLAYERS+1] = {0, ...};
 new g_aiAutojumps[MAXPLAYERS+1] = {0, ...};
 new g_aaiLastJumps[MAXPLAYERS+1][30];
 new g_aiIgnoreCount[MAXPLAYERS+1];
@@ -562,7 +561,6 @@ new g_OverallCp[MAXPLAYERS+1];
 new g_OverallTp[MAXPLAYERS+1];
 new g_SpecTarget[MAXPLAYERS+1];
 new g_PrestrafeFrameCounter[MAXPLAYERS+1];
-new g_LastMouseDir[MAXPLAYERS+1];
 new g_LastButton[MAXPLAYERS + 1];
 new g_CurrentButton[MAXPLAYERS+1];
 new g_MVPStars[MAXPLAYERS+1];
@@ -576,11 +574,10 @@ new String:g_szReplayNameTp[128];
 new String:g_szReplayTimeTp[128]; 
 new String:g_szChallenge_OpponentID[MAXPLAYERS+1][32]; 
 new String:g_szTimeDifference[MAXPLAYERS+1][32]; 
-new String:g_szNewTime[MAXPLAYERS+1][32];
+new String:g_szFinalTime[MAXPLAYERS+1][32];
 new String:g_szMapName[MAX_MAP_LENGTH];
 new String:g_szMapTopName[MAXPLAYERS+1][MAX_MAP_LENGTH];
 new String:g_szMenuTitleRun[MAXPLAYERS+1][255];
-new String:g_szTime[MAXPLAYERS+1][32];
 new String:g_szRecordPlayerPro[MAX_NAME_LENGTH];
 new String:g_szRecordPlayer[MAX_NAME_LENGTH];
 new String:g_szProfileName[MAXPLAYERS+1][MAX_NAME_LENGTH];
@@ -702,6 +699,10 @@ public OnPluginStart()
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
 	
+	g_hChallengePoints 	= CreateConVar("kz_challenge_points", "1", "on/off - Allows players to bet points on challenges", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bChallengePoints     = GetConVarBool(g_hChallengePoints);
+	HookConVarChange(g_hChallengePoints, OnSettingChanged);
+	
 	g_hPreStrafe = CreateConVar("kz_prestrafe", "1", "on/off - Prestrafe", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPreStrafe     = GetConVarBool(g_hPreStrafe);
 	HookConVarChange(g_hPreStrafe, OnSettingChanged);	
@@ -794,11 +795,11 @@ public OnPluginStart()
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
 	HookConVarChange(g_hBhopSpeedCap, OnSettingChanged);	
 
-	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "0.0", "Gives players x extra points for improving their time. That makes it a easier to rank up.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints   = CreateConVar("kz_ranking_extra_points_improvements", "15.0", "Gives players x extra points for improving their time.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints    = GetConVarInt(g_hExtraPoints);
 	HookConVarChange(g_hExtraPoints, OnSettingChanged);	
 
-	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "0.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time. That makes it a easier to rank up.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
+	g_hExtraPoints2   = CreateConVar("kz_ranking_extra_points_firsttime", "25.0", "Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time.", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	g_ExtraPoints2    = GetConVarInt(g_hExtraPoints2);
 	HookConVarChange(g_hExtraPoints2, OnSettingChanged);	
 	
@@ -834,7 +835,7 @@ public OnPluginStart()
 	GetConVarString(g_hArmModel,g_sArmModel,256);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
 	
-	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", "[{olive}KZ{default}] {grey}Welcome! This server is using {lime}KZ Timer","Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", " {yellow}>>{default} {grey}Welcome! This server is using {lime}KZ Timer","Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
@@ -850,7 +851,7 @@ public OnPluginStart()
 	GetConVarString(g_hReplayBotTpColor,szTpColor,256);
 	GetRGBColor(1,szTpColor);
 	
-	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "1", "on/off - auto-ban (bhop hack) including deletion of all player records - Info: There's always an anticheat log (addons/sourcemod/logs) even if autoban is disabled", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hAutoBan 	= CreateConVar("kz_anticheat_auto_ban", "1", "on/off - auto-ban (bhop hack) including deletion of their records (anti-cheat log: sourcemod/logs)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAutoBan     = GetConVarBool(g_hAutoBan);
 	HookConVarChange(g_hAutoBan, OnSettingChanged);	
 	
@@ -971,12 +972,12 @@ public OnPluginStart()
 	db_setupDatabase();
 	
 	//client commands
+	RegConsoleCmd("sm_aclog", Client_AntiCheatLog, "[KZTimer] prints the anticheat log of kztimer in your console");
 	RegConsoleCmd("sm_usp", Client_Usp, "[KZTimer] spawns a usp silencer");
 	RegConsoleCmd("sm_accept", Client_Accept, "[KZTimer] allows you to accept a challenge request");
 	RegConsoleCmd("sm_goto", Client_GoTo, "[KZTimer] teleports you to a selected player");
 	RegConsoleCmd("sm_disablegoto", Client_DisableGoTo, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_showkeys", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
-	RegConsoleCmd("sm_info", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_menusound", Client_ClimbersMenuSounds,"[KZTimer] on/off checkpoint menu sounds");
 	RegConsoleCmd("sm_sync", Client_StrafeSync,"[KZTimer] on/off strafe sync in chat");
 	RegConsoleCmd("sm_language", Client_Language, "[KZTimer] choose your language");
@@ -1017,7 +1018,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
-	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks into chat");
+	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks in chat");
 	RegConsoleCmd("sm_speed", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_pause", Client_Pause,"[KZTimer] on/off pause (timer on hold and movement frozen)");
 	RegConsoleCmd("sm_colorchat", Client_Colorchat, "[KZTimer] on/off jumpstats messages of others in chat");
@@ -1081,8 +1082,7 @@ public OnPluginStart()
 	if (LibraryExists("adminmenu") && ((topmenu = GetAdminTopMenu()) != INVALID_HANDLE))
 		OnAdminMenuReady(topmenu);
 	
-	//, EventHookMode_Post
-	//hooks
+	//events
 	HookEvent("player_spawn", Event_OnPlayerSpawn);
 	HookEvent("player_death", Event_OnPlayerDeath);
 	HookEvent("round_start",Event_OnRoundStart,EventHookMode_PostNoCopy);
@@ -1264,8 +1264,6 @@ public OnAllPluginsLoaded()
 
 public OnMapStart()
 {	
-	LoadTranslations("kztimer.phrases");	
-
 	//blocked chat commands
 	for (new x = 0; x < 256; x++)
 		Format(g_BlockedChatText[x],sizeof(g_BlockedChatText), "");
@@ -1315,24 +1313,19 @@ public OnMapStart()
 	InitPrecache();	
 	SetCashState();
 	
-	//get local map records
+	//sql queries
 	db_GetMapRecord_CP();
 	db_GetMapRecord_Pro();
-	
-	//players count
 	db_CalculatePlayerCount();
-	db_CalculatePlayerCountBigger0();
-	
-	//map ranks count
 	db_viewMapProRankCount();
 	db_viewMapTpRankCount();
-
 	
 	//timers
 	CreateTimer(0.1, KZTimer1, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(1.0, KZTimer2, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	CreateTimer(5.0, Timer_CheckClients, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(60.0, AttackTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	
+
 	//create buttons
 	CreateTimer(2.0, CreateMapButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
 		
@@ -1382,7 +1375,6 @@ public OnMapStart()
 	
 	//server infos
 	GetServerInfo();
-	
 }
 
 public OnMapEnd()
@@ -1505,6 +1497,30 @@ public OnClientConnected(client)
 
 public OnClientPutInServer(client)
 {
+	if (!IsValidClient(client))
+		return;
+			
+	if (IsFakeClient(client))
+	{
+		g_hRecordingAdditionalTeleport[client] = CreateArray(_:AdditionalTeleport);
+		CS_SetMVPCount(client,1);	
+		return;
+	}	
+	else
+		g_MVPStars[client] = 0;	
+			
+	//defaults
+	SetClientDefaults(client);
+	
+	//client country
+	GetCountry(client);		
+
+	//client language
+	if (g_bUseCPrefs && !IsFakeClient(client))
+		if (AreClientCookiesCached(client) && !g_bLoaded[client])
+			LoadCookies(client);
+			
+	//SDKHooks/Dhooks
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
 	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
@@ -1514,173 +1530,10 @@ public OnClientPutInServer(client)
 	SDKHook(client, SDKHook_Think, OnPlayerThink);
 	SDKHook(client, SDKHook_PostThink, OnPlayerThink);
 	SDKHook(client, SDKHook_PostThinkPost, OnPlayerThink);
-	
-	g_bFlagged[client] = false;
-	GetCountry(client);		
-	g_fLastOverlay[client] = GetEngineTime() - 5.0;
 	if(LibraryExists("dhooks"))
-		DHookEntity(g_hTeleport, false, client);
-	//language
-	if (g_bUseCPrefs && !IsFakeClient(client))
-		if (AreClientCookiesCached(client) && !g_bLoaded[client])
-			LoadCookies(client);
-}
-
-public OnClientAuthorized(client)
-{
-	if (g_bConnectMsg && !IsFakeClient(client))
-	{
-		decl String:s_Country[32];
-		decl String:s_clientName[32];
-		decl String:s_address[32];		
-		GetClientIP(client, s_address, 32);
-		GetClientName(client, s_clientName, 32);
-		Format(s_Country, 100, "Unknown");
-		GeoipCountry(s_address, s_Country, 100);     
-		if(!strcmp(s_Country, NULL_STRING))
-			Format( s_Country, 100, "Unknown", s_Country );
-		else				
-			if( StrContains( s_Country, "United", false ) != -1 || 
-				StrContains( s_Country, "Republic", false ) != -1 || 
-				StrContains( s_Country, "Federation", false ) != -1 || 
-				StrContains( s_Country, "Island", false ) != -1 || 
-				StrContains( s_Country, "Netherlands", false ) != -1 || 
-				StrContains( s_Country, "Isle", false ) != -1 || 
-				StrContains( s_Country, "Bahamas", false ) != -1 || 
-				StrContains( s_Country, "Maldives", false ) != -1 || 
-				StrContains( s_Country, "Philippines", false ) != -1 || 
-				StrContains( s_Country, "Vatican", false ) != -1 )
-			{
-				Format( s_Country, 100, "The %s", s_Country );
-			}				
-					
-		if (StrEqual(s_Country, "Unknown",false) || StrEqual(s_Country, "Localhost",false))
-		{	
-			for (new i = 1; i <= MaxClients; i++)
-			if (IsValidClient(i) && i != client)
-				PrintToChat(i, "%t", "Connected1", WHITE,MOSSGREEN, s_clientName, WHITE);
-		}
-		else
-		{
-			for (new i = 1; i <= MaxClients; i++)
-				if (IsValidClient(i) && i != client)
-					PrintToChat(i, "%t", "Connected2", WHITE, MOSSGREEN,s_clientName, WHITE,GREEN,s_Country);
-		}
-	}
-}
-
-
-public OnClientPostAdminCheck(client)
-{	
-	if (IsFakeClient(client))
-		g_hRecordingAdditionalTeleport[client] = CreateArray(_:AdditionalTeleport);
-
-	// reset cp array
-	for( new i = 0; i < CPLIMIT; i++ )
-		g_fPlayerCords[client][i] = Float:{0.0,0.0,0.0};
-		
-	//set default values
-	for( new i = 0; i < MAX_STRAFES; i++ )
-	{
-		g_js_Strafe_Good_Sync[client][i] = 0.0;
-		g_js_Strafe_Frames[client][i] = 0.0;
-	}
-	if (IsFakeClient(client))
-		CS_SetMVPCount(client,1);	
-	else
-		g_MVPStars[client] = 0;		
-	g_bValidTeleport[client]=false;
-	g_bNewReplay[client] = false;
-	g_bClientOwnReason[client] = false;
-	g_pr_Calculating[client] = false;
-	g_bHyperscrollWarning[client] = false;	
-	g_bTimeractivated[client] = false;	
-	g_bKickStatus[client] = false;
-	g_bChallengeIngame[client] = true;
-	g_bSpectate[client] = false;	
-	g_bFirstTeamJoin[client] = true;	
-	g_bFirstSpawn[client] = true;
-	g_bSayHook[client] = false;
-	g_bUndo[client] = false;
-	g_bUndoTimer[client] = false;
-	g_bRespawnAtTimer[client] = false;
-	g_js_bPlayerJumped[client] = false;
-	g_bRecalcRankInProgess[client] = false;
-	g_bPrestrafeTooHigh[client] = false;
-	g_bPause[client] = false;
-	g_bPositionRestored[client] = false;
-	g_bPauseWasActivated[client]=false;
-	g_bTopMenuOpen[client] = false;
-	g_bRestoreC[client] = false;
-	g_bProfileSelected[client] = false;
-	g_bRestorePositionMsg[client] = false;
-	g_bRespawnPosition[client] = false;
-	g_bNoClip[client] = false;		
-	g_bMapFinished[client] = false;
-	g_bMapRankToChat[client] = false;
-	g_bOnBhopPlattform[client] = false;
-	g_bChallenge[client] = false;
-	g_bOverlay[client]=false;
-	g_js_bFuncMoveLinear[client] = false;
-	g_bChallenge_Request[client] = false;
-	g_js_Last_Ground_Frames[client] = 11;
-	g_js_MultiBhop_Count[client] = 1;
-	g_AdminMenuLastPage[client] = 0;
-	g_OptionsMenuLastPage[client] = 0;	
-	g_MenuLevel[client] = -1;
-	g_CurrentCp[client] = -1;
-	g_AttackCounter[client] = 0;
-	g_SpecTarget[client] = -1;
-	g_CounterCp[client] = 0;
-	g_OverallCp[client] = 0;
-	g_OverallTp[client] = 0;
-	g_pr_points[client] = 0;
-	g_PrestrafeFrameCounter[client] = 0;
-	g_PrestrafeVelocity[client] = 1.0;
-	g_fCurrentRunTime[client] = -1.0;
-	g_fPlayerCordsLastPosition[client] = Float:{0.0,0.0,0.0};
-	g_fPlayerCordsUndoTp[client] = Float:{0.0,0.0,0.0};
-	g_fPlayerConnectedTime[client] = GetEngineTime();			
-	g_fLastTimeButtonSound[client] = GetEngineTime();
-	g_fLastTimeNoClipUsed[client] = -1.0;
-	g_fStartTime[client] = -1.0;
-	g_fPlayerLastTime[client] = -1.0;
-	g_js_GroundFrames[client] = 0;
-	g_fLastTimeBhopBlock[client] = GetEngineTime();
-	g_js_fJump_JumpOff_PosLastHeight[client] = -1.012345;
-	g_js_Good_Sync_Frames[client] = 0.0;
-	g_js_Sync_Frames[client] = 0.0;
-	g_js_LeetJump_Count[client] = 0;
-	g_MapRankTp[client] = 99999;
-	g_MapRankPro[client] = 99999;
-	g_OldMapRankPro[client] = 99999;
-	g_OldMapRankTp[client] = 99999;
-	g_fPauseTime[client] = 0.0;
-	g_fProfileMenuLastQuery[client] = GetEngineTime();
-	Format(g_szPlayerPanelText[client], 512, "");
-	Format(g_pr_rankname[client], 32, "");
-	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>0.0 units</font>");
+		DHookEntity(g_hTeleport, false, client);	
 	
-	//options
-	g_bInfoPanel[client]=false;
-	g_bClimbersMenuSounds[client]=true;
-	g_bEnableQuakeSounds[client]=true;
-	g_bShowNames[client]=true; 
-	g_bStrafeSync[client]=false;
-	g_bGoToClient[client]=true; 
-	g_bShowTime[client]=true; 
-	g_bHide[client]=false; 
-	g_bCPTextMessage[client]=false; 
-	g_bAdvancedClimbersMenu[client]=true;
-	g_bColorChat[client]=true; 
-	g_bShowSpecs[client]=true;
-	g_bAutoBhopClient[client]=true;
-	g_bStartWithUsp[client] = false;
-	
-	if (IsFakeClient(client))
-		return;	
-		
-	//DB
+	//get client data
 	GetClientAuthString(client, g_szSteamID[client], 32);	
  	db_viewPersonalRecords(client,g_szSteamID[client],g_szMapName);	
 	db_viewPersonalBhopRecord(client, g_szSteamID[client]);
@@ -1692,27 +1545,9 @@ public OnClientPostAdminCheck(client)
 	db_viewPlayerOptions(client, g_szSteamID[client]);	
 	
 	// ' char fix
-	decl String:szName[64];
-	decl String:szOldName[64];
-	GetClientName(client,szName,64);
-	Format(szOldName, 64,"%s ",szName);
-	ReplaceChar("'", "`", szName);
-	if (!(StrEqual(szOldName,szName)))
-	{
-		SetClientInfo(client, "name", szName);
-		SetEntPropString(client, Prop_Data, "m_szNetname", szName);
-		CS_SetClientName(client, szName);
-	}
-
-	//macrodox
-	new i;
-	while (i < 30)
-	{
-		g_aaiLastJumps[client][i] = -1;
-		i++;
-	}
+	FixPlayerName(client);
 	
-	//Restore time and position
+	//position restoring
 	if(g_bRestore)
 		db_selectLastRun(client);		
 			
@@ -1767,8 +1602,6 @@ public OnClientDisconnect(client)
 	g_fafAvgJumps[client] = 5.0;
 	g_fafAvgSpeed[client] = 250.0;
 	g_fafAvgPerfJumps[client] = 0.3333;
-	g_aiPattern[client] = 0;
-	g_aiPatternhits[client] = 0;
 	g_aiAutojumps[client] = 0;
 	g_aiIgnoreCount[client] = 0;
 	g_bFlagged[client] = false;
@@ -1791,13 +1624,20 @@ public OnClientDisconnect(client)
 
 public OnSettingChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {	
+	if(convar == g_hChallengePoints)
+	{
+		if(newValue[0] == '1')
+			g_bChallengePoints = true;
+		else
+			g_bChallengePoints = false;
+	}	
 	if(convar == g_hGoToServer)
 	{
 		if(newValue[0] == '1')
 			g_bGoToServer = true;
 		else
 			g_bGoToServer = false;
-	}	
+	}
 	if(convar == g_hPreStrafe)
 	{
 		if(newValue[0] == '1')

@@ -5,15 +5,33 @@ public Action:Client_Ljblock(client, args)
 	return Plugin_Handled;
 }
 
-public Action:Client_Language(client, args)
+public Action:Client_AntiCheatLog(client, args)
 {
 	if (!IsValidClient(client))
 			return Plugin_Handled;
-	StopClimbersMenu(client);
-	DisplayMenu(g_hLangMenu, client, MENU_TIME_FOREVER);	
+
+	decl String:sPath[PLATFORM_MAX_PATH];
+	decl String:line[512];
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
+	new Handle:fileHandle=OpenFile(sPath,"r");
+	if (fileHandle == INVALID_HANDLE)
+		PrintToChat(client, "[%cKZ%c] Anti-cheat log is empty.",MOSSGREEN,WHITE);
+	else
+	{
+		PrintToConsole(client," ");
+		PrintToConsole(client,"KZTimer Anti-cheat log file:");
+		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
+		{
+			if (StrContains(line,"hyperscrolling") == -1)
+				PrintToConsole(client, "%s", line);
+		}
+		if (fileHandle != INVALID_HANDLE)
+			CloseHandle(fileHandle);
+		PrintToConsole(client," ");
+		PrintToChat(client, "[%cKZ%c] See console for output!", MOSSGREEN,WHITE);	
+	}
 	return Plugin_Handled;
 }
-
 public LJBlockMenu(client)
 {	
 	new Handle:menu = CreateMenu(LjBlockMenuHandler);
@@ -279,6 +297,16 @@ public ChallengeMenuHandler3(Handle:menu, MenuAction:action, param1,param2)
 	}
 }
 
+public Action:Client_Language(client, args)
+{
+	if (!IsValidClient(client))
+			return Plugin_Handled;
+	StopClimbersMenu(client);
+	DisplayMenu(g_hLangMenu, client, MENU_TIME_FOREVER);	
+	return Plugin_Handled;
+}
+
+
 public Action:Client_Abort(client, args)
 {
 	if (g_bChallenge[client])
@@ -369,6 +397,21 @@ public Action:Client_Accept(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_Usp(client, args)
+{
+	if(!IsValidClient(client) || !IsPlayerAlive(client))
+		return Plugin_Handled;		
+
+	if(Client_HasWeapon(client, "weapon_hkp2000"))
+	{			
+		new weapon = Client_GetWeapon(client, "weapon_hkp2000");
+		Client_SetActiveWeapon(client, weapon);
+	}
+	else
+		GivePlayerItem(client, "weapon_usp_silencer");
+	return Plugin_Handled;
+}
+
 public Action:Client_Surrender (client, args)
 {
 	decl String:szSteamIdOpponent[32];
@@ -402,6 +445,7 @@ public Action:Client_Surrender (client, args)
 					//win ratio
 					SetEntityMoveType(client, MOVETYPE_WALK);
 					SetEntityMoveType(i, MOVETYPE_WALK);
+					
 					if (g_Challenge_Bet[client] > 0)
 					{
 						g_pr_showmsg[i] = true;
@@ -422,7 +466,6 @@ public Action:Client_Surrender (client, args)
 	}
 	return Plugin_Handled;
 }
-
 //public Action:Command_ext_Menu(client, String:command[32])
 public Action:Command_ext_Menu(client, const String:command[], argc) 
 {
@@ -518,15 +561,14 @@ public Action:Client_Undo(client, args)
 
 public Action:NoClip(client, args)
 {
-	decl String:szSteamId[32];
-	if (IsValidClient(client))					
-		GetClientAuthString(client, szSteamId, 32);	
-	if (IsValidClient(client) && (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER") || StrEqual(szSteamId,"STEAM_1:1:73507922")))
+	if (!IsValidClient(client))					
+		return Plugin_Handled;	
+	if (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER") || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922"))
 	{
 		if (!g_bMapFinished[client])
 		{
 			//BEST RANK || ADMIN || VIP
-			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(szSteamId,"STEAM_1:1:73507922") || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922") || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
 				Action_NoClip(client);
 			else
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
@@ -863,8 +905,7 @@ public CompareMenu(client,args)
 		//player ingame? new name?
 		if (!StrEqual(szPlayerName,"",false))
 		{
-			new bool:bPlayerFound=false;
-			decl String:szSteamId2[32];
+			new id = -1;
 			decl String:szName[MAX_NAME_LENGTH];
 			decl String:szName2[MAX_NAME_LENGTH];		
 			for (new i = 1; i <= MaxClients; i++)
@@ -876,14 +917,13 @@ public CompareMenu(client,args)
 					Format(szName2, MAX_NAME_LENGTH, "%s", szPlayerName); 
 					if ((StrContains(szName, szName2) != -1))
 					{
-						bPlayerFound=true;
-						GetClientAuthString(i, szSteamId2, 32);
+						id=i;
 						continue;
 					}
 				}
 			}
-			if (bPlayerFound)
-				db_viewPlayerRank2(client, szSteamId2);
+			if (id != -1)
+				db_viewPlayerRank2(client, g_szSteamID[id]);
 			else
 				db_viewPlayerAll2(client, szPlayerName);
 		}	
@@ -905,9 +945,7 @@ public CompareSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				if(StrEqual(info,szPlayerName))
 				{
-					decl String:szSteamId[32];
-					GetClientAuthString(i, szSteamId, 32);	
-					db_viewPlayerRank2(param1, szSteamId);
+					db_viewPlayerRank2(param1, g_szSteamID[param1]);
 				}
 			}
 		}
@@ -1009,12 +1047,7 @@ public ProfileMenu(client,args)
 		if (bPlayerFound)
 			db_viewPlayerRank(client, szSteamId2);
 		else
-		{
-			if(!g_bProfileSelected[client])
-				db_viewPlayerAll(client, g_szProfileName[client]);
-			else
-				db_ReOpenSelectedProfile(client, g_szProfileName[client]);
-		}
+			db_viewPlayerProfile1(client, g_szProfileName[client]);
 	}
 }
 
@@ -1403,21 +1436,6 @@ public GotoMethod(client, i)
 	}
 }
 
-public Action:Client_Usp(client, args)
-{
-	if(!IsValidClient(client) || !IsPlayerAlive(client))
-		return Plugin_Handled;		
-		
-	if(Client_HasWeapon(client, "weapon_hkp2000"))
-	{			
-		new weapon = Client_GetWeapon(client, "weapon_hkp2000");
-		Client_SetActiveWeapon(client, weapon);
-	}
-	else
-		GivePlayerItem(client, "weapon_usp_silencer");
-	return Plugin_Handled;
-}
-
 public Action:Client_GoTo(client, args) 
 {
 	if (!g_bGoToServer)
@@ -1566,23 +1584,6 @@ public InfoPanel(client)
 		g_bInfoPanel[client] = true;	
 	}
 }
-/*public Action:Client_Shownames(client, args) 
-{
-	ShowNames(client);
-	if (g_bShowNames[client])
-		PrintToChat(client, "%t", "ShowNames1", MOSSGREEN,WHITE);
-	else
-		PrintToChat(client, "%t", "ShowNames2", MOSSGREEN,WHITE);
-	return Plugin_Handled;
-}
-
-public ShowNames(client)
-{
-	if (g_bShowNames[client])
-		g_bShowNames[client] = false;
-	else
-		g_bShowNames[client] = true;		
-}*/
 
 public Action:Client_Colorchat(client, args) 
 {
@@ -1612,7 +1613,6 @@ public Action:Client_Stop(client, args)
 		g_fStartTime[client] = -1.0;
 		g_fCurrentRunTime[client] = -1.0;		
 		PrintToChat(client, "%t", "TimerStopped1",MOSSGREEN,WHITE);
-	
 	}
 	return Plugin_Handled;
 }
@@ -1631,9 +1631,10 @@ public Action:Client_bhop(client, args)
 
 public SaveClientLocation(client)
 {
-	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
+	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client]) 
 		return;
 			
+		
 		
 	if (!g_bChallenge_Checkpoints[client] && g_bChallenge[client])
 	{
@@ -1683,7 +1684,7 @@ public SaveClientLocation(client)
 
 public TeleClient(client,pos)
 {
-	if (!IsValidClient(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1) 
+	if (!IsValidClient(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1  || g_bPause[client]) 
 		return;
 		
 	if (!g_bAllowCheckpoints)
@@ -2006,7 +2007,10 @@ public TopMenu(client)
 		AddMenuItem(topmenu, "Top 100 Players", "Top 100 Players");
 	AddMenuItem(topmenu, "Top 5 Challengers", "Top 5 Challengers");
 	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 Pro Record Holders");
-	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 TP Record Holders");
+	if (g_bAllowCheckpoints)
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers");
+	else
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers",ITEMDRAW_DISABLED);
 	AddMenuItem(topmenu, "Map Top", "Map Top");	
 	if (g_bJumpStats)
 		AddMenuItem(topmenu, "Jump Top", "Jump Top");
@@ -2232,13 +2236,12 @@ public HelpPanel3(client)
 	DrawPanelText(panel, " ");	
 	DrawPanelText(panel, "!maptop <mapname> - displays map top for a given map");
 	DrawPanelText(panel, "!bhopcheck <name> - checks bhop stats for a given player");
-	DrawPanelText(panel, "!ljblock - registers a longjump block");
+	DrawPanelText(panel, "!ljblock - registers a lj block");
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
-	DrawPanelText(panel, "!ranks - prints available ranks into chat");
+	DrawPanelText(panel, "!ranks - prints in chat the available ranks");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
-	DrawPanelText(panel, "!language - opens language menu");
-	DrawPanelText(panel, " ");
-	DrawPanelText(panel, "noclip bind: bind KEY +noclip");
+	DrawPanelText(panel, "!language - opens the language menu");
+	DrawPanelText(panel, "!aclog - prints in console the anticheat log");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "exit");
@@ -2280,6 +2283,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_autoheal %i", g_Autohealing_Hp);
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
 	PrintToConsole(client, "kz_bhop_single_touch %b", g_bSingleTouching);
+	PrintToConsole(client, "kz_challenge_points %b", g_bChallengePoints);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);

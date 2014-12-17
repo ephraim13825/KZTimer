@@ -28,6 +28,35 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 	}	
 }
 
+public Action:Timer_CheckClients(Handle:Timer)
+{
+	for(new i = 1; i <= GetMaxClients(); i++)
+	{
+		if(!IsValidClient(i) || IsFakeClient(i) || !IsPlayerAlive(i))
+			continue;
+		
+		new Float:angle[3];
+		new Float:pos[3];
+		GetClientAbsAngles(i, angle);
+		GetClientAbsOrigin(i, pos);
+
+		if(g_fclientAngle[i] == angle[1] && AfkButtonCheck(pos))
+		{
+			g_clientAFKTime[i] += 5;
+			if(g_clientAFKTime[i] >= 30.0)
+			{
+				ChangeClientTeam(i, 1);
+				PrintToChat(i,"[%cKZ%c] You have been moved to spectate. Reason: Button blocking!",MOSSGREEN,WHITE);
+			}
+		}
+		else
+		{
+			g_clientAFKTime[i] = 0;
+			g_fclientAngle[i] = angle[1];
+		}
+	}
+}
+
 public Action:StartTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))	
@@ -72,8 +101,7 @@ public Action:KZTimer1(Handle:timer)
 				{
 					CreateTimer(0.0, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 					CreateTimer(10.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
-					CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
+					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
 					g_bFirstTeamJoin[client] = false;
 				}
 				CenterHudAlive(client);			
@@ -90,7 +118,7 @@ public Action:KZTimer1(Handle:timer)
 				SurfCheck(client);
 			}
 			else
-				CenterHudDead(client);		
+				CenterHudDead(client);				
 		}
 	}	
 	return Plugin_Continue;		
@@ -288,8 +316,7 @@ public Action:ProReplayTimer(Handle:timer, any:client)
 public Action:CheckChallenge(Handle:timer, any:client)
 {
 	new bool:oppenent=false;
-	decl String:szSteamId[32];
-	decl String:szSteamIdx[128];
+	decl String:szSteamId[128];
 	decl String:szName[32];
 	decl String:szNameTarget[32];
 	if (g_bChallenge[client] && IsValidClient(client) && !IsFakeClient(client))
@@ -298,8 +325,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 		{
 			if (IsValidClient(i) && i != client)
 			{	
-				GetClientAuthString(i, szSteamId, 32);		
-				if (StrEqual(szSteamId,g_szChallenge_OpponentID[client]))
+				if (StrEqual(g_szSteamID[i],g_szChallenge_OpponentID[client]))
 				{
 					oppenent=true;		
 					if (g_bChallenge_Abort[i] && g_bChallenge_Abort[client])
@@ -331,8 +357,8 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			CreateTimer(0.5, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
 			
 			//db opponent
-			Format(szSteamIdx,128,"%s",g_szChallenge_OpponentID[client]);
-			RecalcPlayerRank(64,szSteamIdx);
+			Format(szSteamId,128,"%s",g_szChallenge_OpponentID[client]);
+			RecalcPlayerRank(64,szSteamId);
 			
 			//chat msgs
 			if (IsValidClient(client))
@@ -409,15 +435,6 @@ public Action:HelpMsgTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
 		PrintToChat(client, "%t", "HelpMsg", MOSSGREEN,WHITE,GREEN,WHITE);
-}
-
-public Action:SteamGroupTimer(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))
-	{
-		PrintToChat(client, "[%cKZ%c] %cJoin the %cKZTimer steam group%c to receive latest news about KZTimer updates and new kreedz maps: http://steamcommunity.com/groups/kztimer", MOSSGREEN,WHITE,GRAY,LIMEGREEN,GRAY);
-		PrintToConsole(client, "[KZ] Join the KZTimer steam group to receive latest news about KZTimer updates and new kreedz maps: http://steamcommunity.com/groups/kztimer");	
-	}	
 }
 
 public Action:GetTakeOffSpeedTimer(Handle:timer, any:client)

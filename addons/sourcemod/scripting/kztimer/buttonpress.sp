@@ -1,7 +1,7 @@
 // buttonpress.sp
 public ButtonPress(const String:name[], caller, activator, Float:delay)
 {
-	if(!IsValidEntity(caller) || !IsValidEntity(activator))
+	if(!IsValidEntity(caller) || !IsValidClient(activator))
 		return;	
 	g_bLJBlock[activator] = false;
 	decl String:targetname[128];
@@ -27,7 +27,7 @@ public ButtonPress(const String:name[], caller, activator, Float:delay)
 // - builded Climb buttons -
 public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 {
-	if(!IsValidEntity(entity) || !IsValidEntity(activator))
+	if(!IsValidEntity(entity) || !IsValidClient(activator))
 		return;
 		
 	decl String:targetname[128];
@@ -144,13 +144,10 @@ public CL_OnStartTimerPress(client)
 			GetClientAbsOrigin(client, g_fPlayerCordsRestart[client]);
 			GetClientEyeAngles(client, g_fPlayerAnglesRestart[client]);		
 
-			//get steamid
-			decl String:szSteamId[32];
-			GetClientAuthString(client, szSteamId, 32);
-
 			//star message
 			decl String:szTpTime[32];
 			decl String:szProTime[32];
+			decl String:szTime[32];
 			if (g_fPersonalRecord[client]<=0.0)
 			{
 				Format(szTpTime, 32, "NONE");
@@ -158,16 +155,16 @@ public CL_OnStartTimerPress(client)
 			else
 			{
 				g_bMissedTpBest[client] = false;
-				FormatTimeFloat(client, g_fPersonalRecord[client], 3);
-				Format(szTpTime, 32, "%s (#%i/%i)", g_szTime[client],g_MapRankTp[client],g_MapTimesCountTp);
+				FormatTimeFloat(client, g_fPersonalRecord[client], 3,szTime,32);
+				Format(szTpTime, 32, "%s (#%i/%i)", szTime,g_MapRankTp[client],g_MapTimesCountTp);
 			}
 			if (g_fPersonalRecordPro[client]<=0.0)
 					Format(szProTime, 32, "NONE");
 			else
 			{
 				g_bMissedProBest[client] = false;
-				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
-				Format(szProTime, 32, "%s (#%i/%i)", g_szTime[client],g_MapRankPro[client],g_MapTimesCountPro);
+				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3,szTime,32);
+				Format(szProTime, 32, "%s (#%i/%i)", szTime,g_MapRankPro[client],g_MapTimesCountPro);
 			}
 			g_bOverlay[client]=true;
 			g_fLastOverlay[client] = GetEngineTime()-2.5;
@@ -233,6 +230,7 @@ public CL_OnEndTimerPress(client)
 	decl String:szNameOpponent[MAX_NAME_LENGTH];	
 	decl String:szSteamIdOpponent[32];
 	decl String:szSteamId[32];
+	decl String:szTime[32];
 	new bool:hasRecord;
 	new Float: difference;
 	g_FinishingType[client] = -1;
@@ -245,11 +243,11 @@ public CL_OnEndTimerPress(client)
 	
 	//Final time
 	g_fFinalTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];			
-	FormatTimeFloat(client, g_fFinalTime[client], 3);
-	Format(g_szNewTime[client], 32, "%s", g_szTime[client]);
+	FormatTimeFloat(client, g_fFinalTime[client], 3,szTime,32);
+	Format(g_szFinalTime[client], 32, "%s", szTime);
 	g_bOverlay[client]=true;
 	g_fLastOverlay[client] = GetEngineTime();
-	PrintHintText(client,"%t", "TimerStopped", g_szNewTime[client]);
+	PrintHintText(client,"%t", "TimerStopped", g_szFinalTime[client]);
 	
 	//calc difference
 	if (g_Tp_Final[client]==0)
@@ -258,7 +256,7 @@ public CL_OnEndTimerPress(client)
 		{
 			hasRecord=true;
 			difference = g_fPersonalRecordPro[client] - g_fFinalTime[client];
-			FormatTimeFloat(client, difference, 3);
+			FormatTimeFloat(client, difference, 3,szTime,32);
 		}
 		else
 		{
@@ -272,7 +270,7 @@ public CL_OnEndTimerPress(client)
 		{		
 			hasRecord=true;
 			difference = g_fPersonalRecord[client]-g_fFinalTime[client];
-			FormatTimeFloat(client, difference, 3);
+			FormatTimeFloat(client, difference, 3,szTime,32);
 		}	
 		else
 		{
@@ -285,10 +283,10 @@ public CL_OnEndTimerPress(client)
 		{
 			if (g_ExtraPoints > 0)
 				g_pr_multiplier[client]+=1;
-			Format(g_szTimeDifference[client], 32, "-%s", g_szTime[client]);
+			Format(g_szTimeDifference[client], 32, "-%s", szTime);
 		}
 		else
-			Format(g_szTimeDifference[client], 32, "+%s", g_szTime[client]);
+			Format(g_szTimeDifference[client], 32, "+%s", szTime);
 	}
 	
 	//Type of time

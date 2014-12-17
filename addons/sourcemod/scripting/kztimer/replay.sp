@@ -84,7 +84,7 @@ public SaveRecording(client, type)
 	
 	new iHeader[FILE_HEADER_LENGTH];
 	iHeader[_:FH_binaryFormatVersion] = BINARY_FORMAT_VERSION;
-	strcopy(iHeader[_:FH_Time], 32, g_szNewTime[client]);
+	strcopy(iHeader[_:FH_Time], 32, g_szFinalTime[client]);
 	iHeader[_:FH_tickCount] = GetArraySize(g_hRecording[client]);
 	strcopy(iHeader[_:FH_Playername], 32, szName);
 	iHeader[_:FH_Checkpoints] = g_OverallTp[client];

@@ -32,6 +32,7 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		g_fStartCommandUsed_LastTime[client] = GetEngineTime();
 		g_js_bPlayerJumped[client] = false;
 		g_SpecTarget[client] = -1;	
+		g_clientAFKTime[client] = 0;
 		g_bOnGround[client] = true;
 		g_MouseAbsCount[client] = 0;
 		g_bPause[client] = false;
@@ -104,11 +105,11 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		//restore position (before spec or last session) && Climbers Menu
 		if ((GetClientTeam(client) > 1))
 		{
-			if (g_bRestoreC[client])
+			if (g_bRestorePosition[client])
 			{			
 				g_bPositionRestored[client] = true;
 				TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
-				g_bRestoreC[client]  = false;
+				g_bRestorePosition[client]  = false;
 			}
 			else
 				if (g_bRespawnPosition[client])
@@ -244,6 +245,24 @@ public Action:Say_Hook(client, const String:command[], argc)
 			g_bSayHook[client]=false;
 			return Plugin_Continue;
 		}
+
+		decl String:szName[32];
+		GetClientName(client,szName,32);		
+		ReplaceString(szName,32,"{darkred}","",false);
+		ReplaceString(szName,32,"{green}","",false);
+		ReplaceString(szName,32,"{lightgreen}","",false);
+		ReplaceString(szName,32,"{blue}","",false);
+		ReplaceString(szName,32,"{olive}","",false);
+		ReplaceString(szName,32,"{lime}","",false);
+		ReplaceString(szName,32,"{red}","",false);
+		ReplaceString(szName,32,"{purple}","",false);
+		ReplaceString(szName,32,"{grey}","",false);
+		ReplaceString(szName,32,"{yellow}","",false);
+		ReplaceString(szName,32,"{lightblue}","",false);
+		ReplaceString(szName,32,"{steelblue}","",false);
+		ReplaceString(szName,32,"{darkblue}","",false);
+		ReplaceString(szName,32,"{pink}","",false);
+		ReplaceString(szName,32,"{lightred}","",false);
 		
 		////////////////
 		//say stuff
@@ -267,8 +286,6 @@ public Action:Say_Hook(client, const String:command[], argc)
 					g_bSayHook[client]=false;
 					return Plugin_Handled;
 				}
-				decl String:szName[32];
-				GetClientName(client,szName,32);
 				if (IsPlayerAlive(client))
 					CPrintToChatAllEx(client,"{green}%s{default} %s {teamcolor}%s{default}: %s",g_szCountryCode[client],szChatRank,szName,sText);			
 				else
@@ -285,12 +302,11 @@ public Action:Say_Hook(client, const String:command[], argc)
 						g_bSayHook[client]=false;
 						return Plugin_Handled;
 					}
-					decl String:szName[32];
-					GetClientName(client,szName,32);
 					if (IsPlayerAlive(client))
 						CPrintToChatAllEx(client,"%s {teamcolor}%s{default}: %s",szChatRank,szName,sText);	
 					else
-						CPrintToChatAllEx(client,"%s {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);			
+						CPrintToChatAllEx(client,"%s {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);	
+					g_bSayHook[client]=false;					
 					return Plugin_Handled;							
 				}
 				else
@@ -301,8 +317,6 @@ public Action:Say_Hook(client, const String:command[], argc)
 							g_bSayHook[client]=false;
 							return Plugin_Handled;
 						}
-						decl String:szName[32];
-						GetClientName(client,szName,32);
 						if (IsPlayerAlive(client))
 							CPrintToChatAllEx(client,"[{green}%s{default}] {teamcolor}%s{default}: %s",g_szCountryCode[client],szName,sText);	
 						else
@@ -352,11 +366,9 @@ public Action:Hook_SetTransmit(entity, client)
 { 
     if (client != entity && (0 < entity <= MaxClients) && IsValidClient(client)) 
 	{
-		if (g_bChallenge[client] && !g_bHide[client] && entity != g_SpecTarget[client])
+		if (g_bChallenge[client] && !g_bHide[client])
 		{
-			decl String:szSteamId[32];
-			GetClientAuthString(entity, szSteamId, 32);	
-			if (!StrEqual(szSteamId, g_szChallenge_OpponentID[client], false))
+			if (!StrEqual(g_szSteamID[entity], g_szChallenge_OpponentID[client], false))
 				return Plugin_Handled;
 		}
 		else
@@ -573,10 +585,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	//Set ground frames
 	if (g_js_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
 		g_js_GroundFrames[client]++;
-
-	if (g_js_GroundFrames[client] > 15 && g_bOnBhopPlattform[client] && !g_js_bPlayerJumped[client])
-		g_bOnBhopPlattform[client] = false;
-		
+	
 	//some methods..	
 	if(IsPlayerAlive(client))	
 	{	
@@ -584,7 +593,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		MenuTitleRefreshing(client);	
 		
 		//get player speed
-		g_fSpeed[client] = GetSpeed(client);
+		g_fSpeed[client] = speed;
 		
 		//undo check
 		if(g_bUndo[client] || g_bUndoTimer[client])
@@ -605,7 +614,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		//movement modifications
 		SpeedCap(client);	
 		AutoBhopFunction(client, buttons);
-		Prestrafe(client,mouse[0], buttons);
+		Prestrafe(client, ang[1], buttons);
 
 		//usp attack spam protection
 		if (g_bAttackSpamProtection && client > 0 && IsClientInGame(client))
@@ -670,9 +679,8 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		{
 			TE_SendBlockPoint(client, g_fDestBlock[client][0], g_fDestBlock[client][1], g_Beam[0]);
 			TE_SendBlockPoint(client, g_fOriginBlock[client][0], g_fOriginBlock[client][1], g_Beam[0]);
-		}		
+		}	
 	}
-		
 	
 	// jumpstats (landing)	
 	if(GetEntityFlags(client) & FL_ONGROUND && !g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
@@ -789,11 +797,13 @@ public Teleport_OnStartTouch(const String:output[], caller, client, Float:delay)
 public Teleport_OnEndTouch(const String:output[], caller, client, Float:delay)
 {
 	if (IsValidClient(client) && g_bOnBhopPlattform[client])
-		g_bOnBhopPlattform[client] = false;	
+	{
+		g_bOnBhopPlattform[client] = false;
+		g_fLastTimeBhopBlock[client] = GetEngineTime();
+	}
 }  
 
-//Credits: Macrodox by Inami
-//https://forums.alliedmods.net/showthread.php?p=1678026
+//https://forums.alliedmods.net/showthread.php?p=1678026 by Inami
 public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
@@ -812,41 +822,12 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		{
 			g_NumberJumpsAbove[client] = 0;
 		}
-		
-		//pattern jumps 
-		if (g_fafAvgJumps[client] > 15.0)
-		{
-			if ((g_aiPatternhits[client] > 0) && (g_aiJumps[client] == g_aiPattern[client]))
-			{
-				g_aiPatternhits[client]++;
-				if (g_aiPatternhits[client] > 15)
-				{
-					if (g_bAntiCheat && !g_bFlagged[client])
-					{					
-						//new String:banstats[256];
-						//GetClientStatsLog(client, banstats, sizeof(banstats));		
-						//decl String:sPath[512];
-						//BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
-						//LogToFile(sPath, "%s pattern jumps", banstats);		
-						g_bFlagged[client] = true;
-					}
-				}
-			}
-			else if ((g_aiPatternhits[client] > 0) && (g_aiJumps[client] != g_aiPattern[client]))
-			{
-				g_aiPatternhits[client] -= 2;
-			}
-			else
-			{
-				g_aiPattern[client] = g_aiJumps[client];
-				g_aiPatternhits[client] = 2;
-			}
-		}
-		
-		//hyperscroll
+				
 		if(g_fafAvgJumps[client] > 14.0)
 		{
-			//check if more than 8 of the last 30 jumps were above 12
+			//HYPERSCROLLING:  http://hmxgaming.com/index.php?/topic/1459-cheating-isnt-cool-hyperscrolling-for-bhop-is-an-example/
+			//disabled because it does not give you more speed than usual scrolling
+			/*//check if more than 8 of the last 30 jumps were above 12
 			g_NumberJumpsAbove[client] = 0;
 			
 			for (new i = 0; i < 29; i++)	//count
@@ -858,31 +839,16 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 			}
 			if((g_NumberJumpsAbove[client] > (14 - 1)) && (g_fafAvgPerfJumps[client] >= 0.4))	//if more than #
 			{
-				//glitchy
-				if (g_bAntiCheat && !g_bFlagged[client])
+				if (g_bAntiCheat && !g_bHyperscroll[client])
 				{
-					/*if (!g_bHyperscrollWarning[client])
-					{
-						CreateTimer(10.0, HyperscrollWarningTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-						if (g_bAutoBan)
-							PrintToChat(client, "%t", "Hyperscroll", MOSSGREEN,WHITE,DARKRED);
-					}
-					else
-					{
-						new String:banstats[256];
-						GetClientStatsLog(client, banstats, sizeof(banstats));		
-						decl String:sPath[512];
-						BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
-						if (g_bAutoBan)
-							LogToFile(sPath, "%s reason: hyperscroll (autoban)", banstats);	
-						else
-							LogToFile(sPath, "%s reason: hyperscroll", banstats);	
-						g_bFlagged[client] = true;	
-						if (g_bAutoBan)	
-							PerformBan(client,"hyperscroll");
-					}*/
+					g_bHyperscroll[client] = true;
+					new String:banstats[256];
+					GetClientStatsLog(client, banstats, sizeof(banstats));		
+					decl String:sPath[512];
+					BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
+					LogToFile(sPath, "%s reason: hyperscrolling" banstats);
 				}
-			}
+			}*/
 		}
 		else if(g_aiJumps[client] > 1)
 		{
@@ -899,7 +865,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		{   
 			g_aiIgnoreCount[client] = 2;
 		}
-		//bhop hack
+		
 		if (g_fafAvgPerfJumps[client] >= 0.9)
 		{
 			if (g_bAntiCheat && !g_bFlagged[client])
@@ -909,9 +875,11 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 				decl String:sPath[512];
 				BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
 				if (g_bAutoBan)
-					LogToFile(sPath, "%s reason: bhop hack (autoban)", banstats);	
+				{
+					LogToFile(sPath, "%s, Reason: bhop hack detected. (autoban)", banstats);	
+				}
 				else
-					LogToFile(sPath, "%s reason: bhop hack", banstats);	
+					LogToFile(sPath, "%s, Reason: bhop hack detected.", banstats);	
 				g_bFlagged[client] = true;
 				if (g_bAutoBan)	
 					PerformBan(client,"a bhop hack");
@@ -919,3 +887,4 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		}
 	}
 }
+

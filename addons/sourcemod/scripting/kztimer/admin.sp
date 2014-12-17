@@ -42,7 +42,7 @@ public Action:Admin_KzPanel(client, args)
 		
 	}
 	else
-		PrintToConsole(client,"(database commands require z flag.)");
+		PrintToConsole(client," >> FULL ACCESS requires a 'z' (root) flag.) << ");
 	return Plugin_Handled;
 }
 	
@@ -52,12 +52,15 @@ public KzAdminMenu(client)
 		return;
 	g_bClimbersMenuOpen[client] = false;
 	g_bMenuOpen[client]=true;
-	decl String:szTmp[64];
+	decl String:szTmp[128];
 	
 	new Handle:adminmenu = CreateMenu(AdminPanelHandler);
-	Format(szTmp, sizeof(szTmp), "KZ Timer %s Admin Menu\nNoclip: bind KEY +noclip",VERSION); 	
+	if (GetUserFlagBits(client) & ADMFLAG_ROOT)
+		Format(szTmp, sizeof(szTmp), "KZTimer %s Admin Menu (full access)\nNoclip: bind KEY +noclip",VERSION); 	
+	else
+		Format(szTmp, sizeof(szTmp), "KZTimer %s Admin Menu (limited access)\nNoclip: bind KEY +noclip",VERSION); 	
 	SetMenuTitle(adminmenu, szTmp);
-	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers)
+	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers || !(GetUserFlagBits(client) & ADMFLAG_ROOT))
 		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
 	else
 	{	
@@ -161,9 +164,9 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBhop)
-		Format(szTmp, sizeof(szTmp), "[24.] AutoBhop (only surf_/bhop_ maps)  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop (only surf_/bhop_ maps)  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[24.] AutoBhop  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBan)
 		Format(szTmp, sizeof(szTmp), "[25.] AntiCheat auto-ban  -  Enabled"); 	
@@ -200,10 +203,15 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_hSingleTouching)
+	if (g_bSingleTouching)
 		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Enabled"); 	
 	else
 		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bChallengePoints)
+		Format(szTmp, sizeof(szTmp), "[33.] Allow challenges points  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[33.] Allow challenges points  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -459,6 +467,13 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 				ServerCommand("kz_bhop_multi_touching 1");
 			else
 				ServerCommand("kz_bhop_multi_touching 0");
+		}
+		if(param2 == 32)
+		{
+			if (!g_bChallengePoints)
+				ServerCommand("kz_challenge_points 1");
+			else
+				ServerCommand("kz_challenge_points 0");
 		}
 		g_AdminMenuLastPage[param1] = param2;
 		if (menu != INVALID_HANDLE)

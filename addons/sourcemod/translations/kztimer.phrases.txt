@@ -3,7 +3,7 @@
 	"TimerStartReminder"
 	{	
 		"#format"   ""
-		"en"        " \n<font color='#c73030' size='24'><b> Don't forget to start the timer!</b></font>"
+		"en"        "<font color='#f4520b' size='24'><b>    Don't forget to hit\n    the start button!</b></font>"
 	}
 	"TimeleftCounter"
 	{
@@ -211,12 +211,12 @@
 	"ChallengeFailed5"
 	{
 		"#format"   "{1:c},{2:c},{3:s},{4:i}"
-		"en"        "[{1}KZ{2}] {3} has not enough player points ({4}) to accept your challenge"
+		"en"        "[{1}KZ{2}] {3} doesn't have enough player points ({4}) to accept your challenge"
 	}
 	"ChallengeFailed6"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] {3} is already in a challenge"
+		"en"        "[{1}KZ{2}] {3} is already in a race"
 	}
 	"ChallengeStarted1"
 	{
@@ -226,12 +226,12 @@
 	"ChallengeStarted2"
 	{
 		"#format"   "{1:c},{2:c},{3:c}"
-		"en"        "[{1}KZ{2}] {3}Both of you can !abort the challenge"
+		"en"        "[{1}KZ{2}] {3}Both of you can type !abort in chat to cancel the race"
 	}
 	"ChallengeStarted3"
 	{
 		"#format"   "{1:c},{2:c},{3:c}"
-		"en"        "[{1}KZ{2}] {3}Important: DON'T FORGET TO START YOUR TIMER!"
+		"en"        "[{1}KZ{2}] {3}Important: DON'T FORGET TO HIT THE START BUTTON!"
 	}
 	"ChallengeStarted4"
 	{
@@ -308,7 +308,7 @@
 	"NoRecordTop"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] No times found."
+		"en"        "[{1}KZ{2}] No map times found."
 	}
 	"PrUpdateStarted"
 	{
@@ -413,7 +413,7 @@
 	"PlayerHasNoMapRecords"
 	{
 		"#format"   "{1:c},{2:c},{3:s}"
-		"en"        "[{1}KZ{2}] {3} has no local map times."
+		"en"        "[{1}KZ{2}] {3} doesn't have local map times."
 	}
 	"NoTpRecords"
 	{
@@ -763,12 +763,12 @@
 	"Info1"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] Info panel enabled."
+		"en"        "[{1}KZ{2}] Speed/Keys panel enabled."
 	}
 	"Info2"
 	{
 		"#format"   "{1:c},{2:c}"
-		"en"        "[{1}KZ{2}] Info panel disabled."
+		"en"        "[{1}KZ{2}] Speed/Keys panel disabled."
 	}
 	"ShowKeys1"
 	{

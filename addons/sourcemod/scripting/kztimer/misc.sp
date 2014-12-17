@@ -1,4 +1,14 @@
-// misc.sp
+// misc.spc
+public bool:AfkButtonCheck(Float:origin[3])
+{
+	new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
+	new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
+	if (distance1 < 100.0 || distance2 < 100.0)
+		return true;
+	else
+		return false;
+}
+
 public CheckSpawnPoints() 
 {
 	if (!g_bNoBlock)
@@ -277,7 +287,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !help2, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
-	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec,");
+	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !aclog,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
 	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop)");
@@ -630,13 +640,14 @@ public GetcurrentRunTime(client)
 		Format(g_szMenuTitleRun[client], 255, "%s\nTimer on Hold", g_szPlayerPanelText[client]);
 	else
 	{
-		FormatTimeFloat(client, g_fCurrentRunTime[client], 1);
+		decl String:szTime[32];
+		FormatTimeFloat(client, g_fCurrentRunTime[client], 1,szTime,32);
 		if(g_bShowTime[client])
 		{		
 			if(StrEqual(g_szPlayerPanelText[client],""))		
-				Format(g_szMenuTitleRun[client], 255, "%s", g_szTime[client]);
+				Format(g_szMenuTitleRun[client], 255, "%s", szTime);
 			else
-				Format(g_szMenuTitleRun[client], 255, "%s\n%s", g_szPlayerPanelText[client],g_szTime[client]);
+				Format(g_szMenuTitleRun[client], 255, "%s\n%s", g_szPlayerPanelText[client],szTime);
 		}
 		else
 		{
@@ -831,15 +842,16 @@ public bool:TRDontHitSelf(entity, mask, any:data)
 
 public PrintMapRecords(client)
 {
+	decl String:szTime[32];
 	if (g_fRecordTimePro != 9999999.0)
 	{
-		FormatTimeFloat(client, g_fRecordTimePro, 3);
-		PrintToChat(client, "%t", "ProRecord",MOSSGREEN,WHITE,PURPLE,WHITE, g_szTime[client], g_szRecordPlayerPro); 
+		FormatTimeFloat(client, g_fRecordTimePro, 3,szTime,32);
+		PrintToChat(client, "%t", "ProRecord",MOSSGREEN,WHITE,PURPLE,WHITE, szTime, g_szRecordPlayerPro); 
 	}	
 	if (g_fRecordTime != 9999999.0)
 	{
-		FormatTimeFloat(client, g_fRecordTime, 3);
-		PrintToChat(client, "%t", "TpRecord",MOSSGREEN,WHITE,YELLOW,WHITE, g_szTime[client], g_szRecordPlayer); 
+		FormatTimeFloat(client, g_fRecordTime, 3,szTime,32);
+		PrintToChat(client, "%t", "TpRecord",MOSSGREEN,WHITE,YELLOW,WHITE, szTime, g_szRecordPlayer); 
 	}	
 }
 
@@ -847,7 +859,7 @@ public MapFinishedMsgs(client, type)
 {	
 	if (IsValidClient(client))
 	{
-		
+		decl String:szTime[32];
 		decl String:szName[MAX_NAME_LENGTH];
 		GetClientName(client, szName, MAX_NAME_LENGTH);
 		new count;
@@ -856,52 +868,52 @@ public MapFinishedMsgs(client, type)
 		{
 			count = g_MapTimesCountPro;
 			rank = g_MapRankPro[client];
-			FormatTimeFloat(client, g_fRecordTimePro, 3);	
+			FormatTimeFloat(client, g_fRecordTimePro, 3,szTime,32);	
 		}
 		else
 		if (type==0)
 		{
 			count = g_MapTimesCountTp;
 			rank = g_MapRankTp[client];		
-			FormatTimeFloat(client, g_fRecordTime, 3);	
+			FormatTimeFloat(client, g_fRecordTime, 3,szTime,32);	
 		}
 		for(new i = 1; i <= GetMaxClients(); i++) 
 			if(IsValidClient(i) && !IsFakeClient(i)) 
 			{
 				if (g_Time_Type[client] == 0)
 				{
-					PrintToChat(i, "%t", "MapFinished0",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,  LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
-					PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_Tp_Final[client],rank,count,g_szTime[client]); 
+					PrintToChat(i, "%t", "MapFinished0",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,  LIMEGREEN, g_szFinalTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE); 
+					PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_Tp_Final[client],rank,count,szTime); 
 				}
 				else
 				if (g_Time_Type[client] == 1)
 				{
-					PrintToChat(i, "%t", "MapFinished1",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szNewTime[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE); 
-					PrintToConsole(i, "%s finished with a PRO TIME of (%s). [rank #%i/%i | record %s]",szName,g_szNewTime[client],rank,count,g_szTime[client]);  
+					PrintToChat(i, "%t", "MapFinished1",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE); 
+					PrintToConsole(i, "%s finished with a PRO TIME of (%s). [rank #%i/%i | record %s]",szName,g_szFinalTime[client],rank,count,szTime);  
 				}			
 				else
 					if (g_Time_Type[client] == 2)
 					{
-						PrintToChat(i, "%t", "MapFinished2",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
-						PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_Tp_Final[client],g_szTimeDifference[client],rank,count,g_szTime[client]);  
+						PrintToChat(i, "%t", "MapFinished2",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE);  				
+						PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_Tp_Final[client],g_szTimeDifference[client],rank,count,szTime);  
 					}
 					else
 						if (g_Time_Type[client] == 3)
 						{
-							PrintToChat(i, "%t", "MapFinished3",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  				
-							PrintToConsole(i, "%s finished with a PRO TIME of (%s). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 	
+							PrintToChat(i, "%t", "MapFinished3",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY,GREEN, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE);  				
+							PrintToConsole(i, "%s finished with a PRO TIME of (%s). Improving their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_szTimeDifference[client],rank,count,szTime); 	
 						}
 						else
 							if (g_Time_Type[client] == 4)
 							{
-								PrintToChat(i, "%t", "MapFinished4",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
-								PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_Tp_Final[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
+								PrintToChat(i, "%t", "MapFinished4",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY,LIMEGREEN,g_Tp_Final[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE);  	
+								PrintToConsole(i, "%s finished with a TP TIME of (%s, TP's: %i). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_Tp_Final[client],g_szTimeDifference[client],rank,count,szTime); 
 							}
 							else
 								if (g_Time_Type[client] == 5)
 								{
-									PrintToChat(i, "%t", "MapFinished5",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szNewTime[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,g_szTime[client],WHITE);  	
-									PrintToConsole(i, "%s finished with a PRO TIME of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szNewTime[client],g_szTimeDifference[client],rank,count,g_szTime[client]); 
+									PrintToChat(i, "%t", "MapFinished5",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,PURPLE,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE);  	
+									PrintToConsole(i, "%s finished with a PRO TIME of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_szTimeDifference[client],rank,count,szTime); 
 								}
 				//new record msg
 				if (g_FinishingType[client] == 2)				
@@ -975,7 +987,7 @@ public ReplaceChar(String:sSplitChar[], String:sReplace[], String:sString[64])
 	}
 }
 
-public FormatTimeFloat(client, Float:time, type)
+public FormatTimeFloat(client, Float:time, type, String:string[], length)
 {
 	if (!IsValidClient(client))
 		return;
@@ -1025,7 +1037,7 @@ public FormatTimeFloat(client, Float:time, type)
 		Format(szMinutes2, 16, "0%d", iminutes);
 	else
 		Format(szMinutes2, 16, "%d", iminutes);	
-	//
+	//Time: 00m 00s 00ms
 	if (type==0)
 	{
 		Format(szHours, 16, "%dm", iminutes);	
@@ -1035,38 +1047,40 @@ public FormatTimeFloat(client, Float:time, type)
 			if (g_bClimbersMenuOpen[client])
 			{
 				if (g_bAdvancedClimbersMenu[client])
-					Format(g_szTime[client], 32, "Time: %s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
+					Format(string, length, "Time: %s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
 				else
-					Format(g_szTime[client], 32, "%s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
+					Format(string, length, "%s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
 			}
 			else
-				Format(g_szTime[client], 32, "%s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
+				Format(string, length, "%s:%s:%s.%s", szHours, szMinutes2,szSeconds2,szMilli2);
 		}
 		else
 		{
 			if (g_bClimbersMenuOpen[client])
 			{
 				if (g_bAdvancedClimbersMenu[client])
-					Format(g_szTime[client], 32, "Time: %s:%s.%s", szMinutes2,szSeconds2,szMilli2);
+					Format(string, length, "Time: %s:%s.%s", szMinutes2,szSeconds2,szMilli2);
 				else
-					Format(g_szTime[client], 32, "%s:%s.%s", szMinutes2,szSeconds2,szMilli2);
+					Format(string, length, "%s:%s.%s", szMinutes2,szSeconds2,szMilli2);
 			}
 			else
-				Format(g_szTime[client], 32, "%s:%s.%s", szMinutes2,szSeconds2,szMilli2);
+				Format(string, length, "%s:%s.%s", szMinutes2,szSeconds2,szMilli2);
 		}
 	}
+	//00m 00s 00ms
 	if (type==1)
 	{
 		Format(szHours, 16, "%dm", iminutes);	
 		if (ihours>0)	
 		{
 			Format(szHours, 16, "%dh", ihours);
-			Format(g_szTime[client], 32, "%s %s %s %s", szHours, szMinutes,szSeconds,szMilli);
+			Format(string, length, "%s %s %s %s", szHours, szMinutes,szSeconds,szMilli);
 		}
 		else
-			Format(g_szTime[client], 32, "%s %s %s", szMinutes,szSeconds,szMilli);	
+			Format(string, length, "%s %s %s", szMinutes,szSeconds,szMilli);	
 	}
 	else
+	//00h 00m 00s 00ms
 	if (type==2)
 	{
 		imilli = RoundToZero(time*1000);
@@ -1079,9 +1093,10 @@ public FormatTimeFloat(client, Float:time, type)
 		else
 			Format(szMilli, 16, "%dms", imilli);
 		Format(szHours, 16, "%dh", ihours);
-		Format(g_szTime[client], 32, "%s %s %s %s",szHours, szMinutes,szSeconds,szMilli);
+		Format(string, 32, "%s %s %s %s",szHours, szMinutes,szSeconds,szMilli);
 	}
 	else
+	//00:00:00
 	if (type==3)
 	{
 		if (imilli < 10)
@@ -1099,11 +1114,12 @@ public FormatTimeFloat(client, Float:time, type)
 		if (ihours>0)	
 		{
 			Format(szHours, 16, "%d", ihours);
-			Format(g_szTime[client], 32, "%s:%s:%s.%s", szHours, szMinutes,szSeconds,szMilli);
+			Format(string, length, "%s:%s:%s.%s", szHours, szMinutes,szSeconds,szMilli);
 		}
 		else
-			Format(g_szTime[client], 32, "%s:%s.%s", szMinutes,szSeconds,szMilli);	
+			Format(string, length, "%s:%s.%s", szMinutes,szSeconds,szMilli);	
 	}
+	//Time: 00:00:00
 	if (type==4)
 	{
 		if (imilli < 10)
@@ -1121,15 +1137,18 @@ public FormatTimeFloat(client, Float:time, type)
 		if (ihours>0)	
 		{
 			Format(szHours, 16, "%d", ihours);
-			Format(g_szTime[client], 32, "Time: %s:%s:%s", szHours, szMinutes,szSeconds);
+			Format(string, length, "Time: %s:%s:%s", szHours, szMinutes,szSeconds);
 		}
 		else
-			Format(g_szTime[client], 32, "Time: %s:%s", szMinutes,szSeconds);	
+			Format(string, length, "Time: %s:%s", szMinutes,szSeconds);	
 	}
 }
 
+
 public SetPlayerRank(client)
 {
+	if (IsFakeClient(client))
+		return;
 	if (g_bPointSystem)
 	{
 		if (g_pr_points[client] < g_pr_rank_Percentage[1])
@@ -1190,8 +1209,6 @@ public SetPlayerRank(client)
 		Format(g_pr_rankname[client], 32, "");	
 	
 	decl String:szSteamId[32];
-	if (IsValidClient(client) && !IsFakeClient(client))
-		GetClientAuthString(client, szSteamId, 32);
 	
 	// MAPPER Clantag
 	decl String:sPath[PLATFORM_MAX_PATH];
@@ -1206,7 +1223,7 @@ public SetPlayerRank(client)
 			if ((StrContains(line, "//") == -1))
 			{	
 				TrimString(line);
-				if (StrEqual(line,szSteamId))
+				if (StrEqual(line,g_szSteamID[client]))
 				{
 					mapper=true;				
 					Format(g_pr_chat_coloredrank[client], 32, "%s %cMAPPER%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
@@ -1258,8 +1275,23 @@ public SpectatorCount(client)
 
 stock Action:PrintSpecMessageAll(client)
 {
-	decl String:szName[MAX_NAME_LENGTH];
+	decl String:szName[32];
 	GetClientName(client, szName, sizeof(szName));
+	ReplaceString(szName,32,"{darkred}","",false);
+	ReplaceString(szName,32,"{green}","",false);
+	ReplaceString(szName,32,"{lightgreen}","",false);
+	ReplaceString(szName,32,"{blue}","",false);
+	ReplaceString(szName,32,"{olive}","",false);
+	ReplaceString(szName,32,"{lime}","",false);
+	ReplaceString(szName,32,"{red}","",false);
+	ReplaceString(szName,32,"{purple}","",false);
+	ReplaceString(szName,32,"{grey}","",false);
+	ReplaceString(szName,32,"{yellow}","",false);
+	ReplaceString(szName,32,"{lightblue}","",false);
+	ReplaceString(szName,32,"{steelblue}","",false);
+	ReplaceString(szName,32,"{darkblue}","",false);
+	ReplaceString(szName,32,"{pink}","",false);
+	ReplaceString(szName,32,"{lightred}","",false);
 	decl String:szTextToAll[1024];
 	GetCmdArgString(szTextToAll, sizeof(szTextToAll));
 	StripQuotes(szTextToAll);
@@ -1525,9 +1557,7 @@ public PerformBan(client, String:szbantype[16])
 {
 	if (IsValidClient(client))
 	{
-		decl String:szSteamID[32];
 		decl String:szName[64];
-		GetClientAuthString(client,szSteamID,32);
 		GetClientName(client,szName,64);
 		new bantime= RoundToZero(g_fBanDuration*60);
 		decl String:banmsg[255];
@@ -1540,7 +1570,7 @@ public PerformBan(client, String:szbantype[16])
 			GetClientIP(client, f_sClientIP, sizeof(f_sClientIP));
 			BanIdentity(f_sClientIP, bantime, BANFLAG_IP, banmsg);
 		}
-		db_DeleteCheater(client,szSteamID);
+		db_DeleteCheater(client,g_szSteamID[client]);
 	}
 }
 
@@ -1574,11 +1604,21 @@ public bool:WallCheck(client)
 	return false;
 }
 
-public Prestrafe(client, mouse_ang, &buttons)
-{
+public Prestrafe(client, Float: ang, &buttons)
+{				
 	if (!IsValidClient(client) || !IsPlayerAlive(client) || !(GetEntityFlags(client) & FL_ONGROUND))
 		return;
+
+	new bool: turning_right = false;
+	new bool: turning_left = false;
 	
+	if( ang < g_fLastAngles[client][1])
+		turning_right = true;
+	else 
+		if( ang > g_fLastAngles[client][1])
+			turning_left = true;	
+
+			
 	decl String:classname[64];
 	if (!g_bPreStrafe)
 	{		
@@ -1591,7 +1631,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 	else
 	{
 		//var
-		new g_mouseAbs, MaxFrameCount;	
+		new MaxFrameCount;	
 		GetClientWeapon(client, classname, 64);
 		new Float: IncSpeed, Float: DecSpeed;
 		new Float: speed = GetSpeed(client);
@@ -1605,7 +1645,7 @@ public Prestrafe(client, mouse_ang, &buttons)
 			
 		
 		//no mouse movement?
-		if (mouse_ang == 0)
+		if (!turning_right && !turning_left)
 		{
 			new Float: diff = GetEngineTime() - g_fVelocityModifierLastChange[client]
 			if (diff > 0.2)
@@ -1617,51 +1657,44 @@ public Prestrafe(client, mouse_ang, &buttons)
 				g_fVelocityModifierLastChange[client] = GetEngineTime();
 				SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
 			}
-			g_LastMouseDir[client] = mouse_ang;
 			return;
 		}
 
 		if ((GetEntityFlags(client) & FL_ONGROUND) && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT)) && speed > 249.0)
-		{       
-			//mouse ang diff
-			g_mouseAbs = mouse_ang - g_LastMouseDir[client];
-			if (g_mouseAbs < 0)
-				g_mouseAbs = g_mouseAbs*-1;
-				
+		{       				
 			//tickrate depending values
 			if (g_Server_Tickrate == 64)
 			{
 				MaxFrameCount = 45;
-				IncSpeed = 0.00165;
+				IncSpeed = 0.0015;
 				if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
 					IncSpeed = 0.001;
-				DecSpeed = 0.006;
+				DecSpeed = 0.005;
 			}
 			
 			if (g_Server_Tickrate == 102)
 			{
 				MaxFrameCount = 60;	
-				IncSpeed = 0.0016;
+				IncSpeed = 0.0011;
 				if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
 					IncSpeed = 0.001;			
-				DecSpeed = 0.006;
+				DecSpeed = 0.005;
 				
 			}
 			
 			if (g_Server_Tickrate == 128)
 			{
 				MaxFrameCount = 75;	
-				IncSpeed = 0.00135;
+				IncSpeed = 0.0009;
 				if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
 					IncSpeed = 0.001;			
-				DecSpeed = 0.006;
+				DecSpeed = 0.005;
 			}
-			
-			if (((buttons & IN_MOVERIGHT && ((mouse_ang > 0 && bForward) || (mouse_ang < 0 && !bForward)))) || (buttons & IN_MOVELEFT && ((mouse_ang > 0 && !bForward) || (mouse_ang < 0 && bForward))))
-			{
-				
+			if (((buttons & IN_MOVERIGHT && turning_right || turning_left && !bForward)) || ((buttons & IN_MOVELEFT && turning_left || turning_right && !bForward)))
+			{		
 				g_PrestrafeFrameCounter[client]++;						
-				//Add speed if Prestrafe frames smaller than max frame count	
+				//Add speed if prestrafe frames are less than max frame count	
+				
 				if (g_PrestrafeFrameCounter[client] < MaxFrameCount)
 				{	
 					//increase speed
@@ -1729,9 +1762,9 @@ public Prestrafe(client, mouse_ang, &buttons)
 		//Set VelocityModifier	
 		SetEntPropFloat(client, Prop_Send, "m_flVelocityModifier", g_PrestrafeVelocity[client]);
 		g_fVelocityModifierLastChange[client] = GetEngineTime();
-		g_LastMouseDir[client] = mouse_ang;
 	}
 }
+
 
 //zipcore movedirection
 stock Float:GetClientMovingDirection(client)
@@ -1788,21 +1821,22 @@ public MenuTitleRefreshing(client)
 					ClimbersMenu(client);	
 				}
 			//Check Time
+			decl String:szTime[32];
 			if (g_fCurrentRunTime[client] > g_fPersonalRecordPro[client] && !g_bMissedProBest[client] && g_OverallTp[client] == 0 && !g_bPause[client])
 			{
 				g_bMissedProBest[client]=true;
-				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3);
+				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3,szTime,32);
 				if (g_fPersonalRecordPro[client] > 0.0)
-					PrintToChat(client, "%t", "MissedProBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+					PrintToChat(client, "%t", "MissedProBest", MOSSGREEN,WHITE,GRAY,YELLOW,szTime,GRAY);
 				EmitSoundToClient(client,"buttons/button18.wav",client);
 			}
 			else
 				if (g_fCurrentRunTime[client] > g_fPersonalRecord[client] && !g_bMissedTpBest[client] && !g_bPause[client])
 				{
 					g_bMissedTpBest[client]=true;
-					FormatTimeFloat(client, g_fPersonalRecord[client], 3);
+					FormatTimeFloat(client, g_fPersonalRecord[client], 3,szTime,32);
 					if (g_fPersonalRecord[client] > 0.0)
-						PrintToChat(client, "%t", "MissedTpBest", MOSSGREEN,WHITE,GRAY,YELLOW,g_szTime[client],GRAY);
+						PrintToChat(client, "%t", "MissedTpBest", MOSSGREEN,WHITE,GRAY,YELLOW,szTime,GRAY);
 					EmitSoundToClient(client,"buttons/button18.wav",client);
 				}
 		}
@@ -1924,7 +1958,7 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 	{
 		new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
 		new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
-		if (distance1 < 80.0 && speed < 251.0)
+		if (distance1 < 50.0 && speed < 251.0)
 		{
 			if (!IsFakeClient(client))
 			{
@@ -1933,7 +1967,7 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 			}
 		}
 		else
-			if (distance2 < 80.0)
+			if (distance2 < 50.0)
 			{
 				CL_OnEndTimerPress(client);
 				g_fLastTimeButtonSound[client] = GetEngineTime();
@@ -2294,28 +2328,28 @@ public SpecListMenuDead(client)
 			{
 				decl String:szName[MAX_NAME_LENGTH];
 				GetClientName(ObservedUser, szName, MAX_NAME_LENGTH);
-				if (g_bTimeractivated[ObservedUser] == true)
+				if (g_bTimeractivated[ObservedUser])
 				{			
 					decl String:szTime[32];
+					decl String:szTime2[32];
 					decl String:szTPBest[32];
 					decl String:szProBest[32];
-					new Float:Time = GetEngineTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];				
-					FormatTimeFloat(client, Time, 4);
-					Format(szTime, 32, "%s", g_szTime[client]);						
+					new Float:Time = GetEngineTime() - g_fStartTime[ObservedUser] - g_fPauseTime[ObservedUser];								
+					FormatTimeFloat(client, Time, 4, szTime, sizeof(szTime)); 			
 					if (!g_bPause[ObservedUser])
 					{
 						
 						if (g_fPersonalRecord[ObservedUser] > 0.0)
 						{	
-							FormatTimeFloat(client, g_fPersonalRecord[ObservedUser], 3);
-							Format(szTPBest, 32, "%s (#%i/%i)", g_szTime[client],g_MapRankTp[ObservedUser],g_MapTimesCountTp);	
+							FormatTimeFloat(client, g_fPersonalRecord[ObservedUser], 3, szTime2, sizeof(szTime2));
+							Format(szTPBest, 32, "%s (#%i/%i)", szTime2,g_MapRankTp[ObservedUser],g_MapTimesCountTp);	
 						}	
 						else
 							Format(szTPBest, 32, "None");	
 						if (g_fPersonalRecordPro[ObservedUser] > 0.0)
 						{
-							FormatTimeFloat(client, g_fPersonalRecordPro[ObservedUser], 3);
-							Format(szProBest, 32, "%s (#%i/%i)", g_szTime[client],g_MapRankPro[ObservedUser],g_MapTimesCountPro);		
+							FormatTimeFloat(client, g_fPersonalRecordPro[ObservedUser], 3, szTime2, sizeof(szTime2));
+							Format(szProBest, 32, "%s (#%i/%i)", szTime2,g_MapRankPro[ObservedUser],g_MapTimesCountPro);		
 						}
 						else
 							Format(szProBest, 32, "None");	
@@ -2506,6 +2540,128 @@ public GetClientStats(client, String:string[], length)
 	PERCENT);
 }
 
+public FixPlayerName(client)
+{
+	decl String:szName[64];
+	decl String:szOldName[64];
+	GetClientName(client,szName,64);
+	Format(szOldName, 64,"%s ",szName);
+	ReplaceChar("'", "`", szName);
+	if (!(StrEqual(szOldName,szName)))
+	{
+		SetClientInfo(client, "name", szName);
+		SetEntPropString(client, Prop_Data, "m_szNetname", szName);
+		CS_SetClientName(client, szName);
+	}
+}
+
+public SetClientDefaults(client)
+{	
+	g_fLastTimeBhopBlock[client] = GetEngineTime();
+	g_LastGroundEnt[client] = - 1;	
+	g_bFlagged[client] = false;
+	g_bHyperscroll[client] = false;
+	g_fLastOverlay[client] = GetEngineTime() - 5.0;	
+	g_bValidTeleport[client]=false;
+	g_bProfileSelected[client]=false;
+	g_bNewReplay[client] = false;
+	g_pr_Calculating[client] = false;
+	g_bTimeractivated[client] = false;	
+	g_bKickStatus[client] = false;
+	g_bSpectate[client] = false;	
+	g_bFirstTeamJoin[client] = true;	
+	g_bFirstSpawn[client] = true;
+	g_bSayHook[client] = false;
+	g_bUndo[client] = false;
+	g_bUndoTimer[client] = false;
+	g_bRespawnAtTimer[client] = false;
+	g_js_bPlayerJumped[client] = false;
+	g_bRecalcRankInProgess[client] = false;
+	g_bPrestrafeTooHigh[client] = false;
+	g_bPause[client] = false;
+	g_bPositionRestored[client] = false;
+	g_bPauseWasActivated[client]=false;
+	g_bTopMenuOpen[client] = false;
+	g_bRestorePosition[client] = false;
+	g_bRestorePositionMsg[client] = false;
+	g_bRespawnPosition[client] = false;
+	g_bNoClip[client] = false;		
+	g_bMapFinished[client] = false;
+	g_bMapRankToChat[client] = false;
+	g_bOnBhopPlattform[client] = false;
+	g_bChallenge[client] = false;
+	g_bOverlay[client]=false;
+	g_js_bFuncMoveLinear[client] = false;
+	g_bChallenge_Request[client] = false;
+	g_bClientOwnReason[client] = false;
+	g_js_Last_Ground_Frames[client] = 11;
+	g_js_MultiBhop_Count[client] = 1;
+	g_AdminMenuLastPage[client] = 0;
+	g_OptionsMenuLastPage[client] = 0;	
+	g_MenuLevel[client] = -1;
+	g_CurrentCp[client] = -1;
+	g_AttackCounter[client] = 0;
+	g_SpecTarget[client] = -1;
+	g_CounterCp[client] = 0;
+	g_OverallCp[client] = 0;
+	g_OverallTp[client] = 0;
+	g_pr_points[client] = 0;
+	g_PrestrafeFrameCounter[client] = 0;
+	g_PrestrafeVelocity[client] = 1.0;
+	g_fCurrentRunTime[client] = -1.0;
+	g_fPlayerCordsLastPosition[client] = Float:{0.0,0.0,0.0};
+	g_fPlayerCordsUndoTp[client] = Float:{0.0,0.0,0.0};
+	g_fPlayerConnectedTime[client] = GetEngineTime();			
+	g_fLastTimeButtonSound[client] = GetEngineTime();
+	g_fLastTimeNoClipUsed[client] = -1.0;
+	g_fStartTime[client] = -1.0;
+	g_fLastTimeBhopBlock[client] = GetEngineTime();
+	g_fPlayerLastTime[client] = -1.0;
+	g_js_GroundFrames[client] = 0;
+	g_js_fJump_JumpOff_PosLastHeight[client] = -1.012345;
+	g_js_Good_Sync_Frames[client] = 0.0;
+	g_js_Sync_Frames[client] = 0.0;
+	g_js_LeetJump_Count[client] = 0;
+	g_fPauseTime[client] = 0.0;
+	g_MapRankTp[client] = 99999;
+	g_MapRankPro[client] = 99999;
+	g_OldMapRankPro[client] = 99999;
+	g_OldMapRankTp[client] = 99999;	
+	g_fProfileMenuLastQuery[client] = GetEngineTime();
+	Format(g_szPlayerPanelText[client], 512, "");
+	Format(g_pr_rankname[client], 32, "");
+	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>0.0 units</font>");
+	for( new i = 0; i < CPLIMIT; i++ )
+		g_fPlayerCords[client][i] = Float:{0.0,0.0,0.0};
+	for( new i = 0; i < MAX_STRAFES; i++ )
+	{
+		g_js_Strafe_Good_Sync[client][i] = 0.0;
+		g_js_Strafe_Frames[client][i] = 0.0;
+	}
+	new x = 0;
+	while (x < 30)
+	{
+		g_aaiLastJumps[client][x] = -1;
+		x++;
+	}	
+	
+	// Client options
+	g_bInfoPanel[client]=false;
+	g_bClimbersMenuSounds[client]=true;
+	g_bEnableQuakeSounds[client]=true;
+	g_bShowNames[client]=true; 
+	g_bStrafeSync[client]=false;
+	g_bGoToClient[client]=true; 
+	g_bShowTime[client]=true; 
+	g_bHide[client]=false; 
+	g_bCPTextMessage[client]=false; 
+	g_bStartWithUsp[client] = false;
+	g_bAdvancedClimbersMenu[client]=true;
+	g_bColorChat[client]=true; 
+	g_bShowSpecs[client]=true;
+	g_bAutoBhopClient[client]=true;
+}
+
 //MACRODOX BHOP PROTECTION - modified by 1NutWunDeR
 //https://forums.alliedmods.net/showthread.php?p=1678026
 public GetClientStatsLog(client, String:string[], length)
@@ -2515,16 +2671,8 @@ public GetClientStatsLog(client, String:string[], length)
 	GetEntPropVector(client, Prop_Send, "m_vecOrigin", origin);
 	new String:map[128];
 	GetCurrentMap(map, 128);
-	Format(string, length, "%L Avg scroll pattern: %f Avg speed: %f Perfect jump ratio: %.2f%c %s %f %f %f Scroll pattern (last jumps): %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
+	Format(string, length, "%L Scroll pattern: %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i, Avg scroll pattern: %f, Avg speed: %f, Perfect jump ratio: %.2f%c",
 	client,
-	g_fafAvgJumps[client],
-	g_fafAvgSpeed[client],
-	perf,
-	PERCENT,
-	map,
-	origin[0],
-	origin[1],
-	origin[2],
 	g_aaiLastJumps[client][0],
 	g_aaiLastJumps[client][1],
 	g_aaiLastJumps[client][2],
@@ -2554,8 +2702,13 @@ public GetClientStatsLog(client, String:string[], length)
 	g_aaiLastJumps[client][26],
 	g_aaiLastJumps[client][27],
 	g_aaiLastJumps[client][28],
-	g_aaiLastJumps[client][29]);
+	g_aaiLastJumps[client][29],
+	g_fafAvgJumps[client],
+	g_fafAvgSpeed[client],
+	perf,
+	PERCENT);
 }
+
 //MultiPlayer Bunnyhop
 //https://forums.alliedmods.net/showthread.php?p=808724
 public Teleport(client, bhop)
@@ -3267,6 +3420,7 @@ public OnMapVoteStarted()
 public SetInfoBotName(ent)
 {
 	decl String:szBuffer[64];
+	decl String:szTime[64];
 	decl String:sNextMap[128];	
 	if (!IsValidClient(g_InfoBot) || !g_bInfoBot)
 		return;
@@ -3282,14 +3436,14 @@ public SetInfoBotName(ent)
 	new timeleft;
 	GetMapTimeLeft(timeleft);
 	new Float:ftime = float(timeleft);
-	FormatTimeFloat(g_InfoBot,ftime,4);
+	FormatTimeFloat(g_InfoBot,ftime,4,szTime,32);
 	new Handle:hTmp;	
 	hTmp = FindConVar("mp_timelimit");
 	new iTimeLimit = GetConVarInt(hTmp);			
 	if (hTmp != INVALID_HANDLE)
 		CloseHandle(hTmp);	
 	if (g_bMapEnd && iTimeLimit > 0)
-		Format(szBuffer, sizeof(szBuffer), "%s (in %s)",sNextMap, g_szTime[g_InfoBot]);
+		Format(szBuffer, sizeof(szBuffer), "%s (in %s)",sNextMap, szTime);
 	else
 		Format(szBuffer, sizeof(szBuffer), "Pending Vote (no time limit)");
 	CS_SetClientName(g_InfoBot, szBuffer);

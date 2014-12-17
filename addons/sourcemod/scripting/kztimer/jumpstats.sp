@@ -412,6 +412,7 @@ public Prethink (client, Float:pos[3], Float:vel)
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);		
 	g_js_fPreStrafe[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));	
 	g_js_fTakeOff_Speed[client] = -1.0;
+	
 	CreateTimer(0.015, GetTakeOffSpeedTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 	GetGroundOrigin(client, g_js_fJump_JumpOff_Pos[client]);	
 	if (g_js_fJump_JumpOff_PosLastHeight[client] != -1.012345)
