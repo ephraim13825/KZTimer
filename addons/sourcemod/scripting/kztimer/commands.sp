@@ -2241,7 +2241,6 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!ranks - prints in chat the available ranks");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
 	DrawPanelText(panel, "!language - opens the language menu");
-	DrawPanelText(panel, "!aclog - prints in console the anticheat log");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "exit");

@@ -1499,7 +1499,18 @@ public OnClientPutInServer(client)
 {
 	if (!IsValidClient(client))
 		return;
-			
+
+	//SDKHooks/Dhooks
+	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
+	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
+	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
+	SDKHook(client, SDKHook_StartTouch, Hook_OnTouch);
+	SDKHook(client, SDKHook_PreThink, OnPlayerThink);
+	SDKHook(client, SDKHook_PreThinkPost, OnPlayerThink);
+	SDKHook(client, SDKHook_Think, OnPlayerThink);
+	SDKHook(client, SDKHook_PostThink, OnPlayerThink);
+	SDKHook(client, SDKHook_PostThinkPost, OnPlayerThink);
+	
 	if (IsFakeClient(client))
 	{
 		g_hRecordingAdditionalTeleport[client] = CreateArray(_:AdditionalTeleport);
@@ -1520,16 +1531,6 @@ public OnClientPutInServer(client)
 		if (AreClientCookiesCached(client) && !g_bLoaded[client])
 			LoadCookies(client);
 			
-	//SDKHooks/Dhooks
-	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
-	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
-	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
-	SDKHook(client, SDKHook_StartTouch, Hook_OnTouch);
-	SDKHook(client, SDKHook_PreThink, OnPlayerThink);
-	SDKHook(client, SDKHook_PreThinkPost, OnPlayerThink);
-	SDKHook(client, SDKHook_Think, OnPlayerThink);
-	SDKHook(client, SDKHook_PostThink, OnPlayerThink);
-	SDKHook(client, SDKHook_PostThinkPost, OnPlayerThink);
 	if(LibraryExists("dhooks"))
 		DHookEntity(g_hTeleport, false, client);	
 	
@@ -1571,7 +1572,18 @@ public OnClientDisconnect(client)
 		else
 			g_fPlayerLastTime[client] = g_fCurrentRunTime[client];
 	}
-		
+
+	//SDK Unhook's
+	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
+	SDKUnhook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
+	SDKUnhook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
+	SDKUnhook(client, SDKHook_StartTouch, Hook_OnTouch);
+	SDKUnhook(client, SDKHook_PreThink, OnPlayerThink);
+	SDKUnhook(client, SDKHook_PreThinkPost, OnPlayerThink);
+	SDKUnhook(client, SDKHook_Think, OnPlayerThink);
+	SDKUnhook(client, SDKHook_PostThink, OnPlayerThink);
+	SDKUnhook(client, SDKHook_PostThinkPost, OnPlayerThink);
+	
 	if (client == g_ProBot || client == g_TpBot)
 	{
 		StopPlayerMimic(client);
@@ -1609,17 +1621,6 @@ public OnClientDisconnect(client)
 	
 	//language
 	g_bLoaded[client] = false;
-
-	//SDK Unhook's
-	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
-	SDKUnhook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
-	SDKUnhook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
-	SDKUnhook(client, SDKHook_StartTouch, Hook_OnTouch);
-	SDKUnhook(client, SDKHook_PreThink, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PreThinkPost, OnPlayerThink);
-	SDKUnhook(client, SDKHook_Think, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PostThink, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PostThinkPost, OnPlayerThink);
 }
 
 public OnSettingChanged(Handle:convar, const String:oldValue[], const String:newValue[])
