@@ -19,6 +19,9 @@ Steam group: http://steamcommunity.com/groups/KZTIMER
 Changelog
 =======
 <SPOILER>
+v1.62.1
+- removed !aclog because it caused massive server lags, sry my fault
+
 v1.62
 - fixed a start/stop timer bug @thx to HtC^w/Amber
 - fixed kz_country_tag 0 + timer bug
