@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.62"
+#define VERSION "1.621"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -972,7 +972,7 @@ public OnPluginStart()
 	db_setupDatabase();
 	
 	//client commands
-	RegConsoleCmd("sm_aclog", Client_AntiCheatLog, "[KZTimer] prints the anticheat log of kztimer in your console");
+	//RegConsoleCmd("sm_aclog", Client_AntiCheatLog, "[KZTimer] prints the anticheat log of kztimer in your console");
 	RegConsoleCmd("sm_usp", Client_Usp, "[KZTimer] spawns a usp silencer");
 	RegConsoleCmd("sm_accept", Client_Accept, "[KZTimer] allows you to accept a challenge request");
 	RegConsoleCmd("sm_goto", Client_GoTo, "[KZTimer] teleports you to a selected player");
