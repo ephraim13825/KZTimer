@@ -24,7 +24,7 @@ v1.63
 - fixed !hide command for replay bots
 - fixed the start/stop timer bug #2 (*hidden timers*)
 - fixed double team join bug (this might eliminate the floating usp bug)
-- 
+
 v1.62.1
 - removed !aclog because it caused massive server lags, sry my fault
 
