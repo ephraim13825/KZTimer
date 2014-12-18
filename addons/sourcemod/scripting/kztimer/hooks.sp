@@ -642,7 +642,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		}
 		
 		//several methods
-		ButtonPressCheck(client, buttons, origin, speed);
+		//ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
 		NoClipCheck(client);
 		WaterCheck(client);
