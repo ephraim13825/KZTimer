@@ -1,14 +1,3 @@
-// misc.spc
-public bool:AfkButtonCheck(Float:origin[3])
-{
-	new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
-	new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
-	if (distance1 < 100.0 || distance2 < 100.0)
-		return true;
-	else
-		return false;
-}
-
 public CheckSpawnPoints() 
 {
 	if (!g_bNoBlock)
@@ -304,9 +293,6 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[1],g_pr_rank_Percentage[1],g_szSkillGroups[2], g_pr_rank_Percentage[2],g_szSkillGroups[3], g_pr_rank_Percentage[3],g_szSkillGroups[4], g_pr_rank_Percentage[4]);
 	PrintToConsole(client, "%s (%ip), %s (%ip), %s (%ip), %s (%ip)",g_szSkillGroups[5], g_pr_rank_Percentage[5], g_szSkillGroups[6],g_pr_rank_Percentage[6], g_szSkillGroups[7], g_pr_rank_Percentage[7], g_szSkillGroups[8], g_pr_rank_Percentage[8]);
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");		
-	PrintToConsole(client, "KZTimer Global Edition available at http://steamcommunity.com/groups/KZTIMER");
-	PrintToConsole(client, "-> global version provides sharing of world records across KZTimer servers!");
-	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
 	PrintToConsole(client," ");
 }
 stock FakePrecacheSound( const String:szPath[] )
@@ -516,7 +502,8 @@ public DeleteButtons(client)
 			}
 		}
 	}
-	g_bMapButtons = false;
+	g_bFirstEndButtonPush=true;
+	g_bFirstStartButtonPush=true;
 	GetButtonsPos();
 
 	//stop player times (global record fake)
@@ -562,7 +549,6 @@ public CreateButton(client,String:targetname[])
 				PrintToChat(client,"%c[%cKZ%c] Start button built!", WHITE,MOSSGREEN,WHITE);
 			else
 				PrintToChat(client,"%c[%cKZ%c] Stop button built!", WHITE,MOSSGREEN,WHITE);
-			g_bMapButtons=true;
 			ang[1] -= 180.0;
 		}
 		new sprite = CreateEntityByName("env_sprite");
@@ -1971,24 +1957,40 @@ public SpeedCap(client)
 
 public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 {
-	if (g_LastButton[client] != IN_USE && buttons & IN_USE && ((g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0) || IsFakeClient(client)))
+	if (IsValidClient(client) && g_LastButton[client] != IN_USE && buttons & IN_USE && ((g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0)))
 	{
-		new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
-		new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
-		if (distance1 < 50.0 && speed < 251.0)
-		{
-			if (!IsFakeClient(client))
+		new Float: diff = GetEngineTime() - g_fLastTimeButtonSound[client];
+		if (diff > 0.3)
+		{	
+			new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
+			new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
+			if (distance1 < 75.0 && speed < 251.0 && !g_bFirstStartButtonPush)
 			{
-				CL_OnStartTimerPress(client);
-				g_fLastTimeButtonSound[client] = GetEngineTime();
+				if (!IsFakeClient(client))
+				{	
+					new Handle:trace = TR_TraceRayFilterEx(origin, g_fStartButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
+					if (!TR_DidHit(trace))
+					{
+						g_bButtonSound[client]=true;
+						CreateTimer(0.1,StartTheTimer,client);		
+						g_fLastTimeButtonSound[client] = GetEngineTime();	
+					}
+					CloseHandle(trace);					
+				}
 			}
+			else
+				if (distance2 < 75.0  && !g_bFirstEndButtonPush)
+				{
+					new Handle:trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
+					if (!TR_DidHit(trace))
+					{
+					g_bButtonSound[client]=true;
+					CreateTimer(0.1,EndTheTimer,client);		
+					g_fLastTimeButtonSound[client] = GetEngineTime();
+					}
+					CloseHandle(trace);		
+				}
 		}
-		else
-			if (distance2 < 50.0)
-			{
-				CL_OnEndTimerPress(client);
-				g_fLastTimeButtonSound[client] = GetEngineTime();
-			}
 	}		
 }
 

@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.621"
+#define VERSION "1.63"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -340,7 +340,6 @@ new Float:g_fLastPosition[MAXPLAYERS + 1][3];
 new Float:g_fLastAngles[MAXPLAYERS + 1][3];
 new Float:g_fSpeed[MAXPLAYERS+1];
 new Float:g_fLastTimeBhopBlock[MAXPLAYERS+1];
-new Float:g_fclientAngle[MAXPLAYERS+1]
 new Float:g_fLastHeight[MAXPLAYERS+1];
 new Float:g_fRecordTime;
 new Float:g_fRecordTimePro;
@@ -350,10 +349,12 @@ new Float:g_fStartButtonAngle[3];
 new Float:g_fEndButtonAngle[3];
 new Float:g_pr_finishedmaps_tp_perc[MAX_PR_PLAYERS]; 
 new Float:g_pr_finishedmaps_pro_perc[MAX_PR_PLAYERS]; 
-new bool:g_bMapButtons;
+
 new bool:g_bLateLoaded = false;
 new bool:g_bCanUseSourcebans = false;
 new bool:g_bRoundEnd;
+new bool:g_bFirstStartButtonPush;
+new bool:g_bFirstEndButtonPush;
 new bool:g_bProReplay;
 new bool:g_bTpReplay;
 new bool:g_pr_RankingRecalc_InProgress;
@@ -361,6 +362,7 @@ new bool:g_bAntiCheat;
 new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
+new bool:g_bButtonSound[MAXPLAYERS+1];
 new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bLegitButtons[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
@@ -525,7 +527,6 @@ new g_js_LeetJump_Count[MAXPLAYERS+1];
 new g_js_MultiBhop_Count[MAXPLAYERS+1];
 new g_js_Last_Ground_Frames[MAXPLAYERS+1];
 new g_SelectedTeam[MAXPLAYERS+1];
-new g_clientAFKTime[MAXPLAYERS+1];
 new g_LastGroundEnt[MAXPLAYERS+1];
 new g_BotMimicRecordTickCount[MAXPLAYERS+1] = {0,...};
 new g_BotActiveWeapon[MAXPLAYERS+1] = {-1,...};
@@ -995,7 +996,6 @@ public OnPluginStart()
 	RegConsoleCmd("sm_unstuck", Client_Prev,"[KZTimer] go to previous checkpoint");
 	RegConsoleCmd("sm_maptop", Client_MapTop,"[KZTimer] displays local map top for a given map");
 	RegConsoleCmd("sm_stuck", Client_Prev,"[KZTimer] go to previous checkpoint");
-	RegConsoleCmd("sm_globalcheck", Client_GlobalCheck,"[KZTimer] checks whether global record system is enabled");
 	RegConsoleCmd("sm_checkpoint", Client_Save,"[KZTimer] save your current position");
 	RegConsoleCmd("sm_gocheck", Client_Tele,"[KZTimer] go to latest checkpoint");
 	RegConsoleCmd("sm_hidespecs", Client_HideSpecs, "[KZTimer] hides spectators from menu/panel");
@@ -1281,9 +1281,10 @@ public OnMapStart()
 	}
 	if (fileHandle2 != INVALID_HANDLE)
 		CloseHandle(fileHandle2);
-		
+	
+	g_bFirstStartButtonPush=true;
+	g_bFirstEndButtonPush=true;			
 	g_fMapStartTime = GetEngineTime();
-	g_bMapButtons=false;
 	g_fRecordTime=9999999.0;
 	g_fRecordTimePro=9999999.0;
 	g_fStartButtonPos = Float:{-999999.9,-999999.9,-999999.9};
@@ -1323,7 +1324,6 @@ public OnMapStart()
 	//timers
 	CreateTimer(0.1, KZTimer1, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(1.0, KZTimer2, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-	CreateTimer(5.0, Timer_CheckClients, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(60.0, AttackTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 
 	//create buttons

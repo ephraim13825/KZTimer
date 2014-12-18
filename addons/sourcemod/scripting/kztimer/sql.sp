@@ -3059,7 +3059,6 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 				DispatchSpawn(ent);   
 				TeleportEntity(ent, StartCords, Angs, NULL_VECTOR);
 				g_fStartButtonPos = StartCords;
-				g_bMapButtons=true;
 				SDKHook(ent, SDKHook_UsePost, OnUsePost);		
 			}
 			if (angstart != -1.0)
@@ -3098,7 +3097,6 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 				DispatchSpawn(ent2);   
 				TeleportEntity(ent2, EndCords, Angs, NULL_VECTOR);
 				g_fEndButtonPos = EndCords;
-				g_bMapButtons=true;
 				SDKHook(ent2, SDKHook_UsePost, OnUsePost);		
 			}
 			if (angend != -1.0)

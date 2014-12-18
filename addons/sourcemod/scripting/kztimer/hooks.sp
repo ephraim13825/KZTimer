@@ -32,7 +32,6 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 		g_fStartCommandUsed_LastTime[client] = GetEngineTime();
 		g_js_bPlayerJumped[client] = false;
 		g_SpecTarget[client] = -1;	
-		g_clientAFKTime[client] = 0;
 		g_bOnGround[client] = true;
 		g_MouseAbsCount[client] = 0;
 		g_bPause[client] = false;
@@ -642,7 +641,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		}
 		
 		//several methods
-		//ButtonPressCheck(client, buttons, origin, speed);
+		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
 		NoClipCheck(client);
 		WaterCheck(client);

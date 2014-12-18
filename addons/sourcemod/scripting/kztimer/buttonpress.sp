@@ -3,6 +3,7 @@ public ButtonPress(const String:name[], caller, activator, Float:delay)
 {
 	if(!IsValidEntity(caller) || !IsValidClient(activator))
 		return;	
+	g_bButtonSound[activator] = false;	
 	g_bLJBlock[activator] = false;
 	decl String:targetname[128];
 	GetEdictClassname(activator,targetname, sizeof(targetname));
@@ -62,16 +63,17 @@ public CL_OnStartTimerPress(client)
 			return;
 	}
 		
-	//sound
-	if (g_bMapButtons && !IsFakeClient(client))
+	//timer pos
+	if (g_bFirstStartButtonPush && !IsFakeClient(client))
 	{
-		decl String:buffer[255];
-		Format(buffer, sizeof(buffer), "play %s", RELATIVE_BUTTON_PATH); 
-		new Float:diff = GetEngineTime() - g_fLastTimeButtonSound[client];
-		if (diff > 0.1)
-			ClientCommand(client, buffer); 
-	}
-
+		GetClientAbsOrigin(client,g_fStartButtonPos);
+		g_bFirstStartButtonPush=false;
+	}				
+	
+	//sound
+	if (g_bButtonSound[client] && !IsFakeClient(client))
+		PlayButtonSound(client);
+		
 	new Float:time;
 	time = GetEngineTime() - g_fLastTimeNoClipUsed[client];
 
@@ -181,15 +183,16 @@ public CL_OnEndTimerPress(client)
 {
 	g_fLastTimeButtonSound[client] = GetEngineTime();
 
-	//sound
-	if (g_bMapButtons && !IsFakeClient(client))
+	//timer pos
+	if (g_bFirstEndButtonPush && !IsFakeClient(client))
 	{
-		decl String:buffer[255];
-		Format(buffer, sizeof(buffer), "play %s", RELATIVE_BUTTON_PATH); 
-		new Float:diff = GetEngineTime() - g_fLastTimeButtonSound[client];
-		if (diff > 0.1)
-			ClientCommand(client, buffer); 
-	}	
+		GetClientAbsOrigin(client,g_fEndButtonPos);
+		g_bFirstEndButtonPush=false;
+	}				
+	
+	//sound
+	if (g_bButtonSound[client] && !IsFakeClient(client))
+		PlayButtonSound(client);
 
 	//Format Final Time
 	if (IsFakeClient(client) && g_bTimeractivated[client])

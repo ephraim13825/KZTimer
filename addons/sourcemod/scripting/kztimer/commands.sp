@@ -487,44 +487,35 @@ public StopClimbersMenu(client)
 	g_bClimbersMenuOpen[client] = false;	
 }
 
-public Action:Command_JoinTeam(client, const String:command[], argc) 
+//https://forums.alliedmods.net/showthread.php?t=206308
+public Action:Command_JoinTeam(client, const String:command[], argc)
 { 
-	if(!argc || !client || !IsValidClient(client))
+	if(!IsValidClient(client) || argc < 1)
 		return Plugin_Handled;
-
-	if (IsFakeClient(client))
-		return Plugin_Continue;
 		
-	decl String:m_szTeam[8];
-	GetCmdArg(1, m_szTeam, sizeof(m_szTeam));
-	new m_iTeam = StringToInt(m_szTeam);
-
-	
-	if(CS_TEAM_SPECTATOR<=m_iTeam<=CS_TEAM_CT)
-		g_SelectedTeam[client]=m_iTeam;
-
-	if (1 < m_iTeam <= 3) 
-	{ 
-		if (g_TSpawns==0 && m_iTeam == 2)
-			return Plugin_Continue;
-		if (g_CTSpawns==0 && m_iTeam == 3)
-			return Plugin_Continue;
-		if(g_bSpectate[client])
-		{
-			if(g_fStartTime[client] != -1.0 && g_bTimeractivated[client] == true)
-			{
-				g_fPauseTime[client] = GetEngineTime() - g_fStartPauseTime[client];
-			}
-			g_bSpectate[client] = false;
-		}	
-		CS_SwitchTeam(client, m_iTeam); 	
-		CS_RespawnPlayer(client);	
-		return Plugin_Handled;
-	}
-	if (m_iTeam == 1)
-		ChangeClientTeam(client, m_iTeam);
+	decl String:arg[4];
+	GetCmdArg(1, arg, sizeof(arg));
+	new toteam = StringToInt(arg);
+	TeamChangeActual(client, toteam);
 	return Plugin_Handled;
-}  
+}
+
+//https://forums.alliedmods.net/showthread.php?t=206308
+TeamChangeActual(client, toteam)
+{
+	// Client is auto-assigning
+	if(toteam == 0)
+		toteam = GetRandomInt(2, 3);
+		
+	if(g_bSpectate[client])
+	{
+		if(g_fStartTime[client] != -1.0 && g_bTimeractivated[client] == true)
+			g_fPauseTime[client] = GetEngineTime() - g_fStartPauseTime[client];
+		g_bSpectate[client] = false;
+	}	
+	ChangeClientTeam(client, toteam);
+	return;
+}
 
 public Action:Client_OptionMenu(client, args)
 {
@@ -2259,13 +2250,6 @@ public HelpPanel3Handler(Handle:menu, MenuAction:action, param1, param2)
 			ClimbersMenu(param1);
 		}
 	}
-}
-
-public Action:Client_GlobalCheck(client, args) 
-{
-	PrintToChat(client, "[%cKZ%c] %cGlobal records are disabled. Reason: This KZTimer version does not provide global records!",MOSSGREEN,WHITE,RED);
-		
-	return Plugin_Handled;
 }
 
 public ShowSrvSettings(client)

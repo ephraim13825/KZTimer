@@ -28,33 +28,14 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 	}	
 }
 
-public Action:Timer_CheckClients(Handle:Timer)
+public Action:StartTheTimer(Handle:timer, any:client)
 {
-	for(new i = 1; i <= GetMaxClients(); i++)
-	{
-		if(!IsValidClient(i) || IsFakeClient(i) || !IsPlayerAlive(i))
-			continue;
-		
-		new Float:angle[3];
-		new Float:pos[3];
-		GetClientAbsAngles(i, angle);
-		GetClientAbsOrigin(i, pos);
+	CL_OnStartTimerPress(client);
+}
 
-		if(g_fclientAngle[i] == angle[1] && AfkButtonCheck(pos))
-		{
-			g_clientAFKTime[i] += 5;
-			if(g_clientAFKTime[i] >= 30.0)
-			{
-				ChangeClientTeam(i, 1);
-				PrintToChat(i,"[%cKZ%c] You have been moved to spectate. Reason: Button blocking!",MOSSGREEN,WHITE);
-			}
-		}
-		else
-		{
-			g_clientAFKTime[i] = 0;
-			g_fclientAngle[i] = angle[1];
-		}
-	}
+public Action:EndTheTimer(Handle:timer, any:client)
+{
+	CL_OnEndTimerPress(client);
 }
 
 public Action:StartTimer(Handle:timer, any:client)
