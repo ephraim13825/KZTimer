@@ -136,7 +136,6 @@ public CL_OnStartTimerPress(client)
 		g_bMissedTpBest[client] = true;
 		g_bMissedProBest[client] = true;
 		new bool: act = g_bTimeractivated[client];
-		g_fLastTimeButtonSound[client] = GetEngineTime();
 		g_bTimeractivated[client] = true;		
 			
 		//valid players
@@ -181,19 +180,6 @@ public CL_OnStartTimerPress(client)
 // - Climb Button OnEndPress -
 public CL_OnEndTimerPress(client)
 {
-	g_fLastTimeButtonSound[client] = GetEngineTime();
-
-	//timer pos
-	if (g_bFirstEndButtonPush && !IsFakeClient(client))
-	{
-		GetClientAbsOrigin(client,g_fEndButtonPos);
-		g_bFirstEndButtonPush=false;
-	}				
-	
-	//sound
-	if (g_bButtonSound[client] && !IsFakeClient(client))
-		PlayButtonSound(client);
-
 	//Format Final Time
 	if (IsFakeClient(client) && g_bTimeractivated[client])
 	{
@@ -224,9 +210,20 @@ public CL_OnEndTimerPress(client)
 	}
 	if (!g_bTimeractivated[client]) 
 		return;	
+	
 	g_Tp_Final[client] = g_OverallTp[client];	
 	g_bTimeractivated[client] = false;	
 	
+	//timer pos
+	if (g_bFirstEndButtonPush && !IsFakeClient(client))
+	{
+		GetClientAbsOrigin(client,g_fEndButtonPos);
+		g_bFirstEndButtonPush=false;
+	}				
+	
+	//sound
+	if (g_bButtonSound[client] && !IsFakeClient(client))
+		PlayButtonSound(client);
 	
 	//decl
 	decl String:szName[MAX_NAME_LENGTH];	

@@ -2588,7 +2588,7 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 		return;
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-		if	(g_OverallTp[client]>0)
+		if	(g_Tp_Final[client]>0)
 			Format(szQuery, 512, sql_selectRecordTp, g_szSteamID[client], g_szMapName);
 		else
 			Format(szQuery, 512, sql_selectProRecord, g_szSteamID[client], g_szMapName);
@@ -2599,9 +2599,9 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 	{
 		decl String:szName[MAX_NAME_LENGTH];
 		GetClientName(client, szName, MAX_NAME_LENGTH);
-		if	(g_OverallTp[client]>0)
+		if	(g_Tp_Final[client]>0)
 		{						
-			Format(szQuery, 512, sql_insertPlayerTp, g_szSteamID[client], g_szMapName, szName, g_fFinalTime[client], g_OverallTp[client]);
+			Format(szQuery, 512, sql_insertPlayerTp, g_szSteamID[client], g_szMapName, szName, g_fFinalTime[client], g_Tp_Final[client]);
 			g_fPersonalRecord[client] = g_fFinalTime[client];	
 			SQL_TQuery(g_hDb, SQL_UpdateRecordTpCallback, szQuery,client);	
 		}
@@ -2880,15 +2880,15 @@ public SQL_UpdateRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 	{
 		new Float:time;
 		time = SQL_FetchFloat(hndl, 3);
-		if((g_fFinalTime[client] <= time || time <= 0.0) && g_OverallTp[client] > 0)
+		if((g_fFinalTime[client] <= time || time <= 0.0) && g_Tp_Final[client] > 0)
 		db_updateRecordCP(client);
 		else
-			if((g_fFinalTime[client] <= time || time <= 0.0) && g_OverallTp[client] == 0)
+			if((g_fFinalTime[client] <= time || time <= 0.0) && g_Tp_Final[client] == 0)
 		db_updateRecordPro(client);
 	}    
 	else
 	{
-		if (g_OverallTp[client] > 0)
+		if (g_Tp_Final[client] > 0)
 			db_updateRecordCP(client);	
 		else 
 			db_updateRecordPro(client);	
