@@ -17,7 +17,7 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 - SQLite & MySQL support
 - Sourcebans support
 - Workshop maps support
-- Console command to disable KZTimer: sm plugins unload KZTimer
+- Console command to enable/disable KZTimer: rcon sm plugins load/unload KZTimer
 - Multi-Language support (english, chinese, french, german, russian and swedish)
 - KZTimer is in the final version (only bugs will be fixed from now on!)
 
