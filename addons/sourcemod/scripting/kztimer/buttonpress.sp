@@ -2,8 +2,7 @@
 public ButtonPress(const String:name[], caller, activator, Float:delay)
 {
 	if(!IsValidEntity(caller) || !IsValidClient(activator))
-		return;	
-	g_bButtonSound[activator] = false;	
+		return;		
 	g_bLJBlock[activator] = false;
 	decl String:targetname[128];
 	GetEdictClassname(activator,targetname, sizeof(targetname));
@@ -52,6 +51,7 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 		Call_Finish();
 	}
 }  
+
 // - Climb Button OnStartPress -
 public CL_OnStartTimerPress(client)
 {	
@@ -59,10 +59,10 @@ public CL_OnStartTimerPress(client)
 	{	
 		if (g_bNewReplay[client])
 			return;
-		if (!(GetEntityFlags(client) & FL_ONGROUND) && g_bLegitButtons[client])
+		if (!(g_bOnGround[client]) && g_bLegitButtons[client])
 			return;
 	}
-		
+	
 	//timer pos
 	if (g_bFirstStartButtonPush && !IsFakeClient(client))
 	{
@@ -71,9 +71,8 @@ public CL_OnStartTimerPress(client)
 	}				
 	
 	//sound
-	if (g_bButtonSound[client] && !IsFakeClient(client))
-		PlayButtonSound(client);
-		
+	PlayButtonSound(client);
+	
 	new Float:time;
 	time = GetEngineTime() - g_fLastTimeNoClipUsed[client];
 
@@ -94,27 +93,7 @@ public CL_OnStartTimerPress(client)
 	}			
 	if (!g_bSpectate[client] && !g_bNoClip[client] && time > 2.0) 
 	{	
-		//replay bot: play start sound for specs
-		if (IsFakeClient(client) && g_bReplayBot)
-		{
-			for(new i = 1; i <= MaxClients; i++) 
-			{
-				if (IsValidClient(i) && !IsPlayerAlive(i))
-				{			
-					new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
-					if (SpecMode == 4 || SpecMode == 5)
-					{		
-						new Target = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");	
-						if (Target == client)
-						{
-							decl String:szsound[255];
-							Format(szsound, sizeof(szsound), "play %s", RELATIVE_BUTTON_PATH); 
-							ClientCommand(i,szsound);
-						}
-					}					
-				}
-			}
-		}
+	
 		g_fPlayerCordsUndoTp[client][0] = 0.0;
 		g_fPlayerCordsUndoTp[client][1] = 0.0;
 		g_fPlayerCordsUndoTp[client][2] = 0.0;		
@@ -132,11 +111,11 @@ public CL_OnStartTimerPress(client)
 		g_bMenuOpen[client] = false;		
 		g_bTopMenuOpen[client] = false;	
 		g_bPositionRestored[client] = false;
-		g_bAutoBhopWasActive[client] = false;
 		g_bMissedTpBest[client] = true;
 		g_bMissedProBest[client] = true;
 		new bool: act = g_bTimeractivated[client];
 		g_bTimeractivated[client] = true;		
+		decl String:szTime[32];
 			
 		//valid players
 		if (!IsFakeClient(client))
@@ -148,7 +127,6 @@ public CL_OnStartTimerPress(client)
 			//star message
 			decl String:szTpTime[32];
 			decl String:szProTime[32];
-			decl String:szTime[32];
 			if (g_fPersonalRecord[client]<=0.0)
 			{
 				Format(szTpTime, 32, "NONE");
@@ -156,7 +134,7 @@ public CL_OnStartTimerPress(client)
 			else
 			{
 				g_bMissedTpBest[client] = false;
-				FormatTimeFloat(client, g_fPersonalRecord[client], 3,szTime,32);
+				FormatTimeFloat(client, g_fPersonalRecord[client], 3, szTime, sizeof(szTime));
 				Format(szTpTime, 32, "%s (#%i/%i)", szTime,g_MapRankTp[client],g_MapTimesCountTp);
 			}
 			if (g_fPersonalRecordPro[client]<=0.0)
@@ -164,7 +142,7 @@ public CL_OnStartTimerPress(client)
 			else
 			{
 				g_bMissedProBest[client] = false;
-				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3,szTime,32);
+				FormatTimeFloat(client, g_fPersonalRecordPro[client], 3, szTime, sizeof(szTime));
 				Format(szProTime, 32, "%s (#%i/%i)", szTime,g_MapRankPro[client],g_MapTimesCountPro);
 			}
 			g_bOverlay[client]=true;
@@ -172,14 +150,15 @@ public CL_OnStartTimerPress(client)
 			if (act)
 				PrintHintText(client,"%t", "TimerStarted1", szProTime,szTpTime);
 			else
-				PrintHintText(client,"%t", "TimerStarted2", szProTime,szTpTime);			
+				PrintHintText(client,"%t", "TimerStarted2", szProTime,szTpTime);		
+			
 		}	
 	}
 }
 
 // - Climb Button OnEndPress -
 public CL_OnEndTimerPress(client)
-{
+{	
 	//Format Final Time
 	if (IsFakeClient(client) && g_bTimeractivated[client])
 	{
@@ -198,22 +177,26 @@ public CL_OnEndTimerPress(client)
 						else
 						if (Target == g_ProBot)
 							PrintToChat(i, "%t", "ReplayFinishingMsg", MOSSGREEN,WHITE,LIMEGREEN,g_szReplayName,GRAY,LIMEGREEN,g_szReplayTime,GRAY);
-						decl String:szsound[255];
-						Format(szsound, sizeof(szsound), "play %s", RELATIVE_BUTTON_PATH); 
-						ClientCommand(i,szsound);
 					}
 				}					
 			}		
 		}	
+		PlayButtonSound(client);
 		g_bTimeractivated[client] = false;	
 		return;
 	}
 	if (!g_bTimeractivated[client]) 
+	{
+		decl Float:diff; 
+		diff = GetEngineTime() - g_fLastTimeButtonSound[client];
+		if (diff > 0.1)
+			PlayButtonSound(client);
+		g_fLastTimeButtonSound[client] = GetEngineTime();
 		return;	
-	
+	}
 	g_Tp_Final[client] = g_OverallTp[client];	
-	g_bTimeractivated[client] = false;	
 	
+
 	//timer pos
 	if (g_bFirstEndButtonPush && !IsFakeClient(client))
 	{
@@ -222,33 +205,29 @@ public CL_OnEndTimerPress(client)
 	}				
 	
 	//sound
-	if (g_bButtonSound[client] && !IsFakeClient(client))
-		PlayButtonSound(client);
+	PlayButtonSound(client);	
 	
 	//decl
-	decl String:szName[MAX_NAME_LENGTH];	
-	decl String:szNameOpponent[MAX_NAME_LENGTH];	
-	decl String:szSteamIdOpponent[32];
-	decl String:szSteamId[32];
-	decl String:szTime[32];
-	new bool:hasRecord;
+	new String:szName[MAX_NAME_LENGTH];	
+	new String:szNameOpponent[MAX_NAME_LENGTH];	
+	new String:szTime[32];
+	new bool:hasRecord=false;
 	new Float: difference;
 	g_FinishingType[client] = -1;
 	g_Sound_Type[client] = -1;
 	g_bMapRankToChat[client] = true;
 	if (!IsValidClient(client))
 		return;	
-	GetClientAuthString(client, szSteamId, 32);
 	GetClientName(client, szName, MAX_NAME_LENGTH);
 	
 	//Final time
 	g_fFinalTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];			
-	FormatTimeFloat(client, g_fFinalTime[client], 3,szTime,32);
+	g_bTimeractivated[client] = false;	
+	FormatTimeFloat(client, g_fFinalTime[client], 3, szTime, sizeof(szTime));
 	Format(g_szFinalTime[client], 32, "%s", szTime);
 	g_bOverlay[client]=true;
 	g_fLastOverlay[client] = GetEngineTime();
 	PrintHintText(client,"%t", "TimerStopped", g_szFinalTime[client]);
-	
 	//calc difference
 	if (g_Tp_Final[client]==0)
 	{
@@ -256,7 +235,7 @@ public CL_OnEndTimerPress(client)
 		{
 			hasRecord=true;
 			difference = g_fPersonalRecordPro[client] - g_fFinalTime[client];
-			FormatTimeFloat(client, difference, 3,szTime,32);
+			FormatTimeFloat(client, difference, 3, szTime, sizeof(szTime));
 		}
 		else
 		{
@@ -270,7 +249,7 @@ public CL_OnEndTimerPress(client)
 		{		
 			hasRecord=true;
 			difference = g_fPersonalRecord[client]-g_fFinalTime[client];
-			FormatTimeFloat(client, difference, 3,szTime,32);
+			FormatTimeFloat(client, difference, 3,szTime,sizeof(szTime));
 		}	
 		else
 		{
@@ -320,7 +299,7 @@ public CL_OnEndTimerPress(client)
 				g_Time_Type[client] = 5;
 		}
 	}
-
+	
 	//NEW PRO RECORD
 	if((g_fFinalTime[client] < g_fRecordTimePro) && g_Tp_Final[client] <= 0)
 	{
@@ -337,7 +316,7 @@ public CL_OnEndTimerPress(client)
 			g_bNewReplay[client]=true;
 			CreateTimer(3.0, ProReplayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 		}
-		db_InsertLatestRecords(szSteamId, szName, g_fFinalTime[client], g_Tp_Final[client]);	
+		db_InsertLatestRecords(g_szSteamID[client], szName, g_fFinalTime[client], g_Tp_Final[client]);	
 	} 
 	
 	//NEW TP RECORD
@@ -355,9 +334,9 @@ public CL_OnEndTimerPress(client)
 			g_bNewReplay[client]=true;
 			CreateTimer(3.0, TpReplayTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 		}
-		db_InsertLatestRecords(szSteamId, szName, g_fFinalTime[client], g_Tp_Final[client]);	
-	}		
-			
+		db_InsertLatestRecords(g_szSteamID[client], szName, g_fFinalTime[client], g_Tp_Final[client]);	
+	}
+	
 	//Challenge
 	if (g_bChallenge[client])
 	{
@@ -365,9 +344,8 @@ public CL_OnEndTimerPress(client)
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && i != client && i != g_ProBot && i != g_TpBot)
-			{	
-				GetClientAuthString(i, szSteamIdOpponent, 32);		
-				if (StrEqual(szSteamIdOpponent,g_szChallenge_OpponentID[client]))
+			{				
+				if (StrEqual(g_szSteamID[i],g_szChallenge_OpponentID[client]))
 				{	
 					g_bChallenge[client]=false;
 					g_bChallenge[i]=false;
@@ -385,7 +363,7 @@ public CL_OnEndTimerPress(client)
 								PrintToChat(j, "%t", "ChallengeL", MOSSGREEN, WHITE, PURPLE,szNameOpponent, GRAY, RED, lostpoints,GRAY);		
 						CreateTimer(0.5, UpdatePlayerProfile, i,TIMER_FLAG_NO_MAPCHANGE);
 						g_pr_showmsg[client] = true;
-					}				
+					}					
 					break;
 				}
 			}
@@ -410,6 +388,6 @@ public CL_OnEndTimerPress(client)
 			db_viewMapRankPro(client);
 	}
 	
-	//delete tmp entry
+	//delete tmp
 	db_deleteTmp(client);
 }

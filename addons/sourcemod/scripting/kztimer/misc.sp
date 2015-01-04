@@ -779,6 +779,10 @@ public InitPrecache()
 	AddFileToDownloadsTable("materials/models/props/stopkztimer.vtf");
 	AddFileToDownloadsTable("materials/sprites/bluelaser1.vmt");
 	AddFileToDownloadsTable("materials/sprites/bluelaser1.vtf");
+	AddFileToDownloadsTable("materials/sprites/laser.vmt");
+	AddFileToDownloadsTable("materials/sprites/laser.vtf");
+	AddFileToDownloadsTable("materials/sprites/halo01.vmt");
+	AddFileToDownloadsTable("materials/sprites/halo01.vtf");
 	AddFileToDownloadsTable(g_sArmModel);
 	AddFileToDownloadsTable(g_sPlayerModel);
 	AddFileToDownloadsTable(g_sReplayBotArmModel);
@@ -789,8 +793,8 @@ public InitPrecache()
 	PrecacheModel("materials/models/props/startkztimer.vmt",true);
 	PrecacheModel("materials/models/props/stopkztimer.vmt",true);
 	PrecacheModel("models/props/switch001.mdl",true);	
-	g_Beam[0] = PrecacheModel("materials/sprites/laser.vmt");
-	g_Beam[1] = PrecacheModel("materials/sprites/halo01.vmt");
+	g_Beam[0] = PrecacheModel("materials/sprites/laser.vmt", true);
+	g_Beam[1] = PrecacheModel("materials/sprites/halo01.vmt", true);
 	PrecacheModel(g_sReplayBotArmModel,true);
 	PrecacheModel(g_sReplayBotPlayerModel,true);
 	PrecacheModel(g_sReplayBotArmModel2,true);
@@ -1957,41 +1961,61 @@ public SpeedCap(client)
 
 public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 {
-	if (IsValidClient(client) && g_LastButton[client] != IN_USE && buttons & IN_USE && ((g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0)))
+	if (IsValidClient(client) && !IsFakeClient(client) && g_LastButton[client] != IN_USE && buttons & IN_USE && ((g_fCurrentRunTime[client] > 0.1 || g_fCurrentRunTime[client] == -1.0)))
 	{
-		new Float: diff = GetEngineTime() - g_fLastTimeButtonSound[client];
-		if (diff > 0.3)
-		{	
-			new  Float: distance1 = GetVectorDistance(origin, g_fStartButtonPos);
-			new  Float: distance2 = GetVectorDistance(origin, g_fEndButtonPos);
-			if (distance1 < 75.0 && speed < 251.0 && !g_bFirstStartButtonPush)
+		decl Float:diff; 
+		diff = GetEngineTime() - g_fLastTimeButtonSound[client];
+		if (diff > 0.1)
+		{
+			decl Float:dist; 
+			dist=70.0;		
+			decl  Float:distance1; 
+			distance1 = GetVectorDistance(origin, g_fStartButtonPos);
+			decl  Float: distance2;
+			distance2 = GetVectorDistance(origin, g_fEndButtonPos);
+			if (distance1 < dist && speed < 251.0 && !g_bFirstStartButtonPush)
 			{
-				if (!IsFakeClient(client))
-				{	
-					new Handle:trace = TR_TraceRayFilterEx(origin, g_fStartButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-					if (!TR_DidHit(trace))
-					{
-						g_bButtonSound[client]=true;
-						CreateTimer(0.1,StartTheTimer,client);		
-						g_fLastTimeButtonSound[client] = GetEngineTime();	
-					}
-					CloseHandle(trace);					
+				new Handle:trace;
+				trace = TR_TraceRayFilterEx(origin, g_fStartButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
+				if (!TR_DidHit(trace))
+				{
+					CL_OnStartTimerPress(client);
+					g_fLastTimeButtonSound[client] = GetEngineTime();	
 				}
+				CloseHandle(trace);								
 			}
 			else
-				if (distance2 < 75.0  && !g_bFirstEndButtonPush)
+				if (distance2 < dist  && !g_bFirstEndButtonPush)
 				{
-					new Handle:trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
+					new Handle:trace;
+					trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
 					if (!TR_DidHit(trace))
 					{
-					g_bButtonSound[client]=true;
-					CreateTimer(0.1,EndTheTimer,client);		
-					g_fLastTimeButtonSound[client] = GetEngineTime();
+						CL_OnEndTimerPress(client);	
+						g_fLastTimeButtonSound[client] = GetEngineTime();
 					}
 					CloseHandle(trace);		
 				}
 		}
 	}		
+	else
+	{
+		if (IsValidClient(client) && IsFakeClient(client) && g_bTimeractivated[client] && g_LastButton[client] != IN_USE && buttons & IN_USE)
+		{
+			new Float: distance = GetVectorDistance(origin, g_fEndButtonPos);	
+			if (distance < 100.0  && !g_bFirstEndButtonPush)
+			{
+				new Handle:trace;
+				trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
+				if (!TR_DidHit(trace))
+				{
+					CL_OnEndTimerPress(client);	
+					g_fLastTimeButtonSound[client] = GetEngineTime();
+				}
+				CloseHandle(trace);		
+			}			
+		}
+	}
 }
 
 

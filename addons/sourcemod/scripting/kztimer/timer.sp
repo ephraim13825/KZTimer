@@ -28,16 +28,6 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 	}	
 }
 
-public Action:StartTheTimer(Handle:timer, any:client)
-{
-	CL_OnStartTimerPress(client);
-}
-
-public Action:EndTheTimer(Handle:timer, any:client)
-{
-	CL_OnEndTimerPress(client);
-}
-
 public Action:StartTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))	

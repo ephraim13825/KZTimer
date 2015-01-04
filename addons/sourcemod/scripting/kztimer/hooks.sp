@@ -1,3 +1,16 @@
+//button hook
+public Action:NormalSHook_callback(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
+{
+    if(entity > MaxClients)
+    {
+        new String:clsname[20]; GetEntityClassname(entity, clsname, sizeof(clsname));
+        if(StrEqual(clsname, "func_button", false))
+        {
+            return Plugin_Handled;
+        }
+    }
+    return Plugin_Continue;
+}  
 
 //usp attack spam protection
 public Action:Event_OnFire(Handle:event, const String:name[], bool:dontBroadcast)

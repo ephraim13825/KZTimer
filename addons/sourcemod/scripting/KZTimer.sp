@@ -19,7 +19,7 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.63"
+#define VERSION "1.631"
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define DEBUG 0
@@ -362,7 +362,6 @@ new bool:g_bAntiCheat;
 new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
-new bool:g_bButtonSound[MAXPLAYERS+1];
 new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bLegitButtons[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
@@ -418,7 +417,6 @@ new bool:g_js_Strafing_SD[MAXPLAYERS+1];
 new bool:g_pr_showmsg[MAXPLAYERS+1];
 new bool:g_CMOpen[MAXPLAYERS+1];
 new bool:g_bRecalcRankInProgess[MAXPLAYERS+1];
-new bool:g_bAutoBhopWasActive[MAXPLAYERS+1];
 new bool:g_bColorChat[MAXPLAYERS+1];
 new bool:g_bLanguageSelected[MAXPLAYERS+1];
 new bool:g_bNewReplay[MAXPLAYERS+1];
@@ -1060,6 +1058,8 @@ public OnPluginStart()
 	//chat command listener
 	AddCommandListener(Say_Hook, "say");
 	AddCommandListener(Say_Hook, "say_team");
+	
+	AddNormalSoundHook(NormalSHook_callback);
 	
 	//exec kztimer.cfg
 	AutoExecConfig(true, "kztimer");
