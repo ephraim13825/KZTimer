@@ -1999,9 +1999,9 @@ public TopMenu(client)
 	AddMenuItem(topmenu, "Top 5 Challengers", "Top 5 Challengers");
 	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 Pro Record Holders");
 	if (g_bAllowCheckpoints)
-		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers");
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Record Holders");
 	else
-		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers",ITEMDRAW_DISABLED);
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Record Holders",ITEMDRAW_DISABLED);
 	AddMenuItem(topmenu, "Map Top", "Map Top");	
 	if (g_bJumpStats)
 		AddMenuItem(topmenu, "Jump Top", "Jump Top");
