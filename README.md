@@ -25,6 +25,10 @@ Changelog
 =======
 <SPOILER>
 
+v1.631
+- fixed button press delay
+- added missing sprites halo01.vmt and laser.vmt (this might be the reason for those error boxes)
+
 v1.63
 - fixed !hide command for replay bots
 - fixed the start/stop timer bug #2 (*hidden timers*)
