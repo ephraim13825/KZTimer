@@ -25,6 +25,22 @@ Changelog
 =======
 <SPOILER>
 
+v1.64
+- fixed load/unload procedure of kztimer
+- added jumpstats type: Ladder jump
+- added client option !beam: Showing the trajectory of your last jump
+- added client command !wr: prints in chat the record of the current map
+- added client command !avg: prints in chat the average time of the current map
+- added kz_dynamic_timelimit - on/off: Sets a suitable timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times)
+- added failstats for block lj's
+- added player rank to spec hud
+- added moving direction sideways and backwards to jump types
+- added unstoppable quake sound (only client & specs) for improving your time (sound/quake/unstoppable.mp3)
+- updated all language files
+- updated bhop_.cfg
+- performance tweaks
+- minor bug fixes / optimizations
+
 v1.631
 - fixed button press delay
 - added missing sprites halo01.vmt and laser.vmt (this might be the reason for those error boxes)
