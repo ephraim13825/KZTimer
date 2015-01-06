@@ -19,24 +19,6 @@
 #include <hgr>
 #include <mapchooser>
 
-/*
-v1.64
-- fixed load/unload procedure of kztimer
-- fixed button press delay on self-built buttons
-- added air time to jumpstats messages (only console)
-- added failstats (console+chat) for block lj's
-- added movement direction for bw/sw lj's to the colored jumpstats message
-- added client command !wr: prints in chat the record of the current map
-- added client command !avg: prints in chat the average time of the current map
-- added kz_dynamic_timelimit - on/off: Sets a appropriate timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times)
-- updated all language files
-- performance tweaks
-- minor bug fixes
-
-global record system:
-- changed the map file size check to allow server admins to rename maps without losing of global records from the original map 
-*/
-
 #define VERSION "1.64"
 #define PLUGIN_VERSION 164
 #define ADMIN_LEVEL ADMFLAG_UNBAN
