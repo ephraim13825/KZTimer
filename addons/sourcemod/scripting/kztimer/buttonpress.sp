@@ -151,7 +151,12 @@ public CL_OnStartTimerPress(client)
 				PrintHintText(client,"%t", "TimerStarted1", szProTime,szTpTime);
 			else
 				PrintHintText(client,"%t", "TimerStarted2", szProTime,szTpTime);		
-			
+
+			if (g_bFirstButtonTouch[client])
+			{
+				g_bFirstButtonTouch[client]=false;
+				Client_Avg(client, 0);
+			}				
 		}	
 	}
 }
@@ -256,6 +261,7 @@ public CL_OnEndTimerPress(client)
 			g_pr_finishedmaps_tp[client]++;
 		}
 	}
+	new bool: newbest;
 	if (hasRecord)
 	{
 		if (difference > 0.0)
@@ -263,6 +269,7 @@ public CL_OnEndTimerPress(client)
 			if (g_ExtraPoints > 0)
 				g_pr_multiplier[client]+=1;
 			Format(g_szTimeDifference[client], 32, "-%s", szTime);
+			newbest=true;
 		}
 		else
 			Format(g_szTimeDifference[client], 32, "+%s", szTime);
@@ -337,6 +344,9 @@ public CL_OnEndTimerPress(client)
 		db_InsertLatestRecords(g_szSteamID[client], szName, g_fFinalTime[client], g_Tp_Final[client]);	
 	}
 	
+	if (newbest && g_Sound_Type[client] == -1)
+		g_Sound_Type[client] = 5;
+			
 	//Challenge
 	if (g_bChallenge[client])
 	{

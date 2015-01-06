@@ -34,3 +34,6 @@
 !showkeys
 !knife
 !measure
+!avg
+!wr
+!beam

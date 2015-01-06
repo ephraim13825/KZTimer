@@ -1,5 +1,5 @@
 //TABLE CHALLENGE
-new String:sql_createChallenges[] 				= "CREATE TABLE IF NOT EXISTS challenges (steamid VARCHAR(32), steamid2 VARCHAR(32), bet INT(12), cp_allowed INT(12), map VARCHAR(32), date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);";
+new String:sql_createChallenges[] 				= "CREATE TABLE IF NOT EXISTS challenges (steamid VARCHAR(32), steamid2 VARCHAR(32), bet INT(12), cp_allowed INT(12), map VARCHAR(32), date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(steamid,steamid2,date));";
 new String:sql_insertChallenges[] 				= "INSERT INTO challenges (steamid, steamid2, bet, map, cp_allowed) VALUES('%s', '%s','%i','%s','%i');";
 new String:sql_selectChallenges2[] 				= "SELECT steamid, steamid2, bet, cp_allowed, map, date FROM challenges where steamid = '%s' OR steamid2 ='%s' ORDER BY date DESC";
 new String:sql_selectChallenges[] 				= "SELECT steamid, steamid2, bet, cp_allowed, map FROM challenges where steamid = '%s' OR steamid2 ='%s'";
@@ -7,10 +7,9 @@ new String:sql_selectChallengesCompare[] 		= "SELECT steamid, steamid2, bet FROM
 new String:sql_deleteChallenges[] 				= "DELETE from challenges where steamid = '%s'";
 
 //TABLE LATEST 15 LOCAL RECORDS
-new String:sql_createLatestRecords[] 			= "CREATE TABLE IF NOT EXISTS LatestRecords (steamid VARCHAR(32), name VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', teleports INT(12) DEFAULT '-1', map VARCHAR(32), date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);";
+new String:sql_createLatestRecords[] 			= "CREATE TABLE IF NOT EXISTS LatestRecords (steamid VARCHAR(32), name VARCHAR(32), runtime FLOAT NOT NULL DEFAULT '-1.0', teleports INT(12) DEFAULT '-1', map VARCHAR(32), date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(steamid,map,date));";
 new String:sql_insertLatestRecords[] 			= "INSERT INTO LatestRecords (steamid, name, runtime, teleports, map) VALUES('%s','%s','%f','%i','%s');";
-new String:sql_selectLatestRecords[] 			= "SELECT name, runtime, teleports, map, date FROM LatestRecords ORDER BY date DESC";
-new String:sql_deleteLatestRecords[] 			= "DELETE FROM LatestRecords WHERE date NOT IN (SELECT date FROM LatestRecords ORDER BY date DESC LIMIT 15)";
+new String:sql_selectLatestRecords[] 			= "SELECT name, runtime, teleports, map, date FROM LatestRecords ORDER BY date DESC LIMIT 50";
 
 //TABLE PLAYEROPTIONS
 new String:sql_createPlayerOptions[] 			= "CREATE TABLE IF NOT EXISTS playeroptions2 (steamid VARCHAR(32), colorchat INT(12) DEFAULT '1', speedmeter INT(12) DEFAULT '0', climbersmenu_sounds INT(12) DEFAULT '1', quake_sounds INT(12) DEFAULT '1', autobhop INT(12) DEFAULT '0', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', strafesync INT(12) DEFAULT '0', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', cpmessage INT(12) DEFAULT '0', adv_menu INT(12) DEFAULT '0', knife VARCHAR(32) DEFAULT 'weapon_knife', jumppenalty INT(12) DEFAULT '0', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
@@ -23,7 +22,7 @@ new String:sql_createPlayerRank[]				= "CREATE TABLE IF NOT EXISTS playerrank (s
 new String:sql_insertPlayerRank[] 				= "INSERT INTO playerrank (steamid, name, country) VALUES('%s', '%s', '%s');";
 new String:sql_updatePlayerRankPoints[]			= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i',winratio = '%i',pointsratio = '%i' where steamid='%s'";
 new String:sql_updatePlayerRankPoints2[]		= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i',winratio = '%i',pointsratio = '%i', country ='%s' where steamid='%s'";
-new String:sql_updatePlayerRank[]				= "UPDATE playerrank SET finishedmaps ='%i', finishedmapstp ='%i', finishedmapspro='%i', multiplier ='%i' where steamid='%s'";
+new String:sql_updatePlayerRank[]				= "UPDATE playerrank SET finishedmaps ='%i', finishedmapstp ='%i', finishedmapspro='%i', multiplier ='%i'  where steamid='%s'";
 new String:sql_selectPlayerRankAll[] 			= "SELECT name, steamid FROM playerrank where name like '%c%s%c'";
 new String:sql_selectPlayerRankAll2[] 			= "SELECT name, steamid FROM playerrank where name = '%s'";
 new String:sql_selectPlayerName[] 				= "SELECT name FROM playerrank where steamid = '%s'";
@@ -74,8 +73,6 @@ new String:sql_updatePlayerTmp[] 				= "UPDATE playertmp SET cords1 = '%f', cord
 new String:sql_deletePlayerTmp[] 				= "DELETE FROM playertmp where steamid = '%s';";
 new String:sql_selectPlayerTmp[] 				= "SELECT cords1,cords2,cords3, angle1, angle2, angle3, teleports, checkpoints, runtimeTmp, EncTickrate FROM playertmp WHERE steamid = '%s' AND mapname = '%s';";
 
-
-
 //TABLE JUMMPSTATS
 new String:sql_createPlayerjumpstats[] 			= "CREATE TABLE IF NOT EXISTS playerjumpstats3 (steamid VARCHAR(32), name VARCHAR(32), multibhoprecord FLOAT NOT NULL DEFAULT '-1.0',  multibhoppre FLOAT NOT NULL DEFAULT '-1.0', multibhopmax FLOAT NOT NULL DEFAULT '-1.0', multibhopstrafes INT(12),multibhopcount INT(12),multibhopsync INT(12), multibhopheight FLOAT NOT NULL DEFAULT '-1.0', bhoprecord FLOAT NOT NULL DEFAULT '-1.0',  bhoppre FLOAT NOT NULL DEFAULT '-1.0', bhopmax FLOAT NOT NULL DEFAULT '-1.0', bhopstrafes INT(12),bhopsync INT(12), bhopheight FLOAT NOT NULL DEFAULT '-1.0', ljrecord FLOAT NOT NULL DEFAULT '-1.0', ljpre FLOAT NOT NULL DEFAULT '-1.0', ljmax FLOAT NOT NULL DEFAULT '-1.0', ljstrafes INT(12),ljsync INT(12), ljheight FLOAT NOT NULL DEFAULT '-1.0', ljblockdist INT(12) NOT NULL DEFAULT '-1',ljblockrecord FLOAT NOT NULL DEFAULT '-1.0', ljblockpre FLOAT NOT NULL DEFAULT '-1.0', ljblockmax FLOAT NOT NULL DEFAULT '-1.0', ljblockstrafes INT(12),ljblocksync INT(12), ljblockheight FLOAT NOT NULL DEFAULT '-1.0', dropbhoprecord FLOAT NOT NULL DEFAULT '-1.0',  dropbhoppre FLOAT NOT NULL DEFAULT '-1.0', dropbhopmax FLOAT NOT NULL DEFAULT '-1.0', dropbhopstrafes INT(12),dropbhopsync INT(12), dropbhopheight FLOAT NOT NULL DEFAULT '-1.0', wjrecord FLOAT NOT NULL DEFAULT '-1.0', wjpre FLOAT NOT NULL DEFAULT '-1.0', wjmax FLOAT NOT NULL DEFAULT '-1.0', wjstrafes INT(12),wjsync INT(12), wjheight FLOAT NOT NULL DEFAULT '-1.0', standupbhoprecord FLOAT NOT NULL DEFAULT '-1.0',  standupbhoppre FLOAT NOT NULL DEFAULT '-1.0', standupbhopmax FLOAT NOT NULL DEFAULT '-1.0', standupbhopstrafes INT(12),standupbhopcount INT(12),standupbhopsync INT(12), standupbhopheight FLOAT NOT NULL DEFAULT '-1.0', dropstandupbhoprecord FLOAT NOT NULL DEFAULT '-1.0',  dropstandupbhoppre FLOAT NOT NULL DEFAULT '-1.0', dropstandupbhopmax FLOAT NOT NULL DEFAULT '-1.0', dropstandupbhopstrafes INT(12), dropstandupbhopcount INT(12), dropstandupbhopsync INT(12), dropstandupbhopheight FLOAT NOT NULL DEFAULT '-1.0', ladderjumprecord FLOAT NOT NULL DEFAULT '-1.0',  ladderjumppre FLOAT NOT NULL DEFAULT '-1.0', ladderjumpmax FLOAT NOT NULL DEFAULT '-1.0', ladderjumpstrafes INT(12), ladderjumpcount INT(12), ladderjumpsync INT(12), ladderjumpheight FLOAT NOT NULL DEFAULT '-1.0', ladderbhoprecord FLOAT NOT NULL DEFAULT '-1.0',  ladderbhoppre FLOAT NOT NULL DEFAULT '-1.0', ladderbhopmax FLOAT NOT NULL DEFAULT '-1.0', ladderbhopstrafes INT(12), ladderbhopcount INT(12), ladderbhopsync INT(12), ladderbhopheight FLOAT NOT NULL DEFAULT '-1.0',  PRIMARY KEY(steamid));";
 new String:sql_insertPlayerJumpBhop[] 			= "INSERT INTO playerjumpstats3 (steamid, name, bhoprecord, bhoppre, bhopmax, bhopstrafes, bhopsync, bhopheight) VALUES('%s', '%s', '%f', '%f', '%f', '%i', '%i', '%f');";
@@ -106,7 +103,8 @@ new String:sql_selectPlayerJumpMultiBhop[] 	= "SELECT steamid, name, multibhopre
 new String:sql_selectPlayerJumpWJ[] 			= "SELECT steamid, name, wjrecord FROM playerjumpstats3 WHERE steamid = '%s';";
 new String:sql_selectPlayerJumpDropBhop[] 		= "SELECT steamid, name, dropbhoprecord FROM playerjumpstats3 WHERE steamid = '%s';";
 
-new String:sql_selectJumpStats[] 				= "SELECT db2.steamid, db1.name, db2.bhoprecord,db2.bhoppre,db2.bhopmax,db2.bhopstrafes,db2.bhopsync, db2.ljrecord, db2.ljpre, db2.ljmax, db2.ljstrafes,db2.ljsync, db2.multibhoprecord,db2.multibhoppre,db2.multibhopmax, db2.multibhopstrafes,db2.multibhopcount,db2.multibhopsync, db2.wjrecord, db2.wjpre, db2.wjmax, db2.wjstrafes, db2.wjsync, db2.dropbhoprecord, db2.dropbhoppre, db2.dropbhopmax, db2.dropbhopstrafes, db2.dropbhopsync, db2.ljheight, db2.bhopheight, db2.multibhopheight, db2.dropbhopheight, db2.wjheight,db2.ljblockdist,db2.ljblockrecord, db2.ljblockpre, db2.ljblockmax, db2.ljblockstrafes,db2.ljblocksync, db2.ljblockheight FROM playerjumpstats3 as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE (db2.wjrecord > -1.0 OR db2.dropbhoprecord > -1.0 OR db2.ljrecord > -1.0 OR db2.bhoprecord > -1.0 OR db2.multibhoprecord > -1.0) AND db2.steamid = '%s';";
+new String:sql_selectJumpStats1[] 				= "SELECT db2.steamid, db1.name, db2.ladderjumprecord, db2.ladderjumppre, db2.ladderjumpmax, db2.ladderjumpstrafes,db2.ladderjumpsync,db2.ladderjumpheight FROM playerjumpstats3 as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE db2.ladderjumprecord > -1.0 AND db2.steamid = '%s';";
+new String:sql_selectJumpStats2[] 				= "SELECT db2.steamid, db1.name, db2.bhoprecord,db2.bhoppre,db2.bhopmax,db2.bhopstrafes,db2.bhopsync, db2.ljrecord, db2.ljpre, db2.ljmax, db2.ljstrafes,db2.ljsync, db2.multibhoprecord,db2.multibhoppre,db2.multibhopmax, db2.multibhopstrafes,db2.multibhopcount,db2.multibhopsync, db2.wjrecord, db2.wjpre, db2.wjmax, db2.wjstrafes, db2.wjsync, db2.dropbhoprecord, db2.dropbhoppre, db2.dropbhopmax, db2.dropbhopstrafes, db2.dropbhopsync, db2.ljheight, db2.bhopheight, db2.multibhopheight, db2.dropbhopheight, db2.wjheight,db2.ljblockdist,db2.ljblockrecord, db2.ljblockpre, db2.ljblockmax, db2.ljblockstrafes,db2.ljblocksync, db2.ljblockheight FROM playerjumpstats3 as db2 INNER JOIN playerrank as db1 on db2.steamid = db1.steamid WHERE (db2.wjrecord > -1.0 OR db2.dropbhoprecord > -1.0 OR db2.ljrecord > -1.0 OR db2.bhoprecord > -1.0 OR db2.multibhoprecord > -1.0) AND db2.steamid = '%s';";
 new String:sql_selectPlayerRankMultiBhop[]		= "SELECT name FROM playerjumpstats3 WHERE multibhoprecord >= (SELECT multibhoprecord FROM playerjumpstats3 WHERE steamid = '%s' AND multibhoprecord > -1.0) AND multibhoprecord  > -1.0 ORDER BY multibhoprecord;";
 new String:sql_selectPlayerRankLj[] 			= "SELECT name FROM playerjumpstats3 WHERE ljrecord >= (SELECT ljrecord FROM playerjumpstats3 WHERE steamid = '%s' AND ljrecord > -1.0) AND ljrecord  > -1.0 ORDER BY ljrecord;";
 new String:sql_selectPlayerRankLjBlock[] 		= "SELECT name FROM playerjumpstats3 WHERE ljblockdist >= (SELECT ljblockdist FROM playerjumpstats3 WHERE steamid = '%s' AND ljblockdist > -1.0) AND ljblockdist  > -1.0 ORDER BY ljblockdist DESC, ljblockrecord DESC;";
@@ -114,8 +112,16 @@ new String:sql_selectPlayerRankBhop[] 			= "SELECT name FROM playerjumpstats3 WH
 new String:sql_selectPlayerRankWJ[] 			= "SELECT name FROM playerjumpstats3 WHERE wjrecord >= (SELECT wjrecord FROM playerjumpstats3 WHERE steamid = '%s' AND wjrecord > -1.0) AND wjrecord  > -1.0 ORDER BY wjrecord;";
 new String:sql_selectPlayerRankDropBhop[] 		= "SELECT name FROM playerjumpstats3 WHERE dropbhoprecord >= (SELECT dropbhoprecord FROM playerjumpstats3 WHERE steamid = '%s' AND dropbhoprecord > -1.0) AND dropbhoprecord  > -1.0 ORDER BY dropbhoprecord;";
 
+//new ladderjump
+new String:sql_insertPlayerJumpLadderJump[] 			= "INSERT INTO playerjumpstats3 (steamid, name, ladderjumprecord, ladderjumppre, ladderjumpmax, ladderjumpstrafes, ladderjumpsync, ladderjumpheight) VALUES('%s', '%s', '%f', '%f', '%f', '%i', '%i', '%f');";
+new String:sql_updateLadderJump[] 						= "UPDATE playerjumpstats3 SET name='%s', ladderjumprecord ='%f', ladderjumppre ='%f', ladderjumpmax ='%f', ladderjumpstrafes='%i', ladderjumpsync='%i', ladderjumpheight='%f' WHERE steamid = '%s';";
+new String:sql_selectPlayerJumpTopLadderJump[] 			= "SELECT db1.name, db2.ladderjumprecord,db2.ladderjumpstrafes, db2.steamid, db1.steamid FROM playerjumpstats3 as db2 INNER JOIN playerrank as db1 on db2.steamid=db1.steamid WHERE ladderjumprecord > -1.0 ORDER BY ladderjumprecord DESC LIMIT 20";
+new String:sql_selectPlayerJumpLadderJump[] 			= "SELECT steamid, name, ladderjumprecord FROM playerjumpstats3 WHERE steamid = '%s';";
+new String:sql_selectPlayerRankLadderJump[] 			= "SELECT name FROM playerjumpstats3 WHERE ladderjumprecord >= (SELECT ladderjumprecord FROM playerjumpstats3 WHERE steamid = '%s' AND ladderjumprecord > -1.0) AND ladderjumprecord  > -1.0 ORDER BY ladderjumprecord;";
+
+
 // TABLE MAP BUTTONS
-new String:sql_createMapButtons[] 				= "CREATE TABLE IF NOT EXISTS MapButtons (mapname VARCHAR(32), cords1Start FLOAT NOT NULL DEFAULT '-1.0', cords2Start FLOAT NOT NULL DEFAULT '-1.0', cords3Start FLOAT NOT NULL DEFAULT '-1.0', cords1End FLOAT NOT NULL DEFAULT '-1.0', cords2End FLOAT NOT NULL DEFAULT '-1.0', cords3End FLOAT NOT NULL DEFAULT '-1.0', ang_start FLOAT NOT NULL DEFAULT '-1.0', ang_end FLOAT NOT NULL DEFAULT '-1.0');";
+new String:sql_createMapButtons[] 				= "CREATE TABLE IF NOT EXISTS MapButtons (mapname VARCHAR(32), cords1Start FLOAT NOT NULL DEFAULT '-1.0', cords2Start FLOAT NOT NULL DEFAULT '-1.0', cords3Start FLOAT NOT NULL DEFAULT '-1.0', cords1End FLOAT NOT NULL DEFAULT '-1.0', cords2End FLOAT NOT NULL DEFAULT '-1.0', cords3End FLOAT NOT NULL DEFAULT '-1.0', ang_start FLOAT NOT NULL DEFAULT '-1.0', ang_end FLOAT NOT NULL DEFAULT '-1.0', PRIMARY KEY(mapname));";
 new String:sql_deleteMapButtons[] 				= "DELETE FROM MapButtons where mapname= '%s';";
 new String:sql_insertMapButtons[] 				= "INSERT INTO MapButtons (mapname, cords1Start, cords2Start,cords3Start,cords1End,cords2End,cords3End,ang_start,ang_end) VALUES('%s', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f');";
 new String:sql_selectMapButtons[] 				= "SELECT cords1Start,cords2Start,cords3Start,cords1End,cords2End,cords3End,ang_start,ang_end FROM MapButtons WHERE mapname = '%s';";
@@ -142,14 +148,13 @@ new String:sql_resetBhopRecord[] 			= "UPDATE playerjumpstats3 SET bhoprecord = 
 new String:sql_resetDropBhopRecord[] 		= "UPDATE playerjumpstats3 SET dropbhoprecord = '-1.0' WHERE steamid = '%s';";   
 new String:sql_resetWJRecord[] 				= "UPDATE playerjumpstats3 SET wjrecord = '-1.0' WHERE steamid = '%s';";   
 new String:sql_resetLjRecord[] 				= "UPDATE playerjumpstats3 SET ljrecord = '-1.0' WHERE steamid = '%s';";  
+new String:sql_resetLadderJumpRecord[] 			= "UPDATE playerjumpstats3 SET ladderjumprecord = '-1.0' WHERE steamid = '%s';";  
 new String:sql_resetLjBlockRecord[] 			= "UPDATE playerjumpstats3 SET ljblockdist = '-1' WHERE steamid = '%s';";
 new String:sql_resetMultiBhopRecord[] 		= "UPDATE playerjumpstats3 SET multibhoprecord = '-1.0' WHERE steamid = '%s';";  
-new String:sql_resetJumpStats[] 				= "UPDATE playerjumpstats3 SET multibhoprecord = '-1.0', ljrecord = '-1.0', wjrecord = '-1.0', dropbhoprecord = '-1.0', bhoprecord = '-1.0', ljblockdist = '-1' WHERE steamid = '%s';";  
+new String:sql_resetJumpStats[] 				= "UPDATE playerjumpstats3 SET multibhoprecord = '-1.0', ladderjumprecord = '-1.0', ljrecord = '-1.0', wjrecord = '-1.0', dropbhoprecord = '-1.0', bhoprecord = '-1.0', ljblockdist = '-1' WHERE steamid = '%s';";  
 new String:sql_resetCheat1[] 					= "DELETE FROM playertimes WHERE steamid = '%s'";
 new String:sql_resetCheat2[] 					= "DELETE FROM playerrank WHERE steamid = '%s'";
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 public db_DeleteCheater(client, String:steamid[32])
 {
@@ -169,7 +174,7 @@ public db_viewPlayerRank2(client, String:szSteamId[32])
 	decl String:szQuery[512];  
 	Format(g_pr_szrank[client], 512, "");	
 	Format(szQuery, 512, sql_selectRankedPlayer, szSteamId);  
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayer2Callback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayer2Callback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_ViewRankedPlayer2Callback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -190,7 +195,7 @@ public SQL_ViewRankedPlayer2Callback(Handle:owner, Handle:hndl, const String:err
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);
 		Format(szQuery, 512, sql_selectChallengesCompare, g_szSteamID[client],szSteamIdTarget,szSteamIdTarget,g_szSteamID[client]);
-		SQL_TQuery(g_hDb, sql_selectChallengesCompareCallback, szQuery, pack);
+		SQL_TQuery(g_hDb, sql_selectChallengesCompareCallback, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -287,7 +292,7 @@ public db_viewPlayerAll2(client, String:szPlayerName[MAX_NAME_LENGTH])
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, szPlayerName);
-	SQL_TQuery(g_hDb, SQL_ViewPlayerAll2Callback, szQuery, pack);
+	SQL_TQuery(g_hDb, SQL_ViewPlayerAll2Callback, szQuery, pack,DBPrio_Low);
 }
 //COMPARE
 public SQL_ViewPlayerAll2Callback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -322,7 +327,7 @@ public db_setupDatabase()
         
 	if(g_hDb == INVALID_HANDLE)
 	{
-		SetFailState("[KZTimer] Unable to connect to database (%s)", szError);
+		SetFailState("[KZTimer] Unable to connect to database (%s)",szError);
 		return;
 	}
         
@@ -347,21 +352,6 @@ public db_setupDatabase()
 	
 }
 
-public db_UpdateLastSeen(client)
-{	 
-	if((StrContains(g_szSteamID[client], "STEAM_") != -1) && !IsFakeClient(client))
-	{
-		decl String:szQuery[512]; 
-		if (g_DbType == 0)
-			Format(szQuery, 512, sql_UpdateLastSeenMySQL,g_szSteamID[client]);
-		else
-			if (g_DbType == 1)
-			{
-				Format(szQuery, 512, sql_UpdateLastSeenSQLite,g_szSteamID[client]);
-			}
-		SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);
-	}
-}
 
 public db_createTables()
 {
@@ -424,13 +414,13 @@ public db_deleteTmp(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 256, sql_deletePlayerTmp, g_szSteamID[client]); 
-	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
+	SQL_TQuery(g_hDb, sql_deletePlayerCheckCallback, szQuery, client,DBPrio_Low);
 }
-public db_deleteMapButtons(String:szMapName[MAX_MAP_LENGTH])
+public db_deleteMapButtons(String:szMapName[128])
 {
 	decl String:szQuery[256];
 	Format(szQuery, 256, sql_deleteMapButtons, g_szMapName); 
-	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);
 }
 
 public db_selectLastRun(client)
@@ -438,9 +428,8 @@ public db_selectLastRun(client)
 	decl String:szQuery[512];
 	if (!IsValidClient(client))
 		return;
-		
 	Format(szQuery, 512, sql_selectPlayerTmp, g_szSteamID[client], g_szMapName);     
-	SQL_TQuery(g_hDb, SQL_LastRunCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_LastRunCallback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -462,7 +451,7 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 		
 		//Set new start time	
 		new Float: fl_time = SQL_FetchFloat(hndl, 8);
-		new tickrate = SQL_FetchInt(hndl, 9);		
+		new tickrate = RoundFloat(float(SQL_FetchInt(hndl, 9)) / 5.0 / 11.0);		
 		if (tickrate == g_Server_Tickrate)
 		{
 			if (fl_time > 0.0)
@@ -474,6 +463,7 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 					g_OverallCp[client] = 0;
 				g_fStartTime[client] = GetEngineTime() - fl_time;  
 				g_bTimeractivated[client] = true;
+				
 			}
 				
 			if (SQL_FetchFloat(hndl, 0) == -1.0 && SQL_FetchFloat(hndl, 1) == -1.0 && SQL_FetchFloat(hndl, 2) == -1.0) 
@@ -483,8 +473,18 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 			}
 			else
 			{
-				g_bRestorePosition[client] = true;
-				g_bRestorePositionMsg[client]=true;
+				if (g_bLateLoaded && IsPlayerAlive(client))
+				{
+					g_bPositionRestored[client] = true;
+					TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+					g_bRestorePosition[client]  = false;
+				}
+				else
+				{
+					g_bRestorePosition[client] = true;
+					g_bRestorePositionMsg[client]=true;
+				}
+				
 			}
 		}
 	}
@@ -492,10 +492,8 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 	{
 		g_bTimeractivated[client] = false;
 	}
-
 }
-
-public db_viewPersonalRecords(client, String:szSteamId[32], String:szMapName[MAX_MAP_LENGTH])
+public db_viewPersonalRecords(client, String:szSteamId[32], String:szMapName[128])
 {
 	decl String:szQuery[1024];
 	Format(szQuery, 1024, sql_selectPersonalRecords, szSteamId, szMapName);
@@ -523,21 +521,71 @@ public SQL_selectPersonalRecordsCallback(Handle:owner, Handle:hndl, const String
 	}
 }                
 
+
 public db_viewJumpStats(client, String:szSteamId[32])
 {
 	decl String:szQuery[1024];       
-	Format(szQuery, 1024, sql_selectJumpStats, szSteamId);  
-	SQL_TQuery(g_hDb, SQL_ViewJumpStatsCallback, szQuery, client,DBPrio_Low);
+	Format(szQuery, 1024, sql_selectJumpStats1, szSteamId);  
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, client);
+	WritePackString(pack, szSteamId);	
+	SQL_TQuery(g_hDb, SQL_ViewJumpStatsCallback, szQuery, pack,DBPrio_Low);
 }
 
 public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
-	new client = data;
+	decl String:szSteamId[1024]; 
+	decl String:szQuery[1024];   
+	decl Float:ladderjumprecord, Float:ladderjumppre,Float:ladderjumpmax, Float:ladderjumpheight;	
+	
+	new Handle:pack = data;	
+	ResetPack(pack); 
+	new client = ReadPackCell(pack);      
+	ReadPackString(pack, szSteamId, 32)
+	g_bClimbersMenuOpen[client] = false;
+	g_bMenuOpen[client] = true;		
+	new ladderjumpstrafes, ladderjumpsync;
+	ladderjumprecord = -1.0;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		ladderjumprecord = SQL_FetchFloat(hndl, 2);
+		ladderjumppre = SQL_FetchFloat(hndl, 3);
+		ladderjumpmax = SQL_FetchFloat(hndl, 4);
+		ladderjumpstrafes = SQL_FetchInt(hndl, 5);	
+		ladderjumpsync = SQL_FetchInt(hndl, 6);
+		ladderjumpheight = SQL_FetchFloat(hndl, 7);
+	}
+
+	WritePackFloat(pack, ladderjumprecord);
+	WritePackFloat(pack, ladderjumppre);
+	WritePackFloat(pack, ladderjumpmax);
+	WritePackCell(pack, ladderjumpstrafes);
+	WritePackCell(pack, ladderjumpsync);
+	WritePackFloat(pack, ladderjumpheight);
+	
+	Format(szQuery, 1024, sql_selectJumpStats2, szSteamId);  
+	SQL_TQuery(g_hDb, SQL_ViewJumpStatsCallback2, szQuery, pack,DBPrio_Low);
+}
+
+public SQL_ViewJumpStatsCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	decl String:szSteamId[32];	
+	new Handle:pack = data;	
+	ResetPack(pack); 
+	new client = ReadPackCell(pack);      
+	ReadPackString(pack, szSteamId, 32)
+	new Float:ladderjumprecord = ReadPackFloat(pack);
+	new Float:ladderjumppre = ReadPackFloat(pack);
+	new Float:ladderjumpmax = ReadPackFloat(pack);
+	new ladderjumpstrafes = ReadPackCell(pack);
+	new ladderjumpsync = ReadPackCell(pack);
+	new Float:ladderjumpheight = ReadPackFloat(pack);
+	CloseHandle(pack);
 	g_bClimbersMenuOpen[client] = false;
 	g_bMenuOpen[client] = true;		
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-		decl String:szSteamId[32];				
+					
 		decl String:szName[17];	
 		decl String:szVr[255];	
 		
@@ -584,7 +632,7 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 		new bool:ljtrue;
 		
 		
-		if (bhoprecord >0.0 || ljrecord > 0.0 || multibhoprecord > 0.0 || wjrecord > 0.0 || dropbhoprecord > 0.0 || ljblockdist > 0)
+		if (bhoprecord >0.0 || ljrecord > 0.0 || multibhoprecord > 0.0 || wjrecord > 0.0 || dropbhoprecord > 0.0 || ljblockdist > 0.0 || ladderjumprecord > 0.0)
 		{										 
 			Format(szVr, 255, "JS: %s\nType               Distance  Strafes Pre        Max      Height  Sync", szName);
 			new Handle:menu = CreateMenu(JumpStatsMenuHandler);
@@ -638,11 +686,19 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 				else
 					Format(szVr, 255, "WJ:            %.3f       %i      %.2f   %.2f  %.1f    %i%c", wjrecord,wjstrafes,wjpre,wjmax,wjheight,wjsync,PERCENT);	
 				AddMenuItem(menu, szVr, szVr);	
-			}	
+			}
+			if (ladderjumprecord > 0.0)
+			{
+				if (ladderjumpstrafes>9)
+					Format(szVr, 255, "Ladder:      %.3f     %i      %.2f   %.2f  %.1f    %i%c", ladderjumprecord,ladderjumpstrafes,ladderjumppre,ladderjumpmax,ladderjumpheight,ladderjumpsync,PERCENT);
+				else
+					Format(szVr, 255, "Ladder:      %.3f       %i      %.2f   %.2f  %.1f    %i%c", ladderjumprecord,ladderjumpstrafes,ladderjumppre,ladderjumpmax,ladderjumpheight,ladderjumpsync,PERCENT);	
+				AddMenuItem(menu, szVr, szVr);	
+			}				
 			if (ljtrue && !g_bPreStrafe)
-				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %cLJ PRE%c = TakeOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW,WHITE);	
+				PrintToChat(client,"[%cKZ%c] %cJUMPSTATS INFO%c: %cLJ PRE%c = JumpOff",MOSSGREEN,WHITE,GRAY,WHITE,YELLOW,WHITE);	
 			//SetMenuPagination(menu, 5);
-			SetMenuPagination(menu, MENU_NO_PAGINATION); 
+			//SetMenuPagination(menu, MENU_NO_PAGINATION); 
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 			DisplayMenu(menu, client, MENU_TIME_FOREVER);	
 		}
@@ -657,7 +713,6 @@ public SQL_ViewJumpStatsCallback(Handle:owner, Handle:hndl, const String:error[]
 		PrintToChat(client, "%t", "noJumpRecords",MOSSGREEN,WHITE);
 	}
 }
-
 
 public JumpStatsMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 {
@@ -676,6 +731,13 @@ public db_viewPersonalLJRecord(client, String:szSteamId[32])
 	decl String:szQuery[512];      
 	Format(szQuery, 512, sql_selectPlayerJumpLJ, szSteamId);  
 	SQL_TQuery(g_hDb, SQL_LJRecordCallback, szQuery, client,DBPrio_Low);
+}
+
+public db_viewPersonalLadderJumpRecord(client, String:szSteamId[32])
+{
+	decl String:szQuery[512];      
+	Format(szQuery, 512, sql_selectPlayerJumpLadderJump, szSteamId);  
+	SQL_TQuery(g_hDb, SQL_LadderJumpRecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_viewPersonalLJBlockRecord(client, String:szSteamId[32])
@@ -732,6 +794,119 @@ public GetDBNameCallback(Handle:owner, Handle:hndl, const String:error[], any:da
 	}
 }
 
+public db_CalcAvgRunTime()
+{
+	decl String:szQuery[256];  
+	Format(szQuery, 256, "select runtime, runtimepro from playertimes where mapname = '%s'", g_szMapName);
+	SQL_TQuery(g_hDb, SQL_db_CalcAvgRunTimeCallback, szQuery, DBPrio_Low);
+}
+
+public SQL_db_CalcAvgRunTimeCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{   
+	g_favg_protime = 0.0;
+	g_favg_tptime = 0.0;
+	if(SQL_HasResultSet(hndl))
+	{
+		new rowcount = SQL_GetRowCount(hndl);
+		new i, protimes, tptimes;
+		new Float:TpTime, Float:ProTime;	
+		while (SQL_FetchRow(hndl))
+		{
+			new Float:tp = SQL_FetchFloat(hndl, 0);
+			new Float:pro = SQL_FetchFloat(hndl, 1);
+			if (tp > 0.0)
+			{
+				TpTime += tp;
+				tptimes++;
+			}
+			if (pro > 0.0)
+			{
+				ProTime += pro;
+				protimes++;
+			}			
+			i++;
+			if (rowcount == i)
+			{
+				g_favg_tptime = TpTime / tptimes;
+				g_favg_protime = ProTime / protimes;
+			}
+		}
+	}
+}
+
+public db_GetDynamicTimelimit()
+{
+	if (!g_bDynamicTimelimit)
+		return;
+	decl String:szQuery[256];  
+	Format(szQuery, 256, "select runtime, runtimepro from playertimes where mapname = '%s'", g_szMapName);
+	SQL_TQuery(g_hDb, SQL_db_GetDynamicTimelimitCallback, szQuery, DBPrio_Low);
+}
+
+public SQL_db_GetDynamicTimelimitCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{   
+	if(SQL_HasResultSet(hndl))
+	{
+		new rowcount = SQL_GetRowCount(hndl);
+		new i, maptimes;
+		new Float:total = 0.0,Float:TpTime,Float:ProTime;	
+		while (SQL_FetchRow(hndl))
+		{
+			
+			TpTime = SQL_FetchFloat(hndl, 0);
+			ProTime = SQL_FetchFloat(hndl, 1);
+			if (TpTime > 0.0 || ProTime > 0.0)
+			{
+				if (TpTime > 0.0 && ProTime > 0.0)
+					total += ((TpTime+ProTime)/2)
+				else
+					if (TpTime > 0.0)
+						total += TpTime;
+					else
+						total += ProTime;
+				maptimes++;
+			}
+			i++;
+			if (rowcount == i)
+			{
+				//requires min. 5 map times
+				if (maptimes > 5)
+				{				
+					new scale_factor = 3;
+					new avg = RoundToNearest((total) / float(60) / float(maptimes)); ////output: x min
+			
+						
+					//scale factor
+					if (avg <= 10) 
+						scale_factor = 5;
+					if (avg <= 5) 
+						scale_factor = 8;
+					if (avg <= 3)
+						scale_factor = 10;
+					if (avg <= 2)
+						scale_factor = 12;
+					if (avg <= 1)
+						scale_factor = 14;			
+					avg = avg * scale_factor;
+				
+					//timelimit: min 20min, max 180min
+					if (avg < 20)
+						avg = 20;
+					if (avg > 150)
+						avg = 150;
+						
+					//set timelimit
+					decl String:szTimelimit[32];
+					Format(szTimelimit,32,"mp_timelimit %i;mp_roundtime %i", avg, avg);
+					ServerCommand(szTimelimit);
+					ServerCommand("mp_restartgame 1");
+				}
+			}
+		}
+	}
+}
+
+
 public db_viewPlayerAll(client, String:szPlayerName[MAX_NAME_LENGTH])
 {
 	decl String:szQuery[512];
@@ -755,19 +930,56 @@ public SQL_ViewPlayerAllCallback(Handle:owner, Handle:hndl, const String:error[]
 			PrintToChat(client, "%t", "PlayerNotFound", MOSSGREEN,WHITE, g_szProfileName[client]);
 }
 
+public SQL_LadderJumpRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{            
+	new client = data;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		g_js_fPersonal_LadderJump_Record[client] = SQL_FetchFloat(hndl, 2);
+		if (g_js_fPersonal_LadderJump_Record[client] > -1.0)
+		{
+			decl String:szQuery[512];   
+			if (client > MAXPLAYERS)
+			{
+				decl String:szSteamId[32];
+				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
+				Format(szQuery, 255, sql_selectPlayerRankLadderJump, szSteamId);
+				SQL_TQuery(g_hDb, SQL_viewLadderJumpRecordCallback2, szQuery, client,DBPrio_Low);
+			}
+			else
+			{
+				if (IsValidClient(client))
+				{
+					Format(szQuery, 255, sql_selectPlayerRankLadderJump, g_szSteamID[client]);
+					SQL_TQuery(g_hDb, SQL_viewLadderJumpRecordCallback2, szQuery, client,DBPrio_Low);
+				}
+			}
+		}
+		else
+		{
+			g_js_LadderJumpRank[client] = 99999999;
+			g_js_fPersonal_LadderJump_Record[client] = -1.0;
+		}
+	}
+	else
+	{
+		g_js_LadderJumpRank[client] = 99999999;
+		g_js_fPersonal_LadderJump_Record[client] = -1.0;
+	}
+}
 
 public SQL_LJRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{               
+{            
 	new client = data;
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
 		g_js_fPersonal_Lj_Record[client] = SQL_FetchFloat(hndl, 2);
 		if (g_js_fPersonal_Lj_Record[client] > -1.0)
 		{
-			decl String:szSteamId[32];
 			decl String:szQuery[512];   
 			if (client > MAXPLAYERS)
 			{
+				decl String:szSteamId[32];
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankLj, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewLjRecordCallback2, szQuery, client,DBPrio_Low);
@@ -806,10 +1018,10 @@ public SQL_LJBlockRecordCallback(Handle:owner, Handle:hndl, const String:error[]
 		g_js_fPersonal_LjBlockRecord_Dist[client] = SQL_FetchFloat(hndl, 3);
 		if (g_js_Personal_LjBlock_Record[client] > -1)
 		{
-			decl String:szSteamId[32];
 			decl String:szQuery[512];   
 			if (client > MAXPLAYERS)
 			{
+				decl String:szSteamId[32];
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankLjBlock, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewLjBlockRecordCallback2, szQuery, client,DBPrio_Low);
@@ -836,6 +1048,15 @@ public SQL_LJBlockRecordCallback(Handle:owner, Handle:hndl, const String:error[]
 		g_js_LjBlockRank[client] = 99999999;
 		g_js_Personal_LjBlock_Record[client] = -1;
 		g_js_fPersonal_LjBlockRecord_Dist[client] = -1.0;
+	}
+}
+
+public SQL_viewLadderJumpRecordCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{		
+		g_js_LadderJumpRank[client]= SQL_GetRowCount(hndl);
 	}
 }
 
@@ -866,7 +1087,7 @@ public ContinueRecalc(client)
 	else
 	{
 		//ON CONNECT
-		if (!IsValidClient(client) && IsFakeClient(client))
+		if (!IsValidClient(client) || IsFakeClient(client))
 			return;
 		new Float: diff = GetEngineTime() - g_fMapStartTime + 1.5;
 		if (GetClientTime(client) < diff)
@@ -887,10 +1108,10 @@ public SQL_ViewBhopRecordCallback(Handle:owner, Handle:hndl, const String:error[
 		g_js_fPersonal_Bhop_Record[client] = SQL_FetchFloat(hndl, 2);
 		if (g_js_fPersonal_Bhop_Record[client] > -1.0)
 		{
-			decl String:szSteamId[32];
 			decl String:szQuery[512];  
 			if (client > MAXPLAYERS)
 			{
+				decl String:szSteamId[32];
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankBhop, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewBhopRecordCallback2, szQuery, client,DBPrio_Low);
@@ -925,10 +1146,10 @@ public SQL_ViewDropBhopRecordCallback(Handle:owner, Handle:hndl, const String:er
 		g_js_fPersonal_DropBhop_Record[client] = SQL_FetchFloat(hndl, 2);
 		if (g_js_fPersonal_DropBhop_Record[client] > -1.0)
 		{
-			decl String:szSteamId[32];
 			decl String:szQuery[512];  
 			if (client > MAXPLAYERS)
 			{
+				decl String:szSteamId[32];
 				Format(szSteamId, 32, "%s", g_pr_szSteamID[client]); 
 				Format(szQuery, 255, sql_selectPlayerRankDropBhop, szSteamId);
 				SQL_TQuery(g_hDb, SQL_viewDropBhopRecordCallback2, szQuery, client,DBPrio_Low);
@@ -1069,7 +1290,7 @@ public db_selectPlayer(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 255, sql_selectPlayer, g_szSteamID[client], g_szMapName);
-	SQL_TQuery(g_hDb, SQL_SelectPlayerCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_SelectPlayerCallback, szQuery, client,DBPrio_Low);
 }
 
 
@@ -1080,7 +1301,7 @@ public db_viewBhopRecord2(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpBhop, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewBhop2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewBhop2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_viewDropBhopRecord2(client)
@@ -1089,7 +1310,7 @@ public db_viewDropBhopRecord2(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpDropBhop, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewDropBhop2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewDropBhop2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_viewDropBhop2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1106,7 +1327,7 @@ public SQL_viewDropBhop2RecordCallback(Handle:owner, Handle:hndl, const String:e
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankDropBhop, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewDropBhop2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewDropBhop2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -1124,7 +1345,7 @@ public SQL_viewBhop2RecordCallback(Handle:owner, Handle:hndl, const String:error
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankBhop, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewBhop2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewBhop2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -1142,7 +1363,7 @@ public db_CalculatePlayersCountGreater0()
 {
 	decl String:szQuery[255];
 	Format(szQuery, 255, sql_CountRankedPlayers2);      
-	SQL_TQuery(g_hDb, sql_CountRankedPlayers2Callback, szQuery);
+	SQL_TQuery(g_hDb, sql_CountRankedPlayers2Callback, szQuery,DBPrio_Low);
 }
 
 
@@ -1164,7 +1385,7 @@ public sql_CountRankedPlayers2Callback(Handle:owner, Handle:hndl, const String:e
 		g_pr_RankedPlayers = SQL_FetchInt(hndl, 0);
 	}
 	else
-		g_pr_RankedPlayers=1;	
+		g_pr_RankedPlayers=0;	
 }
 
 
@@ -1230,7 +1451,7 @@ public db_viewMultiBhopRecord2(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpMultiBhop, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewMultiBhop2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewMultiBhop2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_viewMultiBhop2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1247,7 +1468,7 @@ public SQL_viewMultiBhop2RecordCallback(Handle:owner, Handle:hndl, const String:
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankMultiBhop, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewMultiBhop2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewMultiBhop2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -1285,7 +1506,16 @@ public db_viewLjRecord2(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpLJ, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewLj2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewLj2RecordCallback, szQuery, client,DBPrio_Low);
+}
+
+public db_viewLadderJumpRecord2(client)
+{
+	decl String:szQuery[512];
+	if (!IsValidClient(client))
+		return;
+	Format(szQuery, 512, sql_selectPlayerJumpLadderJump, g_szSteamID[client]);
+	SQL_TQuery(g_hDb, SQL_viewLadderJump2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_viewLjBlockRecord2(client)
@@ -1294,7 +1524,7 @@ public db_viewLjBlockRecord2(client)
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpLJBlock, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewLjBlock2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewLjBlock2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_viewLjBlock2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1311,10 +1541,27 @@ public SQL_viewLjBlock2RecordCallback(Handle:owner, Handle:hndl, const String:er
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankLjBlock, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewLjBlock2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewLjBlock2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
+public SQL_viewLadderJump2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		decl String:szQuery[512];
+		decl String:szName[MAX_NAME_LENGTH];
+		decl String:szSteamId[32];
+		SQL_FetchString(hndl, 0, szSteamId, MAX_NAME_LENGTH);
+		SQL_FetchString(hndl, 1, szName, MAX_NAME_LENGTH);	
+		new Handle:pack = CreateDataPack();
+		WritePackCell(pack, client);
+		WritePackString(pack, szName);		
+		Format(szQuery, 512, sql_selectPlayerRankLadderJump, szSteamId);
+		SQL_TQuery(g_hDb, SQL_viewLadderJump2RecordCallback2, szQuery, pack,DBPrio_Low);
+	}
+}
 
 public SQL_viewLj2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -1330,7 +1577,7 @@ public SQL_viewLj2RecordCallback(Handle:owner, Handle:hndl, const String:error[]
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankLj, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewLj2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewLj2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -1392,13 +1639,51 @@ public SQL_viewLj2RecordCallback2(Handle:owner, Handle:hndl, const String:error[
 	}
 }
 
+public SQL_viewLadderJump2RecordCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		decl String:szName[MAX_NAME_LENGTH];
+		new rank = SQL_GetRowCount(hndl);
+		new Handle:pack = data;
+		ResetPack(pack);
+		new client = ReadPackCell(pack);
+		ReadPackString(pack, szName, MAX_NAME_LENGTH);
+		CloseHandle(pack);
+			
+		if (rank < 21 && rank < g_js_LadderJumpRank[client])
+		{			
+			g_js_LadderJumpRank[client] = rank;
+			for(new i = 1; i <= GetMaxClients(); i++) 
+			{ 
+				if(IsValidClient(i) && !IsFakeClient(i)) 
+				{ 		
+					PrintToChat(i, "%t", "Jumpstats_LadderJumpTop", MOSSGREEN, WHITE, YELLOW, szName, rank, g_js_fPersonal_LadderJump_Record[client]);
+					PrintToConsole(i, "[KZ] %s is now #%i in the Ladderjump 20! [%.3f units]", szName, rank, g_js_fPersonal_LadderJump_Record[client]);
+				}
+			}
+			g_pr_showmsg[client] = true;
+			CalculatePlayerRank(client);		
+		}
+	}
+}
+
+public db_ClearLatestRecords()
+{
+	if(g_DbType == MYSQL)
+		SQL_TQuery(g_hDb, SQL_CheckCallback, "DELETE FROM LatestRecords WHERE date < NOW() - INTERVAL 1 WEEK", DBPrio_Low);
+	else
+		SQL_TQuery(g_hDb, SQL_CheckCallback, "DELETE FROM LatestRecords WHERE date <= date('now','-7 day')", DBPrio_Low);
+}
+
+
 public db_viewWjRecord2(client)
 {
 	decl String:szQuery[512];
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 512, sql_selectPlayerJumpWJ, g_szSteamID[client]);
-	SQL_TQuery(g_hDb, SQL_viewWj2RecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_viewWj2RecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public SQL_viewWj2RecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -1415,7 +1700,7 @@ public SQL_viewWj2RecordCallback(Handle:owner, Handle:hndl, const String:error[]
 		WritePackCell(pack, client);
 		WritePackString(pack, szName);		
 		Format(szQuery, 512, sql_selectPlayerRankWJ, szSteamId);
-		SQL_TQuery(g_hDb, SQL_viewWj2RecordCallback2, szQuery, pack);
+		SQL_TQuery(g_hDb, SQL_viewWj2RecordCallback2, szQuery, pack,DBPrio_Low);
 	}
 }
 
@@ -1459,7 +1744,7 @@ public db_viewUnfinishedMaps(client, String:szSteamId[32])
 		new Handle:pack = CreateDataPack();			
 		WritePackString(pack, map);
 		WritePackCell(pack, client);
-		SQL_TQuery(g_hDb, db_viewUnfinishedMapsCallback, szQuery, pack);
+		SQL_TQuery(g_hDb, db_viewUnfinishedMapsCallback, szQuery, pack,DBPrio_Low);
 	}	
 	if (IsValidClient(client))
 	{
@@ -1498,571 +1783,6 @@ public db_viewUnfinishedMapsCallback(Handle:owner, Handle:hndl, const String:err
 		if (IsValidClient(client))
 			PrintToConsole(client, "%s (PRO)\n%s (TP)",szMap,szMap);
 	}
-}
-
-public db_viewAllRecords(client, String:szSteamId[32])
-{
-	decl String:szQuery[1024];       
-	Format(szQuery, 1024, sql_selectPersonalAllRecords, szSteamId, szSteamId);  
-	if ((StrContains(szSteamId, "STEAM_") != -1))
-		SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback, szQuery, client);
-	else
-		if (IsClientInGame(client))
-			PrintToChat(client,"[%cKZ%c] Invalid SteamID found.",RED,WHITE);
-	ProfileMenu(client, -1);
-}
-
-
-public SQL_ViewAllRecordsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new client = data;
-	new bHeader=false;
-	decl String:szUncMaps[1024];
-	new mapcount=0;
-	decl String:szName[MAX_NAME_LENGTH];
-	decl String:szSteamId[32];
-	if(SQL_HasResultSet(hndl))
-	{	
-		new Float:time;
-		new teleports;
-		decl String:szMapName[128];		
-		decl String:szMapName2[128];
-		decl String:szRecord_type[4];
-		decl String:szQuery[1024];
-		Format(szUncMaps,sizeof(szUncMaps),"");
-		while (SQL_FetchRow(hndl))
-		{
-			SQL_FetchString(hndl, 0, szName, MAX_NAME_LENGTH);
-			SQL_FetchString(hndl, 1, szSteamId, MAX_NAME_LENGTH);
-			SQL_FetchString(hndl, 2, szMapName, MAX_MAP_LENGTH);	
-			
-
-			time = SQL_FetchFloat(hndl, 3);
-			teleports = SQL_FetchInt(hndl, 4);
-			if (teleports > 0)
-				Format(szRecord_type, 4, "TP");
-				else
-					Format(szRecord_type, 4, "PRO");	
-			new mapfound=false;
-			
-			//map in rotation?
-			for (new i = 0; i < GetArraySize(g_MapList); i++)
-			{
-				GetArrayString(g_MapList, i, szMapName2, sizeof(szMapName2));
-				if (StrEqual(szMapName2, szMapName, false))
-				{
-					if (!bHeader)
-					{
-						PrintToConsole(client," ");
-						PrintToConsole(client,"-------------");
-						PrintToConsole(client,"Finished Maps");
-						PrintToConsole(client,"Player: %s", szName);
-						PrintToConsole(client,"SteamID: %s", szSteamId);
-						PrintToConsole(client,"-------------");
-						PrintToConsole(client," ");
-						bHeader=true;
-						PrintToChat(client, "%t", "ConsoleOutput", LIMEGREEN,WHITE); 	
-					}
-					new Handle:pack = CreateDataPack();			
-					WritePackString(pack, szName);
-					WritePackString(pack, szSteamId);
-					WritePackString(pack, szMapName);			
-					WritePackString(pack, szRecord_type);		
-					WritePackCell(pack, teleports);
-					WritePackFloat(pack, time);
-					WritePackCell(pack, client);
-					
-					if (teleports > 0)
-					{
-						Format(szQuery, 1024, sql_selectPlayerRankTime, szSteamId, szMapName, szMapName);
-						SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback2, szQuery, pack,DBPrio_Low);
-					}
-					else
-					{	
-						Format(szQuery, 1024, sql_selectPlayerRankProTime, szSteamId, szMapName, szMapName);
-						SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback2, szQuery, pack,DBPrio_Low);
-					}
-					mapfound=true;
-					continue;
-				}
-			}
-			if (!mapfound)
-			{
-				mapcount++;
-				if (!mapfound && mapcount==1)
-				{
-					if (teleports>0)
-						Format(szUncMaps,sizeof(szUncMaps),"%s (TP)",szMapName);
-					else
-						Format(szUncMaps,sizeof(szUncMaps),"%s (Pro)",szMapName);
-				}
-				else
-				{
-					if (!mapfound && mapcount>1)
-					{
-						if (teleports>0)
-							Format(szUncMaps,sizeof(szUncMaps),"%s, %s (TP)",szUncMaps, szMapName);
-						else
-							Format(szUncMaps,sizeof(szUncMaps),"%s, %s (Pro)",szUncMaps, szMapName);
-					}
-				}
-			}
-		}
-	}
-	if (!StrEqual(szUncMaps,""))
-	{		
-		if(!bHeader)
-		{
-			PrintToChat(client, "%t", "ConsoleOutput", LIMEGREEN,WHITE); 
-			PrintToConsole(client," ");
-			PrintToConsole(client,"-------------");
-			PrintToConsole(client,"Finished Maps");
-			PrintToConsole(client,"Player: %s", szName);
-			PrintToConsole(client,"SteamID: %s", szSteamId);
-			PrintToConsole(client,"-------------");
-			PrintToConsole(client," ");		
-		}
-		PrintToConsole(client, "Times on maps which are not in the mapcycle.txt (TP and Pro records still count but you don't get points): %s", szUncMaps);
-	}
-	if(!bHeader && StrEqual(szUncMaps,""))
-	{
-		ProfileMenu(client, -1);
-		PrintToChat(client, "%t", "PlayerHasNoMapRecords", LIMEGREEN,WHITE,g_szProfileName[client]);
-	}
-}
-
-public SQL_ViewAllRecordsCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{
-		decl String:szQuery[512];
-		new rank = SQL_GetRowCount(hndl);
-		new Handle:pack = data;
-		WritePackCell(pack, rank);
-		ResetPack(pack);
-		decl String:szName[MAX_NAME_LENGTH];
-		ReadPackString(pack, szName, MAX_NAME_LENGTH);
-		decl String:szSteamId[32];
-		ReadPackString(pack, szSteamId, 32);
-		decl String:szMapName[MAX_MAP_LENGTH];
-		ReadPackString(pack, szMapName, MAX_MAP_LENGTH);
-		decl String:szRecord_type[4];
-		ReadPackString(pack, szRecord_type, 4);	
-		new teleports = ReadPackCell(pack);
-		if (teleports > 0)
-		{
-			Format(szQuery, 512, sql_selectPlayerCount, szMapName);
-			SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback3, szQuery, pack);
-		}
-		else
-		{
-			Format(szQuery, 512, sql_selectPlayerProCount, szMapName);
-			SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback3, szQuery, pack);
-		}
-		
-	}
-}
-
-public SQL_ViewAllRecordsCallback3(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	//if there is a player record
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{
-		new count = SQL_GetRowCount(hndl);
-		new Handle:pack = data;
-		ResetPack(pack);
-		
-		decl String:szName[MAX_NAME_LENGTH];
-		ReadPackString(pack, szName, MAX_NAME_LENGTH);
-		decl String:szSteamId[32];
-		ReadPackString(pack, szSteamId, 32);
-		decl String:szMapName[MAX_MAP_LENGTH];
-		ReadPackString(pack, szMapName, MAX_MAP_LENGTH);	
-		decl String:szRecord_type[4];
-		ReadPackString(pack, szRecord_type, 4);				
-		new teleports = ReadPackCell(pack);
-		new Float:time = ReadPackFloat(pack);	
-		new client = ReadPackCell(pack);
-		new rank = ReadPackCell(pack);
-		
-		CloseHandle(pack);
-		decl String:szTime[32];
-		FormatTimeFloat(client,time,3,szTime,32);
-		if (IsValidClient(client))
-			PrintToConsole(client,"%s, Time: %s (%s), Teleports: %i, Rank: %i/%i", szMapName, szTime, szRecord_type, teleports,rank,count);
-	}
-}	
-		
-public db_viewPlayerRank(client, String:szSteamId[32])
-{
-	decl String:szQuery[512];  
-	Format(g_pr_szrank[client], 512, "");	
-	Format(szQuery, 512, sql_selectRankedPlayer, szSteamId);  
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback, szQuery, client,DBPrio_Low);
-}
-
-public SQL_ViewRankedPlayerCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new client = data;
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{	
-		decl String:szQuery[512];
-		decl String:szName[MAX_NAME_LENGTH];
-		decl String:szCountry[100];
-		decl String:szLastSeen[100];
-		decl String:szSteamId[32];
-		new finishedmapstp;
-		new finishedmapspro;
-		new points;
-		g_TpRecordCount[client] = 0;	
-		g_ProRecordCount[client] = 0;	
-		
-		//get the result
-		SQL_FetchString(hndl, 0, szSteamId, 32);
-		SQL_FetchString(hndl, 1, szName, MAX_NAME_LENGTH);
-		points = SQL_FetchInt(hndl, 2);
-		finishedmapstp = SQL_FetchInt(hndl, 3);      
-		finishedmapspro = SQL_FetchInt(hndl, 4);
-		SQL_FetchString(hndl, 6, szCountry, 100);
-		SQL_FetchString(hndl, 7, szLastSeen, 100);
-		new Handle:pack_pr = CreateDataPack();	
-		WritePackString(pack_pr, szName);
-		WritePackString(pack_pr, szSteamId);	
-		WritePackCell(pack_pr, client);		
-		WritePackCell(pack_pr, points);
-		WritePackCell(pack_pr, finishedmapstp);
-		WritePackCell(pack_pr, finishedmapspro);
-		WritePackString(pack_pr, szCountry);	
-		WritePackString(pack_pr, szLastSeen);	
-		Format(szQuery, 512, sql_selectRankedPlayersRank, szSteamId);
-		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback2, szQuery, pack_pr,DBPrio_Low);
-	}
-}
-
-public SQL_ViewRankedPlayerCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
-	{
-		decl String:szQuery[512];
-		decl String:szSteamId[32];
-		decl String:szName[MAX_NAME_LENGTH];
-		new rank = SQL_GetRowCount(hndl);
-		new Handle:pack_pr = data;
-		WritePackCell(pack_pr, rank);
-		ResetPack(pack_pr);	        
-		ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
-		ReadPackString(pack_pr, szSteamId, 32);	
-		Format(szQuery, 512, sql_selectTpRecordCount, szSteamId);
-		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback3, szQuery, pack_pr,DBPrio_Low);	
-	}
-}
-
-public SQL_ViewRankedPlayerCallback3(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new Handle:pack_pr = data;
-	decl String:szQuery[512];
-	decl String:szSteamId[32];
-	decl String:szName[MAX_NAME_LENGTH];
-	ResetPack(pack_pr);	        
-	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
-	ReadPackString(pack_pr, szSteamId, 32);	
-	new client = ReadPackCell(pack_pr);    
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
-		g_TpRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?´
-	Format(szQuery, 512, sql_selectProRecordCount, szSteamId);
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback4, szQuery, pack_pr,DBPrio_Low);		
-}
-
-public SQL_ViewRankedPlayerCallback4(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	decl String:szQuery[512];
-	decl String:szSteamId[32];
-	decl String:szName[MAX_NAME_LENGTH];
-	new Handle:pack_pr = data;
-	ResetPack(pack_pr);       
-	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
-	ReadPackString(pack_pr, szSteamId, 32);		
-	new client = ReadPackCell(pack_pr);  
-	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
-		g_ProRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?
-	Format(szQuery, 512, sql_selectChallenges, szSteamId,szSteamId);
-	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback5, szQuery, pack_pr,DBPrio_Low);		
-}
-
-public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:error[], any:data)
-{		
-	decl String:szChallengesPoints[32];
-	Format(szChallengesPoints, 32, "0p")
-	decl String:szChallengesWinRatio[32];
-	Format(szChallengesWinRatio, 32, "0")
-	new Handle:pack_pr = data;
-	decl String:szName[MAX_NAME_LENGTH];
-	decl String:szSteamId[32];
-	decl String:szSteamIdChallenge[32];
-	decl String:szCountry[100];
-	decl String:szLastSeen[100];
-	decl String:szNextRank[32];
-	decl String:szSkillGroup[32];
-	ResetPack(pack_pr);     
-	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
-	ReadPackString(pack_pr, szSteamId, 32);
-	new client = ReadPackCell(pack_pr);       
-	new points = ReadPackCell(pack_pr);
-	new finishedmapstp = ReadPackCell(pack_pr);
-	new finishedmapspro = ReadPackCell(pack_pr);  
-	ReadPackString(pack_pr, szCountry, 100);	
-	ReadPackString(pack_pr, szLastSeen, 100);	
-	if (StrEqual(szLastSeen,""))
-		Format(szLastSeen, 100, "Unknown");
-	new rank = ReadPackCell(pack_pr);
-	new tprecords = g_TpRecordCount[client];
-	new prorecords = g_ProRecordCount[client];
-	Format(g_szProfileSteamId[client], 32, "%s", szSteamId);
-	Format(g_szProfileName[client], MAX_NAME_LENGTH, "%s", szName);
-	new bool:master=false;
-	new RankDifference;		   
-	CloseHandle(pack_pr);	
-	new bet;
-	
-	//get challenge results
-	new challenges = 0;
-	new challengeswon = 0;  
-	new challengespoints = 0;  
-	if(SQL_HasResultSet(hndl))
-	{	
-		challenges= SQL_GetRowCount(hndl);
-		while (SQL_FetchRow(hndl))
-		{
-			SQL_FetchString(hndl, 0, szSteamIdChallenge, 32);
-			bet = SQL_FetchInt(hndl, 2);
-			if (StrEqual(szSteamIdChallenge,szSteamId))
-			{
-				challengespoints+= bet;
-				challengeswon++;
-			}
-			else
-			{
-				challengespoints-= bet;
-				challengeswon--;
-			}
-		}
-	}
-	
-	if (!g_bChallengePoints)
-		challengespoints = 0;
-	
-	if (challengespoints>0)
-		Format(szChallengesPoints, 32, "+%ip",challengespoints);   
-	else
-		if (challengespoints <= 0 && g_bChallengePoints)
-			Format(szChallengesPoints, 32, "%ip",challengespoints);	
-		else
-			if (challengespoints <= 0 && !g_bChallengePoints)
-				Format(szChallengesPoints, 32, "0p (disabled)"); 		
-	
-	
-	if (challengeswon>0)
-		Format(szChallengesWinRatio, 32, "+%i",challengeswon);   
-	else
-		if (challengeswon<0)
-			Format(szChallengesWinRatio, 32, "%i",challengeswon); 
-	
-	
-	//profile not refreshed after removing maps?
-	if (finishedmapstp > g_pr_MapCount)
-		finishedmapstp=g_pr_MapCount;
-	if (finishedmapspro > g_pr_MapCount)	
-		finishedmapspro=g_pr_MapCount;
-		
-	if (points < g_pr_rank_Percentage[1])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[0]);
-		RankDifference = g_pr_rank_Percentage[1] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[1]);
-	}
-	else
-	if (g_pr_rank_Percentage[1] <= points && points < g_pr_rank_Percentage[2])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[1]);
-		RankDifference = g_pr_rank_Percentage[2] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[2]);
-	}
-	else
-	if (g_pr_rank_Percentage[2] <= points && points < g_pr_rank_Percentage[3])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[2]);
-		RankDifference = g_pr_rank_Percentage[3] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[3]);
-	}		   
-	else
-	if (g_pr_rank_Percentage[3] <= points && points < g_pr_rank_Percentage[4])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[3]);
-		RankDifference = g_pr_rank_Percentage[4] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[4]);
-	}                      
-	else
-	if (g_pr_rank_Percentage[4] <= points && points < g_pr_rank_Percentage[5])
-	{
-	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[4]);
-	   RankDifference = g_pr_rank_Percentage[5] - points;
-	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[5]);
-	}                      
-	else
-	if (g_pr_rank_Percentage[5] <= points && points < g_pr_rank_Percentage[6])
-	{
-	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[5]);
-	   RankDifference = g_pr_rank_Percentage[6] - points;
-	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[6]);
-	}
-	else
-	if (g_pr_rank_Percentage[6] <= points && points < g_pr_rank_Percentage[7])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[6]);
-		RankDifference = g_pr_rank_Percentage[7] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[7]);
-	}
-	else
-	if (g_pr_rank_Percentage[7] <= points && points < g_pr_rank_Percentage[8])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[7]);    
-		RankDifference = g_pr_rank_Percentage[8] - points;
-		Format(szNextRank, 32, " (%s)",g_szSkillGroups[8]);
-	}
-	else
-	if (points >= g_pr_rank_Percentage[8])
-	{
-		Format(szSkillGroup, 32, "%s",g_szSkillGroups[8]);    
-		RankDifference = 0;
-		Format(szNextRank, 32, "");
-		master=true;
-	}  
-	
-	decl String:szRanking[255];
-	Format(szRanking, 255, "");			
-	if (master==false)
-	{	
-		if (g_bPointSystem)
-			Format(szRanking, 255,"Rank %i/%i\nPoints: %ip (%s)\nNext rank in: %ip%s\n", rank,g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank);
-		if (g_bAllowCheckpoints)
-			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ",szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
-		else
-			Format(g_pr_szrank[client], 512, "Rank %i/%i\nPoints: %ip (%s)\nNext rank in: %ip%s\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ", rank,g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    	
-	}
-	else
-	{
-		if (g_bPointSystem)
-			Format(szRanking, 255,"Rank %i/%i\nPoints: %ip (%s)\n", rank,g_pr_AllPlayers,points,szSkillGroup);
-		if (g_bAllowCheckpoints)
-			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
-		else
-			Format(g_pr_szrank[client], 512, "Rank %i/%i\nPoints: %ip (%s)\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", rank,g_pr_AllPlayers,points,szSkillGroup,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
-		
-	}
-	new String:szID[32][2];
-	ExplodeString(szSteamId,"_",szID,2,32);
-	decl String:szTitle[1024];
-	if (g_bCountry)
-		Format(szTitle, 1024, "Player: %s\nSteamID: %s\nNationality: %s\nLast seen: %s\n \n%s\n",  szName,szID[1],szCountry,szLastSeen,g_pr_szrank[client]);		
-	else
-		Format(szTitle, 1024, "Player: %s\nSteamID: %s\nLast seen: %s\n \n%s\n",  szName,szID[1],szLastSeen,g_pr_szrank[client]);				
-			
-	new Handle:menu = CreateMenu(ProfileMenuHandler);
-	SetMenuTitle(menu, szTitle);
-	AddMenuItem(menu, "Current map time", "Current map time");
-	if (g_bJumpStats)
-		AddMenuItem(menu, "Jumpstats", "Jumpstats");
-	else
-		AddMenuItem(menu, "Jumpstats", "Jumpstats (disabled)",ITEMDRAW_DISABLED);
-	AddMenuItem(menu, "Challenge history", "Challenge history");
-	AddMenuItem(menu, "Finished maps", "Finished maps");
-	if (IsValidClient(client))
-	{
-		if(StrEqual(szSteamId,g_szSteamID[client]))
-		{
-			AddMenuItem(menu, "Unfinished maps", "Unfinished maps");
-			if (g_bPointSystem)
-				AddMenuItem(menu, "Refresh my profile", "Refresh my profile");
-		}
-	}	
-	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
-	DisplayMenu(menu, client, MENU_TIME_FOREVER);
-	g_bProfileSelected[client] = true;
-	g_bClimbersMenuOpen[client]=false;
-	g_bMenuOpen[client]=true;
-}
-
-
-public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
-{ 
-	if(action == MenuAction_Select)
-	{
-		switch(param2)
-		{
-			case 0: db_viewRecord(param1, g_szProfileSteamId[param1], g_szMapName);
-			case 1: 
-			{
-				db_viewJumpStats(param1, g_szProfileSteamId[param1]);
-				if (!g_bJumpStats)
-					PrintToChat(param1, "%t", "JumpstatsDisabled",MOSSGREEN,WHITE);
-			}
-			case 2: db_viewChallengeHistory(param1, g_szProfileSteamId[param1]);
-			case 3: db_viewAllRecords(param1, g_szProfileSteamId[param1]);
-			case 4: db_viewUnfinishedMaps(param1, g_szProfileSteamId[param1]);	
-			case 5:
-			{
-			
-				if(g_bRecalcRankInProgess[param1])
-				{
-					PrintToChat(param1, "%t", "PrUpdateInProgress", MOSSGREEN,WHITE);
-				}
-				else
-				{
-				
-					g_bRecalcRankInProgess[param1] = true;
-					PrintToChat(param1, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
-					CalculatePlayerRank(param1);
-				}
-			}		
-		}	
-	}
-	else
-	if(action == MenuAction_Cancel)
-	{
-		if (1 <= param1 <= MaxClients && IsValidClient(param1))
-		{
-			switch(g_MenuLevel[param1])
-			{
-				case 0: db_selectTopPlayers(param1);
-				case 1: db_selectTopClimbers(param1,g_szMapTopName[param1]);
-				case 2: db_selectTopLj(param1);	
-				case 3: db_selectTopChallengers(param1);
-				case 4: db_selectTopWj(param1);
-				case 5: db_selectTopBhop(param1);
-				case 6: db_selectTopDropBhop(param1);	
-				case 7: db_selectTopMultiBhop(param1);	
-				case 8: db_selectTPClimbers(param1);	
-				case 9: db_selectProClimbers(param1);	
-				case 10: db_selectTopTpRecordHolders(param1);
-				case 11: db_selectTopProRecordHolders(param1);	
-				case 12: db_selectTopLjBlock(param1);
-			}	
-			if (g_MenuLevel[param1] < 0)		
-			{
-				if (g_bSelectProfile[param1])
-					ProfileMenu(param1,0);
-				else
-					g_bMenuOpen[param1]=false;	
-			}
-		}	
-		g_bProfileSelected[param1] = false;
-	}
-	else 
-		if (action == MenuAction_End)	
-		{
-			CloseHandle(menu);
-		}
 }
 
 public db_viewChallengeHistory(client, String:szSteamId[32])
@@ -2216,9 +1936,525 @@ public sql_selectChallengesCallback2(Handle:owner, Handle:hndl, const String:err
 		PrintToConsole(client,"(%s) %s vs. %s, map: %s, bet: %i, checkpoints: %s, result: %s", szDate, szNameTarget, szNameOpponent, szMapName, bet, szCps, szResult);
 }
 
+public db_viewAllRecords(client, String:szSteamId[32])
+{
+	decl String:szQuery[1024];       
+	Format(szQuery, 1024, sql_selectPersonalAllRecords, szSteamId, szSteamId);  
+	if ((StrContains(szSteamId, "STEAM_") != -1))
+		SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback, szQuery, client,DBPrio_Low);
+	else
+		if (IsClientInGame(client))
+			PrintToChat(client,"[%cKZ%c] Invalid SteamID found.",RED,WHITE);
+	ProfileMenu(client, -1);
+}
+
+
+public SQL_ViewAllRecordsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	new bHeader=false;
+	decl String:szUncMaps[1024];
+	new mapcount=0;
+	decl String:szName[MAX_NAME_LENGTH];
+	decl String:szSteamId[32];
+	if(SQL_HasResultSet(hndl))
+	{	
+		new Float:time;
+		new teleports;
+		decl String:szMapName[128];		
+		decl String:szMapName2[128];
+		decl String:szRecord_type[4];
+		decl String:szQuery[1024];
+		Format(szUncMaps,sizeof(szUncMaps),"");
+		while (SQL_FetchRow(hndl))
+		{
+			SQL_FetchString(hndl, 0, szName, MAX_NAME_LENGTH);
+			SQL_FetchString(hndl, 1, szSteamId, MAX_NAME_LENGTH);
+			SQL_FetchString(hndl, 2, szMapName, 128);	
+			
+
+			time = SQL_FetchFloat(hndl, 3);
+			teleports = SQL_FetchInt(hndl, 4);
+			if (teleports > 0)
+				Format(szRecord_type, 4, "TP");
+				else
+					Format(szRecord_type, 4, "PRO");	
+			new mapfound=false;
+			
+			//map in rotation?
+			for (new i = 0; i < GetArraySize(g_MapList); i++)
+			{
+				GetArrayString(g_MapList, i, szMapName2, sizeof(szMapName2));
+				if (StrEqual(szMapName2, szMapName, false))
+				{
+					if (!bHeader)
+					{
+						PrintToConsole(client," ");
+						PrintToConsole(client,"-------------");
+						PrintToConsole(client,"Finished Maps");
+						PrintToConsole(client,"Player: %s", szName);
+						PrintToConsole(client,"SteamID: %s", szSteamId);
+						PrintToConsole(client,"-------------");
+						PrintToConsole(client," ");
+						bHeader=true;
+						PrintToChat(client, "%t", "ConsoleOutput", LIMEGREEN,WHITE); 	
+					}
+					new Handle:pack = CreateDataPack();			
+					WritePackString(pack, szName);
+					WritePackString(pack, szSteamId);
+					WritePackString(pack, szMapName);			
+					WritePackString(pack, szRecord_type);		
+					WritePackCell(pack, teleports);
+					WritePackFloat(pack, time);
+					WritePackCell(pack, client);
+					
+					if (teleports > 0)
+					{
+						Format(szQuery, 1024, sql_selectPlayerRankTime, szSteamId, szMapName, szMapName);
+						SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback2, szQuery, pack,DBPrio_Low);
+					}
+					else
+					{	
+						Format(szQuery, 1024, sql_selectPlayerRankProTime, szSteamId, szMapName, szMapName);
+						SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback2, szQuery, pack,DBPrio_Low);
+					}
+					mapfound=true;
+					continue;
+				}
+			}
+			if (!mapfound)
+			{
+				mapcount++;
+				if (!mapfound && mapcount==1)
+				{
+					if (teleports>0)
+						Format(szUncMaps,sizeof(szUncMaps),"%s (TP)",szMapName);
+					else
+						Format(szUncMaps,sizeof(szUncMaps),"%s (Pro)",szMapName);
+				}
+				else
+				{
+					if (!mapfound && mapcount>1)
+					{
+						if (teleports>0)
+							Format(szUncMaps,sizeof(szUncMaps),"%s, %s (TP)",szUncMaps, szMapName);
+						else
+							Format(szUncMaps,sizeof(szUncMaps),"%s, %s (Pro)",szUncMaps, szMapName);
+					}
+				}
+			}
+		}
+	}
+	if (!StrEqual(szUncMaps,""))
+	{		
+		if(!bHeader)
+		{
+			PrintToChat(client, "%t", "ConsoleOutput", LIMEGREEN,WHITE); 
+			PrintToConsole(client," ");
+			PrintToConsole(client,"-------------");
+			PrintToConsole(client,"Finished Maps");
+			PrintToConsole(client,"Player: %s", szName);
+			PrintToConsole(client,"SteamID: %s", szSteamId);
+			PrintToConsole(client,"-------------");
+			PrintToConsole(client," ");		
+		}
+		PrintToConsole(client, "Times on maps which are not in the mapcycle.txt (TP and Pro records still count but you don't get points): %s", szUncMaps);
+	}
+	if(!bHeader && StrEqual(szUncMaps,""))
+	{
+		ProfileMenu(client, -1);
+		PrintToChat(client, "%t", "PlayerHasNoMapRecords", LIMEGREEN,WHITE,g_szProfileName[client]);
+	}
+}
+
+public SQL_ViewAllRecordsCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		decl String:szQuery[512];
+		new rank = SQL_GetRowCount(hndl);
+		new Handle:pack = data;
+		WritePackCell(pack, rank);
+		ResetPack(pack);
+		decl String:szName[MAX_NAME_LENGTH];
+		ReadPackString(pack, szName, MAX_NAME_LENGTH);
+		decl String:szSteamId[32];
+		ReadPackString(pack, szSteamId, 32);
+		decl String:szMapName[128];
+		ReadPackString(pack, szMapName, 128);
+		decl String:szRecord_type[4];
+		ReadPackString(pack, szRecord_type, 4);	
+		new teleports = ReadPackCell(pack);
+		if (teleports > 0)
+		{
+			Format(szQuery, 512, sql_selectPlayerCount, szMapName);
+			SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback3, szQuery, pack,DBPrio_Low);
+		}
+		else
+		{
+			Format(szQuery, 512, sql_selectPlayerProCount, szMapName);
+			SQL_TQuery(g_hDb, SQL_ViewAllRecordsCallback3, szQuery, pack,DBPrio_Low);
+		}
+		
+	}
+}
+
+public SQL_ViewAllRecordsCallback3(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	//if there is a player record
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		new count = SQL_GetRowCount(hndl);
+		new Handle:pack = data;
+		ResetPack(pack);
+		
+		decl String:szName[MAX_NAME_LENGTH];
+		ReadPackString(pack, szName, MAX_NAME_LENGTH);
+		decl String:szSteamId[32];
+		ReadPackString(pack, szSteamId, 32);
+		decl String:szMapName[128];
+		ReadPackString(pack, szMapName, 128);	
+		decl String:szRecord_type[4];
+		decl String:szTime[32];
+		ReadPackString(pack, szRecord_type, 4);				
+		new teleports = ReadPackCell(pack);
+		new Float:time = ReadPackFloat(pack);	
+		new client = ReadPackCell(pack);
+		new rank = ReadPackCell(pack);
+		
+		CloseHandle(pack);
+		FormatTimeFloat(client,time,3,szTime,sizeof(szTime));
+		if (IsValidClient(client))
+			PrintToConsole(client,"%s, Time: %s (%s), Teleports: %i, Rank: %i/%i", szMapName, szTime, szRecord_type, teleports,rank,count);
+	}
+}	
+		
+public db_viewPlayerRank(client, String:szSteamId[32])
+{
+	decl String:szQuery[512];  
+	Format(g_pr_szrank[client], 512, "");	
+	Format(szQuery, 512, sql_selectRankedPlayer, szSteamId);  
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback, szQuery, client,DBPrio_Low);
+}
+
+public SQL_ViewRankedPlayerCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{	
+		decl String:szQuery[512];
+		decl String:szName[MAX_NAME_LENGTH];
+		decl String:szCountry[100];
+		decl String:szLastSeen[100];
+		decl String:szSteamId[32];
+		new finishedmapstp;
+		new finishedmapspro;
+		new points;
+		g_TpRecordCount[client] = 0;	
+		g_ProRecordCount[client] = 0;	
+		
+		//get the result
+		SQL_FetchString(hndl, 0, szSteamId, 32);
+		SQL_FetchString(hndl, 1, szName, MAX_NAME_LENGTH);
+		points = SQL_FetchInt(hndl, 2);
+		finishedmapstp = SQL_FetchInt(hndl, 3);      
+		finishedmapspro = SQL_FetchInt(hndl, 4);
+		SQL_FetchString(hndl, 6, szCountry, 100);
+		SQL_FetchString(hndl, 7, szLastSeen, 100);
+		new Handle:pack_pr = CreateDataPack();	
+		WritePackString(pack_pr, szName);
+		WritePackString(pack_pr, szSteamId);	
+		WritePackCell(pack_pr, client);		
+		WritePackCell(pack_pr, points);
+		WritePackCell(pack_pr, finishedmapstp);
+		WritePackCell(pack_pr, finishedmapspro);
+		WritePackString(pack_pr, szCountry);	
+		WritePackString(pack_pr, szLastSeen);	
+		Format(szQuery, 512, sql_selectRankedPlayersRank, szSteamId);
+		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback2, szQuery, pack_pr,DBPrio_Low);
+	}
+}
+
+public db_GetPlayerRank(client)
+{
+	decl String:szQuery[512];
+	Format(szQuery, 512, sql_selectRankedPlayersRank, g_szSteamID[client]);
+	SQL_TQuery(g_hDb, sql_selectRankedPlayersRankCallback, szQuery, client,DBPrio_Low);		
+}
+
+public sql_selectRankedPlayersRankCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+		g_PlayerRank[client] = SQL_GetRowCount(hndl);
+}
+
+public SQL_ViewRankedPlayerCallback2(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		decl String:szQuery[512];
+		decl String:szSteamId[32];
+		decl String:szName[MAX_NAME_LENGTH];
+		new rank = SQL_GetRowCount(hndl);
+		new Handle:pack_pr = data;
+		WritePackCell(pack_pr, rank);
+		ResetPack(pack_pr);	        
+		ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
+		ReadPackString(pack_pr, szSteamId, 32);	
+		Format(szQuery, 512, sql_selectTpRecordCount, szSteamId);
+		SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback3, szQuery, pack_pr,DBPrio_Low);	
+	}
+}
+
+public SQL_ViewRankedPlayerCallback3(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new Handle:pack_pr = data;
+	decl String:szQuery[512];
+	decl String:szSteamId[32];
+	decl String:szName[MAX_NAME_LENGTH];
+	ResetPack(pack_pr);	        
+	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
+	ReadPackString(pack_pr, szSteamId, 32);	
+	new client = ReadPackCell(pack_pr);    
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
+		g_TpRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?´
+	Format(szQuery, 512, sql_selectProRecordCount, szSteamId);
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback4, szQuery, pack_pr,DBPrio_Low);		
+}
+
+public SQL_ViewRankedPlayerCallback4(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	decl String:szQuery[512];
+	decl String:szSteamId[32];
+	decl String:szName[MAX_NAME_LENGTH];
+	new Handle:pack_pr = data;
+	ResetPack(pack_pr);       
+	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
+	ReadPackString(pack_pr, szSteamId, 32);		
+	new client = ReadPackCell(pack_pr);  
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl)) 
+		g_ProRecordCount[client] = SQL_FetchInt(hndl, 1);	//pack full?
+	Format(szQuery, 512, sql_selectChallenges, szSteamId,szSteamId);
+	SQL_TQuery(g_hDb, SQL_ViewRankedPlayerCallback5, szQuery, pack_pr,DBPrio_Low);		
+}
+
+public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:error[], any:data)
+{		
+	decl String:szChallengesPoints[32];
+	Format(szChallengesPoints, 32, "0p")
+	decl String:szChallengesWinRatio[32];
+	Format(szChallengesWinRatio, 32, "0")
+	new Handle:pack_pr = data;
+	decl String:szName[MAX_NAME_LENGTH];
+	decl String:szSteamId[32];
+	decl String:szSteamIdChallenge[32];
+	decl String:szCountry[100];
+	decl String:szLastSeen[100];
+	decl String:szNextRank[32];
+	decl String:szSkillGroup[32];
+	ResetPack(pack_pr);     
+	ReadPackString(pack_pr, szName, MAX_NAME_LENGTH);
+	ReadPackString(pack_pr, szSteamId, 32);
+	new client = ReadPackCell(pack_pr);       
+	new points = ReadPackCell(pack_pr);
+	new finishedmapstp = ReadPackCell(pack_pr);
+	new finishedmapspro = ReadPackCell(pack_pr);  
+	ReadPackString(pack_pr, szCountry, 100);	
+	ReadPackString(pack_pr, szLastSeen, 100);	
+	if (StrEqual(szLastSeen,""))
+		Format(szLastSeen, 100, "Unknown");
+	new rank = ReadPackCell(pack_pr);
+	new tprecords = g_TpRecordCount[client];
+	new prorecords = g_ProRecordCount[client];
+	Format(g_szProfileSteamId[client], 32, "%s", szSteamId);
+	Format(g_szProfileName[client], MAX_NAME_LENGTH, "%s", szName);
+	new bool:master=false;
+	new RankDifference;		   
+	CloseHandle(pack_pr);	
+	new bet;
+
+	if (StrEqual(szSteamId, g_szSteamID[client]))
+		g_PlayerRank[client] = rank;
+		
+	//get challenge results
+	new challenges = 0;
+	new challengeswon = 0;  
+	new challengespoints = 0;  
+	if(SQL_HasResultSet(hndl))
+	{	
+		challenges= SQL_GetRowCount(hndl);
+		while (SQL_FetchRow(hndl))
+		{
+			SQL_FetchString(hndl, 0, szSteamIdChallenge, 32);
+			bet = SQL_FetchInt(hndl, 2);
+			if (StrEqual(szSteamIdChallenge,szSteamId))
+			{
+				challengespoints+= bet;
+				challengeswon++;
+			}
+			else
+			{
+				challengespoints-= bet;
+				challengeswon--;
+			}
+		}
+	}
+	
+	if (!g_bChallengePoints)
+		challengespoints = 0;
+	
+	if (challengespoints>0)
+		Format(szChallengesPoints, 32, "+%ip",challengespoints);   
+	else
+		if (challengespoints <= 0 && g_bChallengePoints)
+			Format(szChallengesPoints, 32, "%ip",challengespoints);	
+		else
+			if (challengespoints <= 0 && !g_bChallengePoints)
+				Format(szChallengesPoints, 32, "0p (disabled)"); 		
+	
+	
+	if (challengeswon>0)
+		Format(szChallengesWinRatio, 32, "+%i",challengeswon);   
+	else
+		if (challengeswon<0)
+			Format(szChallengesWinRatio, 32, "%i",challengeswon); 
+	
+	
+	//profile not refreshed after removing maps?
+	if (finishedmapstp > g_pr_MapCount)
+		finishedmapstp=g_pr_MapCount;
+	if (finishedmapspro > g_pr_MapCount)	
+		finishedmapspro=g_pr_MapCount;
+		
+	if (points < g_pr_rank_Percentage[1])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[0]);
+		RankDifference = g_pr_rank_Percentage[1] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[1]);
+	}
+	else
+	if (g_pr_rank_Percentage[1] <= points && points < g_pr_rank_Percentage[2])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[1]);
+		RankDifference = g_pr_rank_Percentage[2] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[2]);
+	}
+	else
+	if (g_pr_rank_Percentage[2] <= points && points < g_pr_rank_Percentage[3])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[2]);
+		RankDifference = g_pr_rank_Percentage[3] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[3]);
+	}		   
+	else
+	if (g_pr_rank_Percentage[3] <= points && points < g_pr_rank_Percentage[4])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[3]);
+		RankDifference = g_pr_rank_Percentage[4] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[4]);
+	}                      
+	else
+	if (g_pr_rank_Percentage[4] <= points && points < g_pr_rank_Percentage[5])
+	{
+	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[4]);
+	   RankDifference = g_pr_rank_Percentage[5] - points;
+	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[5]);
+	}                      
+	else
+	if (g_pr_rank_Percentage[5] <= points && points < g_pr_rank_Percentage[6])
+	{
+	   Format(szSkillGroup, 32, "%s",g_szSkillGroups[5]);
+	   RankDifference = g_pr_rank_Percentage[6] - points;
+	   Format(szNextRank, 32, " (%s)",g_szSkillGroups[6]);
+	}
+	else
+	if (g_pr_rank_Percentage[6] <= points && points < g_pr_rank_Percentage[7])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[6]);
+		RankDifference = g_pr_rank_Percentage[7] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[7]);
+	}
+	else
+	if (g_pr_rank_Percentage[7] <= points && points < g_pr_rank_Percentage[8])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[7]);    
+		RankDifference = g_pr_rank_Percentage[8] - points;
+		Format(szNextRank, 32, " (%s)",g_szSkillGroups[8]);
+	}
+	else
+	if (points >= g_pr_rank_Percentage[8])
+	{
+		Format(szSkillGroup, 32, "%s",g_szSkillGroups[8]);    
+		RankDifference = 0;
+		Format(szNextRank, 32, "");
+		master=true;
+	}  
+	
+	decl String: szRank[32];
+	if (rank > g_pr_RankedPlayers || points == 0)
+		Format(szRank,32,"-");
+	else
+		Format(szRank,32,"%i", rank);
+	
+	decl String:szRanking[255];
+	Format(szRanking, 255, "");			
+	if (master==false)
+	{	
+		if (g_bPointSystem)
+			Format(szRanking, 255,"Rank: %s/%i (%i)\nPoints: %ip (%s)\nNext skill group in: %ip%s\n", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank);
+		if (g_bAllowCheckpoints)
+			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ",szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
+		else
+			Format(g_pr_szrank[client], 512, "Rank: %s/%i (%i)\nPoints: %ip (%s)\nNext skill group in: %ip%s\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    	
+	}
+	else
+	{
+		if (g_bPointSystem)
+			Format(szRanking, 255,"Rank: %s/%i (%i)\nPoints: %ip (%s)\n", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup);
+		if (g_bAllowCheckpoints)
+			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
+		else
+			Format(g_pr_szrank[client], 512, "Rank: %s/%i (%i)\nPoints: %ip (%s)\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
+		
+	}
+	new String:szID[32][2];
+	ExplodeString(szSteamId,"_",szID,2,32);
+	decl String:szTitle[1024];
+	if (g_bCountry)
+		Format(szTitle, 1024, "Player: %s\nSteamID: %s\nNationality: %s \nLast seen: %s\n \n%s\n",  szName,szID[1],szCountry,szLastSeen,g_pr_szrank[client]);		
+	else
+		Format(szTitle, 1024, "Player: %s\nSteamID: %s\nLast seen: %s\n \n%s\n",  szName,szID[1],szLastSeen,g_pr_szrank[client]);				
+			
+	new Handle:menu = CreateMenu(ProfileMenuHandler);
+	SetMenuTitle(menu, szTitle);
+	AddMenuItem(menu, "Current map time", "Current map time");
+	if (g_bJumpStats)
+		AddMenuItem(menu, "Jumpstats", "Jumpstats");
+	else
+		AddMenuItem(menu, "Jumpstats", "Jumpstats (disabled)",ITEMDRAW_DISABLED);
+	AddMenuItem(menu, "Challenge history", "Challenge history");
+	AddMenuItem(menu, "Finished maps", "Finished maps");
+	if (IsValidClient(client))
+	{
+		if(StrEqual(szSteamId,g_szSteamID[client]))
+		{
+			AddMenuItem(menu, "Unfinished maps", "Unfinished maps");
+			if (g_bPointSystem)
+				AddMenuItem(menu, "Refresh my profile", "Refresh my profile");
+		}
+	}	
+	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
+	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+	g_bProfileSelected[client] = true;
+	g_bClimbersMenuOpen[client]=false;
+	g_bMenuOpen[client]=true;
+}
+
 public db_ViewLatestRecords(client)
 {
-	SQL_TQuery(g_hDb, sql_selectLatestRecordsCallback, sql_selectLatestRecords, client);
+	SQL_TQuery(g_hDb, sql_selectLatestRecordsCallback, sql_selectLatestRecords, client,DBPrio_Low);
 }
 
 public sql_selectLatestRecordsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -2231,7 +2467,7 @@ public sql_selectLatestRecordsCallback(Handle:owner, Handle:hndl, const String:e
 	new teleports;
 	new Float: ftime;
 	PrintToConsole(client, "----------------------------------------------------------------------------------------------------");
-	PrintToConsole(client," KZTimer - latest records:");
+	PrintToConsole(client,"Last map records:");
 	if(SQL_HasResultSet(hndl))
 	{		
 		new i = 1;
@@ -2239,7 +2475,7 @@ public sql_selectLatestRecordsCallback(Handle:owner, Handle:hndl, const String:e
 		{
 			SQL_FetchString(hndl, 0, szName, 64);
 			ftime = SQL_FetchFloat(hndl, 1); 
-			FormatTimeFloat(client, ftime, 3,szTime,32);
+			FormatTimeFloat(client, ftime, 3,szTime,sizeof(szTime));
 			teleports = SQL_FetchInt(hndl, 2); 
 			SQL_FetchString(hndl, 3, szMapName, 64);
 			SQL_FetchString(hndl, 4, szDate, 64);
@@ -2260,18 +2496,14 @@ public db_InsertLatestRecords(String:szSteamID[32], String:szName[32], Float: Fi
 {
 	decl String:szQuery[512];       
 	Format(szQuery, 512, sql_insertLatestRecords, szSteamID, szName, FinalTime, Teleports, g_szMapName); 
-	SQL_TQuery(g_hDb, sql_insertLatestRecordCallback, szQuery);
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);
 }
 
-public sql_insertLatestRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	SQL_TQuery(g_hDb, SQL_CheckCallback, sql_deleteLatestRecords);
-}
-public db_viewRecord(client, String:szSteamId[32], String:szMapName[MAX_MAP_LENGTH])
+public db_viewRecord(client, String:szSteamId[32], String:szMapName[128])
 {
 	decl String:szQuery[512];       
 	Format(szQuery, 512, sql_selectPersonalRecords, szSteamId, szMapName);  
-	SQL_TQuery(g_hDb, SQL_ViewRecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, SQL_ViewRecordCallback, szQuery, client,DBPrio_Low);
 }
 
 
@@ -2285,7 +2517,7 @@ public SQL_ViewRecordCallback(Handle:owner, Handle:hndl, const String:error[], a
 	{
 		
 		decl String:szQuery[512];
-		decl String:szMapName[MAX_MAP_LENGTH];
+		decl String:szMapName[128];
 		decl String:szName[MAX_NAME_LENGTH];
 		decl String:szSteamId[32];
 		new Float:time;
@@ -2293,7 +2525,7 @@ public SQL_ViewRecordCallback(Handle:owner, Handle:hndl, const String:error[], a
 		new teleports;
         
 		//get the result
-		SQL_FetchString(hndl, 0, szMapName, MAX_MAP_LENGTH);
+		SQL_FetchString(hndl, 0, szMapName, 128);
 		SQL_FetchString(hndl, 1, szSteamId, MAX_NAME_LENGTH);
 		SQL_FetchString(hndl, 2, szName, MAX_NAME_LENGTH);
 		time = SQL_FetchFloat(hndl, 3);
@@ -2312,7 +2544,7 @@ public SQL_ViewRecordCallback(Handle:owner, Handle:hndl, const String:error[], a
 			Format(szQuery, 512, sql_selectPlayerRankTime, szSteamId, szMapName, szMapName);
 		else
 			Format(szQuery, 512, sql_selectPlayerRankProTime, szSteamId, szMapName, szMapName);
-		SQL_TQuery(g_hDb, SQL_ViewRecordCallback2, szQuery, pack1);
+		SQL_TQuery(g_hDb, SQL_ViewRecordCallback2, szQuery, pack1,DBPrio_Low);
 	}
 	else
 	{ 
@@ -2335,8 +2567,8 @@ public SQL_ViewRecordCallback2(Handle:owner, Handle:hndl, const String:error[], 
 	new Handle:pack2 = data;
 	WritePackCell(pack2, rank);
 	ResetPack(pack2);	
-	decl String:szMapName[MAX_MAP_LENGTH];
-	ReadPackString(pack2, szMapName, MAX_MAP_LENGTH);
+	decl String:szMapName[128];
+	ReadPackString(pack2, szMapName, 128);
 	decl String:szSteamId[32];
 	ReadPackString(pack2, szSteamId, 32);
 	decl String:szName[MAX_NAME_LENGTH];
@@ -2346,7 +2578,7 @@ public SQL_ViewRecordCallback2(Handle:owner, Handle:hndl, const String:error[], 
 		Format(szQuery, 512, sql_selectPlayerCount, szMapName);
 	else
 		Format(szQuery, 512, sql_selectPlayerProCount, szMapName);
-	SQL_TQuery(g_hDb, SQL_ViewRecordCallback3, szQuery, pack2);
+	SQL_TQuery(g_hDb, SQL_ViewRecordCallback3, szQuery, pack2,DBPrio_Low);
 	}
 }
 
@@ -2361,8 +2593,8 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 		new count1 = SQL_GetRowCount(hndl);
 		new Handle:pack3 = data;
 		ResetPack(pack3);		
-		decl String:szMapName[MAX_MAP_LENGTH];
-		ReadPackString(pack3, szMapName, MAX_MAP_LENGTH);
+		decl String:szMapName[128];
+		ReadPackString(pack3, szMapName, 128);
 		decl String:szSteamId[32];
 		ReadPackString(pack3, szSteamId, 32);
 		decl String:szName[MAX_NAME_LENGTH];
@@ -2387,7 +2619,8 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 			decl String:szVrTeleports[32];
 			decl String:szVrRank[32];			
 			
-			FormatTimeFloat(client, time, 3,szVrTime,256);
+			FormatTimeFloat(client, time, 3,szVrTime,sizeof(szVrTime));
+			Format(szVrTime, 256, "Time: %s", szVrTime);
 			
 			Format(szVrTeleports, 32, "Teleports: %i", teleports);
 			Format(szVrRank, 32, "Rank: %i of %i", rank,count1);                  
@@ -2416,7 +2649,9 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 				DrawPanelText(panel, " ");		
 				decl String:szVrRank[32];
 				
-				FormatTimeFloat(client, timepro, 3,szVrTime,256);
+				FormatTimeFloat(client, timepro, 3,szVrTime,sizeof(szVrTime));
+				Format(szVrTime, 256, "Time: %s", szVrTime);
+
 				Format(szVrRank, 32, "Rank: %i of %i", rank,count1);
 				DrawPanelText(panel, "TP time:");
 				DrawPanelText(panel, "-");
@@ -2436,7 +2671,7 @@ public SQL_ViewRecordCallback3(Handle:owner, Handle:hndl, const String:error[], 
 					WritePackCell(pack3, count1);
 					decl String:szQuery[512];
 					Format(szQuery, 512, sql_selectPlayerRankProTime, szSteamId, szMapName, szMapName);
-					SQL_TQuery(g_hDb, SQL_ViewRecordCallback4, szQuery, pack3);
+					SQL_TQuery(g_hDb, SQL_ViewRecordCallback4, szQuery, pack3,DBPrio_Low);
                 }
         }
 }
@@ -2451,10 +2686,10 @@ public SQL_ViewRecordCallback4(Handle:owner, Handle:hndl, const String:error[], 
 		new Handle:pack4 = data;
 		WritePackCell(pack4, rankPro);
 		ResetPack(pack4);
-		decl String:szMapName[MAX_MAP_LENGTH];
-		ReadPackString(pack4, szMapName, MAX_MAP_LENGTH);
+		decl String:szMapName[128];
+		ReadPackString(pack4, szMapName, 128);
 		Format(szQuery, 512, sql_selectPlayerProCount, szMapName);
-		SQL_TQuery(g_hDb, SQL_ViewRecordCallback5, szQuery, pack4);
+		SQL_TQuery(g_hDb, SQL_ViewRecordCallback5, szQuery, pack4,DBPrio_Low);
 	}
 }
 
@@ -2467,8 +2702,8 @@ public SQL_ViewRecordCallback5(Handle:owner, Handle:hndl, const String:error[], 
 		//retrieve all values
 		new Handle:pack5 = data;
 		ResetPack(pack5);            
-		decl String:szMapName[MAX_MAP_LENGTH];
-		ReadPackString(pack5, szMapName, MAX_MAP_LENGTH);
+		decl String:szMapName[128];
+		ReadPackString(pack5, szMapName, 128);
 		decl String:szSteamId[32];
 		ReadPackString(pack5, szSteamId, 32);
 		decl String:szName[MAX_NAME_LENGTH];
@@ -2492,12 +2727,14 @@ public SQL_ViewRecordCallback5(Handle:owner, Handle:hndl, const String:error[], 
 			DrawPanelText(panel, " ");
 			
 			decl String:szVrTeleports[16];
-			decl String:szVrRank[16];
-			decl String:szVrRankPro[16];      
+			decl String:szVrRank[32];
+			decl String:szVrRankPro[32];      
 			decl String:szVrTime[256];
 			decl String:szVrTimePro[256];
-			FormatTimeFloat(client, time, 3,szVrTime,256);	
-			FormatTimeFloat(client, timepro, 3,szVrTimePro,256);
+			FormatTimeFloat(client, time, 3,szVrTime,sizeof(szVrTime));	
+			Format(szVrTime, 256, "Time: %s",szVrTime);
+			FormatTimeFloat(client, timepro, 3,szVrTimePro,sizeof(szVrTimePro));
+			Format(szVrTimePro, 256, "Time: %s", szVrTimePro);
 			
 			Format(szVrTeleports, 16, "Teleports: %i", teleports); 
 			Format(szVrRank, 32, "Rank: %i of %i", rank,count1); 
@@ -2557,7 +2794,6 @@ public SQL_ViewPlayerProfile1Callback(Handle:owner, Handle:hndl, const String:er
 	}
 }
 
-
 public SQL_ViewPlayerProfile2Callback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {    
 	new client = data;  
@@ -2571,13 +2807,84 @@ public SQL_ViewPlayerProfile2Callback(Handle:owner, Handle:hndl, const String:er
 			PrintToChat(client, "%t", "PlayerNotFound", MOSSGREEN,WHITE, g_szProfileName[client]);
 }
 
+public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
+{ 
+	if(action == MenuAction_Select)
+	{
+		switch(param2)
+		{
+			case 0: db_viewRecord(param1, g_szProfileSteamId[param1], g_szMapName);
+			case 1: 
+			{
+				db_viewJumpStats(param1, g_szProfileSteamId[param1]);
+				if (!g_bJumpStats)
+					PrintToChat(param1, "%t", "JumpstatsDisabled",MOSSGREEN,WHITE);
+			}
+			case 2: db_viewChallengeHistory(param1, g_szProfileSteamId[param1]);
+			case 3: db_viewAllRecords(param1, g_szProfileSteamId[param1]);
+			case 4: db_viewUnfinishedMaps(param1, g_szProfileSteamId[param1]);	
+			case 5:
+			{
+				if(g_bRecalcRankInProgess[param1])
+				{
+					PrintToChat(param1, "%t", "PrUpdateInProgress", MOSSGREEN,WHITE);
+				}
+				else
+				{
+				
+					g_bRecalcRankInProgess[param1] = true;
+					PrintToChat(param1, "%t", "Rc_PlayerRankStart", MOSSGREEN,WHITE,GRAY);
+					CalculatePlayerRank(param1);
+				}
+			}		
+		}	
+	}
+	else
+	if(action == MenuAction_Cancel)
+	{
+		if (1 <= param1 <= MaxClients && IsValidClient(param1))
+		{
+			switch(g_MenuLevel[param1])
+			{
+				case 0: db_selectTopPlayers(param1);
+				case 1: db_selectTopClimbers(param1,g_szMapTopName[param1]);
+				case 2: db_selectTopLj(param1);	
+				case 3: db_selectTopChallengers(param1);
+				case 4: db_selectTopWj(param1);
+				case 5: db_selectTopBhop(param1);
+				case 6: db_selectTopDropBhop(param1);	
+				case 7: db_selectTopMultiBhop(param1);	
+				case 8: db_selectTPClimbers(param1);	
+				case 9: db_selectProClimbers(param1);	
+				case 10: db_selectTopTpRecordHolders(param1);
+				case 11: db_selectTopProRecordHolders(param1);	
+				case 12: db_selectTopLjBlock(param1);
+				case 13: db_selectTopLadderJump(param1);
+			}	
+			if (g_MenuLevel[param1] < 0)		
+			{
+				if (g_bSelectProfile[param1])
+					ProfileMenu(param1,0);
+				else
+					g_bMenuOpen[param1]=false;	
+			}
+			g_bProfileSelected[param1]=false;
+		}							
+	}
+	else 
+		if (action == MenuAction_End)	
+		{
+			CloseHandle(menu);
+		}
+}
+
 public db_selectRecord(client)
 {
 	decl String:szQuery[255];
 	if (!IsValidClient(client))
 		return;
 	Format(szQuery, 255, sql_selectRecord, g_szSteamID[client], g_szMapName);
-	SQL_TQuery(g_hDb, sql_selectRecordCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectRecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -2593,35 +2900,25 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 		else
 			Format(szQuery, 512, sql_selectProRecord, g_szSteamID[client], g_szMapName);
 		if (!IsFakeClient(client))
-			SQL_TQuery(g_hDb, SQL_UpdateRecordCallback, szQuery, client);		
+			SQL_TQuery(g_hDb, SQL_UpdateRecordCallback, szQuery, client,DBPrio_Low);		
 	}
 	else
 	{
 		decl String:szName[MAX_NAME_LENGTH];
 		GetClientName(client, szName, MAX_NAME_LENGTH);
-		if	(g_Tp_Final[client]>0)
+		if	(g_OverallTp[client]>0)
 		{						
 			Format(szQuery, 512, sql_insertPlayerTp, g_szSteamID[client], g_szMapName, szName, g_fFinalTime[client], g_Tp_Final[client]);
 			g_fPersonalRecord[client] = g_fFinalTime[client];	
-			SQL_TQuery(g_hDb, SQL_UpdateRecordTpCallback, szQuery,client);	
+			SQL_TQuery(g_hDb, SQL_UpdateRecordTpCallback, szQuery,client,DBPrio_Low);	
 		}
 		else
 		{
 			Format(szQuery, 512, sql_insertPlayerPro, g_szSteamID[client], g_szMapName, szName, g_fFinalTime[client]);
 			g_fPersonalRecordPro[client] = g_fFinalTime[client];
-			SQL_TQuery(g_hDb, SQL_UpdateRecordProCallback, szQuery,client);	
+			SQL_TQuery(g_hDb, SQL_UpdateRecordProCallback, szQuery,client,DBPrio_Low);	
 		}
 			
-	}
-}
-
-public db_updatePlayerOptions(client)
-{
-	if (g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
-	{
-		decl String:szQuery[1024];
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),0,0,g_szSteamID[client]);
-		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
 	}
 }
 		
@@ -2633,6 +2930,16 @@ public db_updateLjRecord(client)
 	Format(szQuery, 255, sql_selectPlayerJumpLJ, g_szSteamID[client]);
 	if (!IsFakeClient(client))
 		SQL_TQuery(g_hDb, SQL_UpdateLjRecordCallback, szQuery, client,DBPrio_Low);
+}
+
+public db_updateLadderJumpRecord(client)
+{
+	decl String:szQuery[255];
+	if (!IsValidClient(client))
+		return;
+	Format(szQuery, 255, sql_selectPlayerJumpLadderJump, g_szSteamID[client]);
+	if (!IsFakeClient(client))
+		SQL_TQuery(g_hDb, SQL_UpdateLadderJumpRecordCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_updateLjBlockRecord(client)
@@ -2695,7 +3002,7 @@ public db_updateMapButtons(Float:loc0, Float:loc1, Float:loc2, Float:ang0, index
 	WritePackFloat(pack, ang0);
 	WritePackCell(pack, index);
 	Format(szQuery, 255, sql_selectMapButtons, g_szMapName);
-	SQL_TQuery(g_hDb, SQL_selectMapButtonsCallback, szQuery, pack);
+	SQL_TQuery(g_hDb, SQL_selectMapButtonsCallback, szQuery, pack,DBPrio_Low);
 }
 
 public SQL_selectMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -2750,6 +3057,30 @@ public SQL_UpdateLjRecordCallback(Handle:owner, Handle:hndl, const String:error[
 			SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);
 		}
 		db_viewLjRecord2(client);
+	}
+}
+
+public SQL_UpdateLadderJumpRecordCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+	new client = data;
+	if (IsValidClient(client))
+	{
+		decl String:szQuery[512];
+		decl String:szUName[MAX_NAME_LENGTH];
+		GetClientName(client, szUName, MAX_NAME_LENGTH);
+		decl String:szName[MAX_NAME_LENGTH*2+1];
+		SQL_QuoteString(g_hDb, szUName, szName, MAX_NAME_LENGTH*2+1);
+		if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+		{
+			Format(szQuery, 512, sql_updateLadderJump, szName, g_js_fPersonal_LadderJump_Record[client], g_js_fPreStrafe[client], g_js_fMax_Speed_Final[client], g_js_Strafes_Final[client],g_js_Sync_Final[client],g_flastHeight[client], g_szSteamID[client]);
+			SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);
+		}	
+		else
+		{
+			Format(szQuery, 512, sql_insertPlayerJumpLadderJump, g_szSteamID[client], szName, g_js_fPersonal_LadderJump_Record[client], g_js_fPreStrafe[client], g_js_fMax_Speed_Final[client], g_js_Strafes_Final[client],g_js_Sync_Final[client],g_flastHeight[client]);
+			SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);
+		}
+		db_viewLadderJumpRecord2(client);
 	}
 }
 
@@ -2905,7 +3236,7 @@ public db_updateRecordCP(client)
 		return;	
 	decl String:szName[MAX_NAME_LENGTH*2+1];
 	SQL_QuoteString(g_hDb, szUName, szName, MAX_NAME_LENGTH*2+1);   
-	Format(szQuery, 1024, sql_updateRecord, szUName, g_OverallTp[client], g_fFinalTime[client], g_szSteamID[client], g_szMapName);
+	Format(szQuery, 1024, sql_updateRecord, szUName, g_Tp_Final[client], g_fFinalTime[client], g_szSteamID[client], g_szMapName);
 	SQL_TQuery(g_hDb, SQL_UpdateRecordTpCallback, szQuery,client,DBPrio_Low);
 	g_fPersonalRecord[client] = g_fFinalTime[client];	
 }
@@ -2943,7 +3274,7 @@ public db_selectTPClimbers(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectTPClimbers, g_szMapName);   
-	SQL_TQuery(g_hDb, sql_selectTPClimbersCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectTPClimbersCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTopClimbers(client, String:mapname[128])
@@ -2953,7 +3284,7 @@ public db_selectTopClimbers(client, String:mapname[128])
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, mapname);
-	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack);
+	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack,DBPrio_Low);
 }
 
 public db_selectMapTopClimbers(client, String:mapname[128])
@@ -2963,48 +3294,55 @@ public db_selectMapTopClimbers(client, String:mapname[128])
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, mapname);
-	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack);
+	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack,DBPrio_Low);
 }
 
 public db_selectProClimbers(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectProClimbers, g_szMapName);   		
-	SQL_TQuery(g_hDb, sql_selectProClimbersCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectProClimbersCallback, szQuery, client,DBPrio_Low);
 }
 public db_selectTopLj(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopLJ);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopLJCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopLJCallback, szQuery, client,DBPrio_Low);
+}
+
+public db_selectTopLadderJump(client)
+{
+	decl String:szQuery[1024];       
+	Format(szQuery, 1024, sql_selectPlayerJumpTopLadderJump);   		
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopLadderJumpCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTopLjBlock(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopLJBlock);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopLJBlockCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopLJBlockCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTopWj(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopWJ);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopWJCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopWJCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTopBhop(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopBhop);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopBhopCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopBhopCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTopDropBhop(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopDropBhop);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopDropBhopCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopDropBhopCallback, szQuery, client,DBPrio_Low);
 }
 
 
@@ -3012,14 +3350,14 @@ public db_selectTopMultiBhop(client)
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectPlayerJumpTopMultiBhop);   		
-	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopMultiBhopCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectPlayerJumpTopMultiBhopCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectMapButtons()
 {
 	decl String:szQuery[1024];       
 	Format(szQuery, 1024, sql_selectMapButtons, g_szMapName);
-	SQL_TQuery(g_hDb, sql_ViewMapButtonsCallback, szQuery);
+	SQL_TQuery(g_hDb, sql_ViewMapButtonsCallback, szQuery,DBPrio_Low);
 }
 
 public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -3125,6 +3463,7 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 	}
 }
 
+
 public sql_selectPlayerJumpTopLJBlockCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
 	new client = data;
@@ -3194,6 +3533,43 @@ public sql_selectPlayerJumpTopLJCallback(Handle:owner, Handle:hndl, const String
 					Format(szValue, 128, "[0%i.]    %.3f units      %s      » %s", i, ljrecord,szStrafes, szName);
 				else
 					Format(szValue, 128, "[%i.]    %.3f units      %s      » %s", i, ljrecord,szStrafes, szName);
+			AddMenuItem(menu, szSteamID, szValue, ITEMDRAW_DEFAULT);
+			i++;
+		}
+	}
+	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
+	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+}
+
+public sql_selectPlayerJumpTopLadderJumpCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{       
+	new client = data;
+	decl String:szValue[128];
+	decl String:szName[64];
+	decl String:szSteamID[32];
+	new Float:ladderjumprecord;
+	new String:szStrafes[32];
+	new strafes;
+	new Handle:menu = CreateMenu(LadderJumpMenuHandler1);
+	SetMenuTitle(menu, "Top 20 Ladderjump\n    Rank    Distance           Strafes      Player");  
+	SetMenuPagination(menu, 5);
+	if(SQL_HasResultSet(hndl))
+	{
+		new i = 1;
+		while (SQL_FetchRow(hndl))
+		{
+			SQL_FetchString(hndl, 0, szName, 64);
+			ladderjumprecord = SQL_FetchFloat(hndl, 1); 
+			strafes = SQL_FetchInt(hndl, 2); 
+			SQL_FetchString(hndl, 3, szSteamID, 32);
+			if (strafes < 10)
+				Format(szStrafes, 32, " %i ", strafes); 
+			else
+				Format(szStrafes, 32, "%i", strafes); 
+			if (i < 10)
+					Format(szValue, 128, "[0%i.]    %.3f units      %s      » %s", i, ladderjumprecord,szStrafes, szName);
+				else
+					Format(szValue, 128, "[%i.]    %.3f units      %s      » %s", i, ladderjumprecord,szStrafes, szName);
 			AddMenuItem(menu, szSteamID, szValue, ITEMDRAW_DEFAULT);
 			i++;
 		}
@@ -3406,7 +3782,7 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 						Format(szTeleports, 32, "%i",teleports);
 					
 					decl String:szTime[32];
-					FormatTimeFloat(client, time, 3,szTime,32);
+					FormatTimeFloat(client, time, 3,szTime,sizeof(szTime));
 					if (time<3600.0)
 						Format(szTime, 32, "   %s", szTime);			
 					if (i == 100)
@@ -3430,7 +3806,7 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	}
 	else
 		PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
-	Format(g_szMapTopName[client], MAX_MAP_LENGTH, "%s",szFirstMap);	
+	Format(g_szMapTopName[client], 128, "%s",szFirstMap);	
 	StopClimbersMenu(client);
 	Format(title, 256, "Top 50 Times on %s (local)\n    Rank    Time           TP's     Player", szFirstMap);
 	SetMenuTitle(menu, title);     
@@ -3448,6 +3824,7 @@ public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:erro
 	new teleports;
 	decl String:szTeleports[32];
 	decl String:szSteamID[32];
+	decl String:szTime[32];
 	new Handle:menu = CreateMenu(MapMenuHandler2);
 	SetMenuPagination(menu, 5);
 	SetMenuTitle(menu, "Top 20 TP Times (local)\n    Rank    Time           TP's       Player");     
@@ -3468,8 +3845,7 @@ public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:erro
 				else
 					Format(szTeleports, 32, "%i",teleports);
 			
-			decl String:szTime[32];
-			FormatTimeFloat(client, time, 3,szTime,32);
+			FormatTimeFloat(client, time, 3,szTime,sizeof(szTime));
 			if (time<3600.0)
 				Format(szTime, 32, "   %s", szTime);			
 			if (i < 10)
@@ -3493,10 +3869,11 @@ public sql_selectProClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	decl String:szValue[128];
 	decl String:szSteamID[32];
 	decl String:szName[64];
+	decl String:szTime[32];
 	new Float:time;
 	new Handle:menu = CreateMenu(MapMenuHandler3);
 	SetMenuPagination(menu, 5);
-	SetMenuTitle(menu, "Top 20 PRO Times (local)\n    Rank   Time               Player");     
+	SetMenuTitle(menu, "Top 20 PRO Times (local)\n    Rank   Time              Player");     
 	if(SQL_HasResultSet(hndl))
 		
 	{
@@ -3506,8 +3883,7 @@ public sql_selectProClimbersCallback(Handle:owner, Handle:hndl, const String:err
 			SQL_FetchString(hndl, 0, szName, 64);
 			time = SQL_FetchFloat(hndl, 1);		
 			SQL_FetchString(hndl, 2, szSteamID, 32);
-			decl String:szTime[32];
-			FormatTimeFloat(client, time, 3,szTime,32);			
+			FormatTimeFloat(client, time, 3,szTime,sizeof(szTime));			
 			if (time<3600.0)
 				Format(szTime, 32, "  %s", szTime);
 			if (i < 10)
@@ -3643,6 +4019,26 @@ public LjJumpMenuHandler1(Handle:menu, MenuAction:action, param1, param2)
 		CloseHandle(menu);
 	}
 }
+
+public LadderJumpMenuHandler1(Handle:menu, MenuAction:action, param1, param2)
+{
+	if (action ==  MenuAction_Select)
+	{
+		decl String:info[32];
+		GetMenuItem(menu, param2, info, sizeof(info));
+		g_MenuLevel[param1] = 13;
+		db_viewPlayerRank(param1, info);	
+	}
+	if (action ==  MenuAction_Cancel)
+	{
+		JumpTopMenu(param1);
+	}
+	else if (action == MenuAction_End)
+	{
+		CloseHandle(menu);
+	}
+}
+
 public WjJumpMenuHandler1(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action ==  MenuAction_Select)
@@ -3747,7 +4143,6 @@ public MapTopMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 	}
 }
 
-
 public MapMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action ==  MenuAction_Select)
@@ -3766,6 +4161,7 @@ public MapMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 		CloseHandle(menu);
 	}
 }
+
 
 public MapMenuHandler3(Handle:menu, MenuAction:action, param1, param2)
 {
@@ -3814,13 +4210,13 @@ public db_GetMapRecord_CP()
 {
 	decl String:szQuery[512];      
 	Format(szQuery, 512, sql_selectMapRecordCP, g_szMapName);       
-	SQL_TQuery(g_hDb, sql_selectMapRecordCPCallback, szQuery);
+	SQL_TQuery(g_hDb, sql_selectMapRecordCPCallback, szQuery,DBPrio_Low);
 }
 public db_GetMapRecord_Pro()
 {
 	decl String:szQuery[512];      
 	Format(szQuery, 512, sql_selectMapRecordPro, g_szMapName);      
-	SQL_TQuery(g_hDb, sql_selectMapRecordProCallback, szQuery);
+	SQL_TQuery(g_hDb, sql_selectMapRecordProCallback, szQuery,DBPrio_Low);
 }
 public sql_selectMapRecordCPCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -3856,6 +4252,18 @@ public sql_selectMapRecordProCallback(Handle:owner, Handle:hndl, const String:er
 		g_fRecordTimePro = 9999999.0;
 }
 
+public db_Cleanup()
+{
+	decl String:szQuery[255];
+	
+	//tmps
+	Format(szQuery, 255, "DELETE FROM playertmp where mapname != '%s'", g_szMapName);
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);
+	
+	//times
+	SQL_TQuery(g_hDb, SQL_CheckCallback, "DELETE FROM playertimes where runtime = -1.0 and runtimepro = -1.0");
+}
+
 public db_dropMap(client)
 {
 	SQL_LockDatabase(g_hDb);       
@@ -3881,7 +4289,7 @@ public db_dropChallenges(client)
 
 public db_dropPlayer(client)
 {
-	SQL_TQuery(g_hDb, sql_selectMutliplierCallback, "UPDATE playerrank SET multiplier ='0'", client);	
+	SQL_TQuery(g_hDb, sql_selectMutliplierCallback, "UPDATE playerrank SET multiplier ='0'", client);
 	SQL_LockDatabase(g_hDb);
 	if(g_DbType == MYSQL)
 		SQL_FastQuery(g_hDb, sql_dropPlayer);
@@ -3961,7 +4369,7 @@ public db_resetPlayerRecords(client, String:steamid[128])
 	}
 }
 
-public db_resetPlayerRecordTp(client, String:steamid[128], String:szMapName[MAX_MAP_LENGTH])
+public db_resetPlayerRecordTp(client, String:steamid[128], String:szMapName[128])
 {
 	decl String:szQuery[255];      
 	decl String:szsteamid[128*2+1];
@@ -3990,7 +4398,7 @@ public db_resetPlayerRecordTp(client, String:steamid[128], String:szMapName[MAX_
 	}  
 }
 
-public db_resetPlayerRecordPro(client, String:steamid[128], String:szMapName[MAX_MAP_LENGTH])
+public db_resetPlayerRecordPro(client, String:steamid[128], String:szMapName[128])
 {
 	decl String:szQuery[255];      
 	decl String:szsteamid[128*2+1];
@@ -4019,7 +4427,7 @@ public db_resetPlayerRecordPro(client, String:steamid[128], String:szMapName[MAX
 	} 
 }
 
-public db_resetPlayerRecords2(client, String:steamid[128], String:szMapName[MAX_MAP_LENGTH])
+public db_resetPlayerRecords2(client, String:steamid[128], String:szMapName[128])
 {
 	decl String:szQuery[255];      
 	decl String:szsteamid[128*2+1];
@@ -4148,7 +4556,9 @@ public db_resetPlayerJumpstats(client, String:steamid[128])
 				g_js_BhopRank[i] = 99999999;
 				g_js_fPersonal_Bhop_Record[i] = -1.0;	
 				g_js_LjRank[i] = 99999999;
-				g_js_fPersonal_Lj_Record[i] = -1.0;				
+				g_js_fPersonal_Lj_Record[i] = -1.0;	
+				g_js_LadderJumpRank[i] = 99999999;
+				g_js_fPersonal_LadderJump_Record[i] = -1.0;						
 			}
 		}
 	}
@@ -4191,6 +4601,7 @@ public db_resetPlayerResetChallenges(client, String:steamid[128])
 	PrintToConsole(client, "won challenges cleared (%s)", szsteamid);
 }
 
+
 public db_resetPlayerLjRecord(client, String:steamid[128])
 {
 	decl String:szQuery[255];
@@ -4214,6 +4625,31 @@ public db_resetPlayerLjRecord(client, String:steamid[128])
 		}
 	}
 }
+
+public db_resetPlayerLadderJumpRecord(client, String:steamid[128])
+{
+	decl String:szQuery[255];
+	decl String:szsteamid[128*2+1];
+	SQL_QuoteString(g_hDb, steamid, szsteamid, 128*2+1);      
+	Format(szQuery, 255, sql_resetLadderJumpRecord, szsteamid);   
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, client);
+	WritePackString(pack, steamid);	    
+	SQL_TQuery(g_hDb, SQL_CheckCallback4, szQuery, pack);	      
+	PrintToConsole(client, "ladderjump record cleared (%s).", szsteamid);
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (IsValidClient(i))
+		{
+			if(StrEqual(g_szSteamID[i],szsteamid))
+			{
+				g_js_LadderJumpRank[i] = 99999999;
+				g_js_fPersonal_LadderJump_Record[i] = -1.0;
+			}
+		}
+	}
+}
+
 
 public db_resetPlayerLjBlockRecord(client, String:steamid[128])
 {
@@ -4277,6 +4713,15 @@ public SQL_CheckCallback4(Handle:owner, Handle:hndl, const String:error[], any:d
 	RecalcPlayerRank(client, steamid);
 }
 
+
+public SQL_InsertCheckCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+}
+
+public sql_deletePlayerCheckCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{
+}
+
 public RecordPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 {
 	if(action ==  MenuAction_Select)
@@ -4304,7 +4749,7 @@ public db_viewPlayerOptions(client, String:szSteamId[32])
 {
 	decl String:szQuery[512];      
 	Format(szQuery, 512, sql_selectPlayerOptions, szSteamId);     
-	SQL_TQuery(g_hDb, db_viewPlayerOptionsCallback, szQuery,client);	
+	SQL_TQuery(g_hDb, db_viewPlayerOptionsCallback, szQuery,client,DBPrio_Low);	
 }
 
 public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -4326,7 +4771,8 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bCPTextMessage[client]=IntoBool(SQL_FetchInt(hndl, 11));
 		g_bAdvancedClimbersMenu[client]=IntoBool(SQL_FetchInt(hndl, 12));	
 		g_bStartWithUsp[client]=IntoBool(SQL_FetchInt(hndl, 15));
-
+		g_bJumpBeam[client]=IntoBool(SQL_FetchInt(hndl, 16));
+		
 		//org
 		g_borg_AutoBhopClient[client] = g_bAutoBhopClient[client];
 		g_borg_ColorChat[client] = g_bColorChat[client];
@@ -4342,6 +4788,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_ShowSpecs[client] = g_bShowSpecs[client]; 
 		g_borg_CPTextMessage[client] = g_bCPTextMessage[client];
 		g_borg_AdvancedClimbersMenu[client] = g_bAdvancedClimbersMenu[client];
+		g_borg_JumpBeam[client] = g_bJumpBeam[client];
 	}
 	else
 	{
@@ -4349,7 +4796,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		if (!IsValidClient(client))
 			return;
 		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0)
-		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery,DBPrio_Low);			
+		SQL_TQuery(g_hDb, SQL_InsertCheckCallback, szQuery,DBPrio_Low);			
 		g_borg_ColorChat[client] = true;
 		g_borg_InfoPanel[client] = false;
 		g_borg_ClimbersMenuSounds[client] = true;
@@ -4364,10 +4811,20 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_CPTextMessage[client] = false;
 		g_borg_AdvancedClimbersMenu[client] = true;
 		g_borg_AutoBhopClient[client] = true;
+		g_borg_JumpBeam[client] = false;
 	}
 }
 
-
+public db_updatePlayerOptions(client)
+{
+	if (g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
+	{
+		decl String:szQuery[1024];
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),0,g_szSteamID[client]);
+		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
+	}
+}
+	
 public db_viewPlayerPoints(client)
 {
 	g_pr_multiplier[client] = 0;
@@ -4397,12 +4854,14 @@ public db_viewPlayerPointsCallback(Handle:owner, Handle:hndl, const String:error
 			g_pr_multiplier[client] = -1 * g_pr_multiplier[client];
 		g_pr_finishedmaps_tp_perc[client]= (float(g_pr_finishedmaps_tp[client]) / float(g_pr_MapCount)) * 100.0;
 		g_pr_finishedmaps_pro_perc[client]= (float(g_pr_finishedmaps_pro[client]) / float(g_pr_MapCount)) * 100.0;	
+		if (IsValidClient(client))
+			db_GetPlayerRank(client);
 	}
 	else
 	{
 		if (IsValidClient(client))
 		{
-			//insert
+			//insert	
 			decl String:szQuery[512];
 			decl String:szUName[MAX_NAME_LENGTH];
 			if (IsValidClient(client))
@@ -4413,12 +4872,9 @@ public db_viewPlayerPointsCallback(Handle:owner, Handle:hndl, const String:error
 			SQL_QuoteString(g_hDb, szUName, szName, MAX_NAME_LENGTH*2+1);	
 			Format(szQuery, 512, sql_insertPlayerRank, g_szSteamID[client], szName,g_szCountry[client]); 
 			SQL_TQuery(g_hDb, SQL_InsertCheckCallback, szQuery,DBPrio_Low);
+			db_GetPlayerRank(client);
 		}
 	}
-}
-
-public SQL_InsertCheckCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
 }
 
 /////////////////////////////////////////////////////////////////
@@ -4428,17 +4884,6 @@ public SQL_InsertCheckCallback(Handle:owner, Handle:hndl, const String:error[], 
 /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////START/
 /////////////////////////////////////////////////////////////////
-
-public RefreshPlayerRankTable(max)
-{
-	g_pr_Recalc_ClientID=1;
-	g_pr_RankingRecalc_InProgress=true;
-	decl String:szQuery[255];
-	Format(szQuery, 255, sql_selectRankedPlayers);      
-	new Handle:pack = CreateDataPack();
-	WritePackCell(pack, max);
-	SQL_TQuery(g_hDb, sql_selectRankedPlayersCallback, szQuery, pack,DBPrio_Low);
-}
 
 public RecalcPlayerRank(client, String:steamid[128])
 {
@@ -4485,6 +4930,17 @@ public sql_selectPlayerNameCallback(Handle:owner, Handle:hndl, const String:erro
 			PrintToConsole(client, "SteamID %s not found.", g_pr_szSteamID[clientid]);
 }
 
+public RefreshPlayerRankTable(max)
+{
+	g_pr_Recalc_ClientID=1;
+	g_pr_RankingRecalc_InProgress=true;
+	decl String:szQuery[255];
+	Format(szQuery, 255, sql_selectRankedPlayers);      
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, max);
+	SQL_TQuery(g_hDb, sql_selectRankedPlayersCallback, szQuery, pack,DBPrio_Low);
+}
+
 public sql_selectRankedPlayersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new Handle:pack = data;
@@ -4516,9 +4972,10 @@ public sql_selectRankedPlayersCallback(Handle:owner, Handle:hndl, const String:e
 				db_viewPersonalBhopRecord(66,g_pr_szSteamID[66]);
 				db_viewPersonalMultiBhopRecord(66,g_pr_szSteamID[66]);
 				db_viewPersonalWeirdRecord(66,g_pr_szSteamID[66]);
-				db_viewPersonalDropBhopRecord(66,g_pr_szSteamID[66]); 
+				db_viewPersonalDropBhopRecord(66,g_pr_szSteamID[66]);
+				db_viewPersonalLadderJumpRecord(66,g_pr_szSteamID[66]);
+				db_viewPersonalLJBlockRecord(66,g_pr_szSteamID[66]);				
 				db_viewPersonalLJRecord(66,g_pr_szSteamID[66]);
-				db_viewPersonalLJBlockRecord(66,g_pr_szSteamID[66]);
 			}
 		}
 	}
@@ -4668,8 +5125,8 @@ public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:e
 	new client = data;
 	decl String:szQuery[512];   
 	decl String:szSteamId[32];
-	decl String:MapName[MAX_MAP_LENGTH];
-	decl String:MapName2[MAX_MAP_LENGTH];
+	decl String:MapName[128];
+	decl String:MapName2[128];
 	new finished_TP=0;
 	
 	if (client>MAXPLAYERS)
@@ -4690,7 +5147,7 @@ public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:e
 	{
 		while (SQL_FetchRow(hndl))
 		{
-			SQL_FetchString(hndl, 0, MapName, MAX_MAP_LENGTH);	
+			SQL_FetchString(hndl, 0, MapName, 128);	
 			for (new i = 0; i < GetArraySize(g_MapList); i++)
 			{
 				GetArrayString(g_MapList, i, MapName2, sizeof(MapName2));
@@ -4716,8 +5173,8 @@ public sql_CountFinishedMapsProCallback(Handle:owner, Handle:hndl, const String:
 	new client = data;
 	decl String:szQuery[1024];   
 	decl String:szSteamId[32];
-	decl String:MapName[MAX_MAP_LENGTH];
-	decl String:MapName2[MAX_MAP_LENGTH];
+	decl String:MapName[128];
+	decl String:MapName2[128];
 	new finished_Pro=0;
 	
 	if (client>MAXPLAYERS)
@@ -4738,7 +5195,7 @@ public sql_CountFinishedMapsProCallback(Handle:owner, Handle:hndl, const String:
 	{	
 		while (SQL_FetchRow(hndl))
 		{
-			SQL_FetchString(hndl, 0, MapName, MAX_MAP_LENGTH);	
+			SQL_FetchString(hndl, 0, MapName, 128);	
 			for (new i = 0; i < GetArraySize(g_MapList); i++)
 			{
 				GetArrayString(g_MapList, i, MapName2, sizeof(MapName2));
@@ -4777,7 +5234,7 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 		else
 			return;
 	}
-	decl String:szMapName[MAX_MAP_LENGTH];
+	decl String:szMapName[128];
 	if(SQL_HasResultSet(hndl))
 	{	
 		g_pr_maprecords_row_counter[client]=0;
@@ -4785,7 +5242,7 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 		new teleports;
 		while (SQL_FetchRow(hndl))
 		{		
-			SQL_FetchString(hndl, 2, szMapName, MAX_MAP_LENGTH);			
+			SQL_FetchString(hndl, 2, szMapName, 128);			
 			teleports = SQL_FetchInt(hndl, 4);	
 			if (teleports > 0)
 				Format(szQuery, 1024, sql_selectPlayerRankTime, szSteamId, szMapName, szMapName);
@@ -4797,6 +5254,11 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 	if (g_pr_maprecords_row_count[client]==0)
 	{
 		new Float:percentage2;
+		if (g_js_LadderJumpRank[client]<21 && g_js_LadderJumpRank[client] > 0)
+		{
+			percentage2 = 1.05 - (float (g_js_LadderJumpRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
+		}
 		if (g_js_LjBlockRank[client]<21 && g_js_LjBlockRank[client] > 0)
 		{
 			percentage2 = 1.05 - (float (g_js_LjBlockRank[client]) / 20.0);
@@ -4834,12 +5296,12 @@ public sql_selectPersonalAllRecordsCallback(Handle:owner, Handle:hndl, const Str
 
 public 	sql_selectPlayerRankCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
-	decl String:szMapName[MAX_MAP_LENGTH];
+	decl String:szMapName[128];
 	new client = data;
 	decl String:szQuery[255];  
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
-		SQL_FetchString(hndl, 2, szMapName, MAX_MAP_LENGTH);	
+		SQL_FetchString(hndl, 2, szMapName, 128);	
 		new rank = SQL_GetRowCount(hndl);
 		new teleports = SQL_FetchInt(hndl, 1);	
 		new Handle:pack = CreateDataPack();
@@ -4865,7 +5327,7 @@ public sql_selectPlayerRankCallback2(Handle:owner, Handle:hndl, const String:err
 	decl String:szMap[64];
 	ReadPackString(pack, szMap, 64);	
 	CloseHandle(pack);
-	decl String:szMapName2[MAX_MAP_LENGTH];
+	decl String:szMapName2[128];
 	//if there is a player record
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
@@ -4939,6 +5401,11 @@ public sql_selectPlayerRankCallback2(Handle:owner, Handle:hndl, const String:err
 	if (g_pr_maprecords_row_counter[client]==g_pr_maprecords_row_count[client])
 	{
 		new Float:percentage2;
+		if (g_js_LadderJumpRank[client]<21 && g_js_LadderJumpRank[client] > 0)
+		{
+			percentage2 = 1.05 - (float (g_js_LadderJumpRank[client]) / 20.0);
+			g_pr_points[client]+= RoundToCeil(500.0 * percentage2);
+		}
 		if (g_js_LjBlockRank[client]<21 && g_js_LjBlockRank[client] > 0)
 		{
 			percentage2 = 1.05 - (float (g_js_LjBlockRank[client]) / 20.0);
@@ -4998,7 +5465,7 @@ public db_updatePoints(client)
 	}	
 }
 
-public db_insertLastPosition(client, String:szMapName[MAX_MAP_LENGTH])
+public db_insertLastPosition(client, String:szMapName[128])
 {	 
 	if(g_bRestore && !g_bRoundEnd && (StrContains(g_szSteamID[client], "STEAM_") != -1) && g_bTimeractivated[client])
 	{
@@ -5015,27 +5482,28 @@ public db_insertLastPosition(client, String:szMapName[MAX_MAP_LENGTH])
 public db_insertLastPositionCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	decl String:szQuery[1024]; 
-	decl String:szMapName[MAX_MAP_LENGTH]; 
+	decl String:szMapName[128]; 
 	decl String:szSteamID[32]; 
 	new Handle:pack = data;
 	ResetPack(pack);
 	new client = ReadPackCell(pack);      
-	ReadPackString(pack, szMapName, MAX_MAP_LENGTH);	
+	ReadPackString(pack, szMapName, 128);	
 	ReadPackString(pack, szSteamID, 32);	
 	CloseHandle(pack);		
 	if (1 <= client <= MaxClients)
 	{
 		if (!g_bTimeractivated[client])
 			g_fPlayerLastTime[client] = -1.0;
-		
+		new tickrate = g_Server_Tickrate * 5 * 11;
 		if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 		{
-			Format(szQuery, 1024, sql_updatePlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client], szMapName, g_Server_Tickrate,szSteamID);
+			
+			Format(szQuery, 1024, sql_updatePlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client], szMapName, tickrate,szSteamID);
 			SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);	
 		}
 		else
 		{
-			Format(szQuery, 1024, sql_insertPlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client],szSteamID, szMapName,g_Server_Tickrate);
+			Format(szQuery, 1024, sql_insertPlayerTmp, g_fPlayerCordsLastPosition[client][0],g_fPlayerCordsLastPosition[client][1],g_fPlayerCordsLastPosition[client][2],g_fPlayerAnglesLastPosition[client][0],g_fPlayerAnglesLastPosition[client][1],g_fPlayerAnglesLastPosition[client][2], g_OverallTp[client], g_OverallCp[client], g_fPlayerLastTime[client],szSteamID, szMapName,tickrate);
 			SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);
 		}
 	}
@@ -5050,7 +5518,6 @@ public db_deletePlayerTmps()
 
 public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
-	
 	new client = data;
 	if (client>MAXPLAYERS &&  g_pr_RankingRecalc_InProgress  || client>MAXPLAYERS && g_bProfileRecalc[client])
 	{		
@@ -5065,7 +5532,7 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 				}
 			}
 		}
-		g_bProfileRecalc[client] = false;		
+		g_bProfileRecalc[client] = false;
 		if (g_pr_RankingRecalc_InProgress)
 		{
 			//console info
@@ -5123,8 +5590,24 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 						PrintToChat(i, "%t", "EarnedPoints", MOSSGREEN, WHITE, PURPLE,szName, GRAY, PURPLE, diff,GRAY,PURPLE, g_pr_points[client], GRAY);
 			}
 			g_pr_showmsg[client]=false;
+			db_CalculatePlayersCountGreater0();
 		}	
+		db_GetPlayerRank(client);
 		CreateTimer(1.0, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);			
+	}
+}
+
+public db_UpdateLastSeen(client)
+{	 
+	if((StrContains(g_szSteamID[client], "STEAM_") != -1) && !IsFakeClient(client))
+	{
+		decl String:szQuery[512]; 
+		if (g_DbType == 0)
+			Format(szQuery, 512, sql_UpdateLastSeenMySQL,g_szSteamID[client]);
+		else
+			if (g_DbType == 1)
+				Format(szQuery, 512, sql_UpdateLastSeenSQLite,g_szSteamID[client]);
+		SQL_TQuery(g_hDb,SQL_CheckCallback,szQuery,DBPrio_Low);
 	}
 }
 
@@ -5142,6 +5625,7 @@ public SQL_UpdateStatCallback(Handle:owner, Handle:hndl, const String:error[], a
 	new client = data;
 	CalculatePlayerRank(client);
 }
+
 
 public db_viewMapRankPro(client)
 {
@@ -5199,7 +5683,7 @@ public db_viewMapTpRankCount()
 {
 	decl String:szQuery[512];
 	Format(szQuery, 512, sql_selectPlayerCount, g_szMapName);
-	SQL_TQuery(g_hDb, sql_selectPlayerCountCallback, szQuery);	
+	SQL_TQuery(g_hDb, sql_selectPlayerCountCallback, szQuery,DBPrio_Low);	
 }
 
 public sql_selectPlayerCountCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -5208,6 +5692,7 @@ public sql_selectPlayerCountCallback(Handle:owner, Handle:hndl, const String:err
 		g_MapTimesCountTp = SQL_GetRowCount(hndl);
 	else
 		g_MapTimesCountTp = 0;
+		
 }
 //////////////////////////////////////////////////////
 /////////////////TOP 100 PLAYERS
@@ -5215,7 +5700,7 @@ public db_selectTopChallengers(client)
 {
 	decl String:szQuery[128];       
 	Format(szQuery, 128, sql_selectTopChallengers);   
-	SQL_TQuery(g_hDb, sql_selectTopChallengersCallback, szQuery, client);
+	SQL_TQuery(g_hDb, sql_selectTopChallengersCallback, szQuery, client,DBPrio_Low);
 }
 
 public sql_selectTopChallengersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -5371,7 +5856,7 @@ public db_selectTopTpRecordHolders(client)
 {
 	decl String:szQuery[512];       
 	Format(szQuery, 512, sql_selectTpRecordHolders);   
-	SQL_TQuery(g_hDb, db_sql_selectTpRecordHoldersCallback, szQuery, client);
+	SQL_TQuery(g_hDb, db_sql_selectTpRecordHoldersCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_sql_selectTpRecordHoldersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -5449,7 +5934,7 @@ public db_selectTopPlayers(client)
 {
 	decl String:szQuery[128];       
 	Format(szQuery, 128, sql_selectTopPlayers);   
-	SQL_TQuery(g_hDb, db_selectTop100PlayersCallback, szQuery, client);
+	SQL_TQuery(g_hDb, db_selectTop100PlayersCallback, szQuery, client,DBPrio_Low);
 }
 
 public db_selectTop100PlayersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)

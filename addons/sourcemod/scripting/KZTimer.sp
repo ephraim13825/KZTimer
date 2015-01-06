@@ -19,10 +19,30 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.631"
+/*
+v1.64
+- fixed load/unload procedure of kztimer
+- fixed button press delay on self-built buttons
+- added air time to jumpstats messages (only console)
+- added failstats (console+chat) for block lj's
+- added movement direction for bw/sw lj's to the colored jumpstats message
+- added client command !wr: prints in chat the record of the current map
+- added client command !avg: prints in chat the average time of the current map
+- added kz_dynamic_timelimit - on/off: Sets a appropriate timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times)
+- updated all language files
+- performance tweaks
+- minor bug fixes
+
+global record system:
+- changed the map file size check to allow server admins to rename maps without losing of global records from the original map 
+*/
+
+#define VERSION "1.64"
+#define PLUGIN_VERSION 164
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
-#define DEBUG 0
+#define MYSQL 0
+#define SQLITE 1
 #define WHITE 0x01
 #define DARKRED 0x02
 #define PURPLE 0x03
@@ -41,26 +61,14 @@
 #define QUOTE 0x22
 #define PERCENT 0x25
 #define CPLIMIT 50 
-#define MYSQL 0
-#define SQLITE 1
-#define MAX_MAP_LENGTH 128
-#define MAX_BUTTONS 25
-#define HIDE_RADAR (1 << 12)
-#define HIDE_ROUNDTIME ( 1<<13 )
-#define ASSISTS_OFFSET_FROM_FRAGS 4 
 #define MAX_PR_PLAYERS 20000
-#define MAX_STRAFES 100
-#define STRAFE_A 1
-#define STRAFE_D 2
-#define STRAFE_W 3
-#define STRAFE_S 4
-#define MAX_BHOPBLOCKS 1024
-#define BLOCK_TELEPORT 0.05
-#define BLOCK_COOLDOWN 0.1		
+#define MAX_BHOPBLOCKS 2048
+#define BLOCK_TELEPORT 0.05	
+#define BLOCK_COOLDOWN 0.1
+#define HIDE_RADAR (1 << 12)
 #define SF_BUTTON_DONTMOVE (1<<0)		
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
-#define MAX_RECORD_NAME_LENGTH 64
 #define BM_MAGIC 0xBAADF00D
 #define BINARY_FORMAT_VERSION 0x01
 #define ADDITIONAL_FIELD_TELEPORTED_ORIGIN (1<<0)
@@ -125,10 +133,21 @@ enum EJoinTeamReason
 // kztimer decl.
 new g_DbType;
 new g_ReplayRecordTps;
+new Handle:g_hStaminaLandCost = INVALID_HANDLE;
+new Handle:g_hMaxSpeed = INVALID_HANDLE;
+new Handle:g_hWaterAccelerate = INVALID_HANDLE;
+new Handle:g_hStaminaJumpCost = INVALID_HANDLE;
+new Handle:g_hGravity = INVALID_HANDLE;
+new Handle:g_hAirAccelerate = INVALID_HANDLE;
+new Handle:g_hFriction = INVALID_HANDLE;
+new Handle:g_hAccelerate = INVALID_HANDLE;
+new Handle:g_hMaxVelocity = INVALID_HANDLE;
+new Handle:g_hCheats = INVALID_HANDLE;
+new Handle:g_hEnableBunnyhoping = INVALID_HANDLE;
+new Handle:g_hTeleport = INVALID_HANDLE;
 new Handle:g_hMainMenu = INVALID_HANDLE;
 new Handle:g_hSDK_Touch = INVALID_HANDLE;
-new Handle:g_hAdminMenu;
-new Handle:g_hTeleport;
+new Handle:g_hAdminMenu = INVALID_HANDLE;
 new Handle:g_MapList = INVALID_HANDLE;
 new Handle:g_hDb = INVALID_HANDLE;
 new Handle:hStartPress = INVALID_HANDLE;
@@ -137,7 +156,7 @@ new Handle:g_hLangMenu = INVALID_HANDLE;
 new Handle:g_hCookie = INVALID_HANDLE;
 new Handle:g_OnLangChanged = INVALID_HANDLE;
 new Handle:g_hRecording[MAXPLAYERS+1];
-new Handle:g_hLoadedRecordsAdditionalTeleport;
+new Handle:g_hLoadedRecordsAdditionalTeleport = INVALID_HANDLE;
 new Handle:g_hBotMimicsRecord[MAXPLAYERS+1] = {INVALID_HANDLE,...};
 new Handle:g_hP2PRed[MAXPLAYERS+1] = { INVALID_HANDLE,... };
 new Handle:g_hP2PGreen[MAXPLAYERS+1] = { INVALID_HANDLE,... };
@@ -182,6 +201,12 @@ new Handle:g_hdist_pro_multibhop = INVALID_HANDLE;
 new Float:g_dist_pro_multibhop;
 new Handle:g_hdist_leet_multibhop = INVALID_HANDLE;
 new Float:g_dist_leet_multibhop;
+new Handle:g_hdist_good_ladder = INVALID_HANDLE;
+new Float:g_dist_good_ladder;
+new Handle:g_hdist_pro_ladder = INVALID_HANDLE;
+new Float:g_dist_pro_ladder;
+new Handle:g_hdist_leet_ladder = INVALID_HANDLE;
+new Float:g_dist_leet_ladder;
 new Handle:g_hBanDuration = INVALID_HANDLE;
 new Float:g_fBanDuration;
 new Handle:g_hdist_good_lj = INVALID_HANDLE;
@@ -204,11 +229,15 @@ new Handle:g_hAutoBan = INVALID_HANDLE;
 new bool:g_bAutoBan;
 new Handle:g_hPauseServerside = INVALID_HANDLE;
 new bool:g_bPauseServerside;
-new Handle:g_hAutoBhop = INVALID_HANDLE;
+new Handle:g_hChallengePoints = INVALID_HANDLE;
+new bool:g_bChallengePoints;
+new Handle:g_hAutoBhopConVar = INVALID_HANDLE;
+new bool:g_bAutoBhopConVar;
 new bool:g_bAutoBhop;
-new bool:g_bAutoBhop2;
 new Handle:g_hVipClantag = INVALID_HANDLE;
 new bool:g_bVipClantag;
+new Handle:g_hDynamicTimelimit = INVALID_HANDLE;
+new bool:g_bDynamicTimelimit;
 new Handle:g_hAdminClantag = INVALID_HANDLE;
 new bool:g_bAdminClantag;
 new Handle:g_hConnectMsg = INVALID_HANDLE;
@@ -217,18 +246,14 @@ new Handle:g_hRadioCommands = INVALID_HANDLE;
 new bool:g_bRadioCommands;
 new Handle:g_hInfoBot = INVALID_HANDLE;
 new bool:g_bInfoBot;
-new Handle:g_hChallengePoints = INVALID_HANDLE;
-new bool:g_bChallengePoints;
-new Handle:g_hGoToServer = INVALID_HANDLE;
-new bool:g_bGoToServer;
 new Handle:g_hAttackSpamProtection = INVALID_HANDLE;
 new bool:g_bAttackSpamProtection;
+new Handle:g_hGoToServer = INVALID_HANDLE;
+new bool:g_bGoToServer;
 new Handle:g_hPlayerSkinChange = INVALID_HANDLE;
 new bool:g_bPlayerSkinChange;
 new Handle:g_hJumpStats = INVALID_HANDLE;
 new bool:g_bJumpStats;
-new Handle:g_hSingleTouching = INVALID_HANDLE;
-new bool:g_bSingleTouching;
 new Handle:g_hCountry = INVALID_HANDLE;
 new bool:g_bCountry;
 new Handle:g_hAutoRespawn = INVALID_HANDLE;
@@ -237,6 +262,8 @@ new Handle:g_hAllowCheckpoints = INVALID_HANDLE;
 new bool:g_bAllowCheckpoints;
 new Handle:g_hcvarNoBlock = INVALID_HANDLE;
 new bool:g_bNoBlock;
+new Handle:g_hSingleTouch = INVALID_HANDLE;
+new bool:g_bSingleTouch;
 new Handle:g_hPointSystem = INVALID_HANDLE;
 new bool:g_bPointSystem;
 new Handle:g_hCleanWeapons = INVALID_HANDLE;
@@ -270,14 +297,16 @@ new Float:g_fafAvgPerfJumps[MAXPLAYERS+1] = {0.3333, ...};
 new Float:g_fLastJump[MAXPLAYERS+1] = {0.0, ...};
 new Float:g_fBlockHeight[MAXPLAYERS + 1];
 new Float:g_fEdgeVector[MAXPLAYERS + 1][3];
-new Float:g_fEdgeDist[MAXPLAYERS + 1];
-new Float:g_fEdgePoint[MAXPLAYERS + 1][3];
+new Float:g_fEdgeDistJumpOff[MAXPLAYERS + 1];
+new Float:g_fEdgePoint1[MAXPLAYERS + 1][3];
+new Float:g_fEdgePoint2[MAXPLAYERS + 1][3];
 new Float:g_fOriginBlock[MAXPLAYERS + 1][2][3];
 new Float:g_fDestBlock[MAXPLAYERS + 1][2][3];
 new Float:g_fStartTime[MAXPLAYERS+1];
 new Float:g_fFinalTime[MAXPLAYERS+1];
 new Float:g_fPauseTime[MAXPLAYERS+1];
 new Float:g_fLastTimeNoClipUsed[MAXPLAYERS+1];
+new Float:g_fLastOverlay[MAXPLAYERS+1];
 new Float:g_fStartPauseTime[MAXPLAYERS+1];
 new Float:g_fPlayerCordsLastPosition[MAXPLAYERS+1][3];
 new Float:g_fPlayerLastTime[MAXPLAYERS+1];
@@ -290,20 +319,24 @@ new Float:g_fPlayerCordsRestore[MAXPLAYERS+1][3];
 new Float:g_fPlayerAnglesRestore[MAXPLAYERS+1][3];
 new Float:g_fPlayerCordsUndoTp[MAXPLAYERS+1][3];
 new Float:g_fPlayerAnglesUndoTp[MAXPLAYERS+1][3];
+new Float:g_fLastPositionOnGround[MAXPLAYERS+1][3];
 new Float:g_fPersonalRecord[MAXPLAYERS+1];
 new Float:g_fPersonalRecordPro[MAXPLAYERS+1];
-new Float:g_fLastOverlay[MAXPLAYERS+1]
 new Float:g_fCurrentRunTime[MAXPLAYERS+1];
 new Float:g_fVelocityModifierLastChange[MAXPLAYERS+1];
 new Float:g_fLastTimeButtonSound[MAXPLAYERS+1];
 new Float:g_fPlayerConnectedTime[MAXPLAYERS+1];
 new Float:g_fStartCommandUsed_LastTime[MAXPLAYERS+1];
 new Float:g_fProfileMenuLastQuery[MAXPLAYERS+1];
+new Float:g_favg_protime;
+new Float:g_favg_tptime;
+new Float:g_fSpawnpointOrigin[3];
+new Float:g_fSpawnpointAngle[3];
 new Float:g_js_fJump_JumpOff_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_Landing_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_JumpOff_PosLastHeight[MAXPLAYERS+1];
 new Float:g_js_fJump_DistanceX[MAXPLAYERS+1];
-new Float:g_js_fTakeOff_Speed[MAXPLAYERS+1];
+new Float:g_js_fJumpOff_Speed[MAXPLAYERS+1];
 new Float:g_js_fJump_DistanceZ[MAXPLAYERS+1];
 new Float:g_js_fJump_Distance[MAXPLAYERS+1];
 new Float:g_js_fPreStrafe[MAXPLAYERS+1];
@@ -315,18 +348,20 @@ new Float:g_js_fMax_Height[MAXPLAYERS+1];
 new Float:g_js_fLast_Jump_Time[MAXPLAYERS+1];
 new Float:g_js_Good_Sync_Frames[MAXPLAYERS+1];
 new Float:g_js_Sync_Frames[MAXPLAYERS+1];
-new Float:g_js_Strafe_Good_Sync[MAXPLAYERS+1][MAX_STRAFES];
-new Float:g_js_Strafe_Frames[MAXPLAYERS+1][MAX_STRAFES];
-new Float:g_js_Strafe_Gained[MAXPLAYERS+1][MAX_STRAFES];
-new Float:g_js_Strafe_Max_Speed[MAXPLAYERS+1][MAX_STRAFES];
-new Float:g_js_Strafe_Lost[MAXPLAYERS+1][MAX_STRAFES];
+new Float:g_js_Strafe_Good_Sync[MAXPLAYERS+1][100];
+new Float:g_js_Strafe_Frames[MAXPLAYERS+1][100];
+new Float:g_js_Strafe_Gained[MAXPLAYERS+1][100];
+new Float:g_js_Strafe_Max_Speed[MAXPLAYERS+1][100];
+new Float:g_js_Strafe_Lost[MAXPLAYERS+1][100];
 new Float:g_js_fPersonal_Wj_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_DropBhop_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_Bhop_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_MultiBhop_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_Lj_Record[MAX_PR_PLAYERS]=-1.0;
+new Float:g_js_fPersonal_LadderJump_Record[MAX_PR_PLAYERS]=-1.0;
 new Float:g_js_fPersonal_LjBlockRecord_Dist[MAX_PR_PLAYERS]=-1.0;
 new Float:g_fLastSpeed[MAXPLAYERS+1];
+new Float:g_fFailedLandingPos[MAXPLAYERS+1][3];
 new Float:g_fAirTime[MAXPLAYERS+1];
 new Float:g_fLastUndo[MAXPLAYERS +1];
 new Float:g_flastHeight[MAXPLAYERS +1];
@@ -335,21 +370,18 @@ new Float:g_fInitialAngles[MAXPLAYERS+1][3];
 new Float:g_PrestrafeVelocity[MAXPLAYERS+1];
 new Float:g_fChallenge_RequestTime[MAXPLAYERS+1];
 new Float:g_fSpawnPosition[MAXPLAYERS+1][3]; 
-new Float:g_fLastPositionOnGround[MAXPLAYERS+1][3];
 new Float:g_fLastPosition[MAXPLAYERS + 1][3];
+new Float:g_fMovingDirection[MAXPLAYERS+1];
 new Float:g_fLastAngles[MAXPLAYERS + 1][3];
-new Float:g_fSpeed[MAXPLAYERS+1];
+new Float:g_js_fLadderDirection[MAXPLAYERS+1];
 new Float:g_fLastTimeBhopBlock[MAXPLAYERS+1];
-new Float:g_fLastHeight[MAXPLAYERS+1];
 new Float:g_fRecordTime;
 new Float:g_fRecordTimePro;
 new Float:g_fStartButtonPos[3];
 new Float:g_fEndButtonPos[3];
-new Float:g_fStartButtonAngle[3];
-new Float:g_fEndButtonAngle[3];
 new Float:g_pr_finishedmaps_tp_perc[MAX_PR_PLAYERS]; 
 new Float:g_pr_finishedmaps_pro_perc[MAX_PR_PLAYERS]; 
-
+new MoveType:g_LastMoveType[MAXPLAYERS+1];
 new bool:g_bLateLoaded = false;
 new bool:g_bCanUseSourcebans = false;
 new bool:g_bRoundEnd;
@@ -363,14 +395,15 @@ new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
 new bool:g_bLoaded[MAXPLAYERS+1];
-new bool:g_bLegitButtons[MAXPLAYERS+1];
+new bool:g_bLadderJump[MAXPLAYERS+1];
+new bool:g_bFirstButtonTouch[MAXPLAYERS+1];
+new bool:g_bSideWay[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
-new bool:g_bLjStarDest[MAXPLAYERS + 1];
-new bool:g_bLJBlockValidJumpoff[MAXPLAYERS + 1];
+new bool:g_js_block_lj_jumpoff_pos[MAXPLAYERS + 1];
+new bool:g_bClientOwnReason[MAXPLAYERS + 1];
+new bool:g_js_block_lj_valid[MAXPLAYERS + 1];
 new bool:g_js_bFuncMoveLinear[MAXPLAYERS+1];
 new bool:g_bUndoTimer[MAXPLAYERS+1];
-new bool:g_bHyperscroll[MAXPLAYERS+1]; 
-new bool:g_bValidTeleport[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bChallenge_Checkpoints[MAXPLAYERS+1];
 new bool:g_bTopMenuOpen[MAXPLAYERS+1]; 
@@ -387,19 +420,20 @@ new bool:g_bTimeractivated[MAXPLAYERS+1];
 new bool:g_bFirstTeamJoin[MAXPLAYERS+1];
 new bool:g_bFirstSpawn[MAXPLAYERS+1];
 new bool:g_bTop100Refresh;
-new bool:g_bClientOwnReason[MAXPLAYERS+1];
 new bool:g_bMissedTpBest[MAXPLAYERS+1];
 new bool:g_bMissedProBest[MAXPLAYERS+1];
 new bool:g_bRestorePosition[MAXPLAYERS+1]; 
 new bool:g_bRestorePositionMsg[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuOpen[MAXPLAYERS+1];  
-new bool:g_bNoClip[MAXPLAYERS+1]; 
+new bool:g_bNoClip[MAXPLAYERS+1];
 new bool:g_bOnBhopPlattform[MAXPLAYERS+1]; 
 new bool:g_bMapFinished[MAXPLAYERS+1]; 
 new bool:g_bRespawnPosition[MAXPLAYERS+1]; 
 new bool:g_bKickStatus[MAXPLAYERS+1]; 
 new bool:g_bUndo[MAXPLAYERS+1]; 
+new bool:g_bHyperscroll[MAXPLAYERS+1]; 
 new bool:g_bProfileRecalc[MAX_PR_PLAYERS];
+new bool:g_bProfileSelected[MAXPLAYERS+1]; 
 new bool:g_bManualRecalc; 
 new bool:g_bSelectProfile[MAXPLAYERS+1]; 
 new bool:g_bClimbersMenuwasOpen[MAXPLAYERS+1]; 
@@ -426,10 +460,10 @@ new bool:g_bClimbersMenuSounds[MAXPLAYERS+1];
 new bool:g_bEnableQuakeSounds[MAXPLAYERS+1];
 new bool:g_bShowNames[MAXPLAYERS+1]; 
 new bool:g_bStrafeSync[MAXPLAYERS+1];
+new bool:g_bStartWithUsp[MAXPLAYERS+1];
 new bool:g_bGoToClient[MAXPLAYERS+1]; 
 new bool:g_bShowTime[MAXPLAYERS+1]; 
-new bool:g_bHide[MAXPLAYERS+1]; 
-new bool:g_bProfileSelected[MAXPLAYERS+1]; 
+new bool:g_bHide[MAXPLAYERS+1];   
 new bool:g_bSayHook[MAXPLAYERS+1]; 
 new bool:g_bShowSpecs[MAXPLAYERS+1]; 
 new bool:g_bFlagged[MAXPLAYERS+1];
@@ -438,7 +472,6 @@ new bool:g_bMeasurePosSet[MAXPLAYERS+1][2];
 new bool:g_bCPTextMessage[MAXPLAYERS+1]; 
 new bool:g_bAdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_bAutoBhopClient[MAXPLAYERS+1];
-new bool:g_bStartWithUsp[MAXPLAYERS+1];
 new bool:g_borg_StartWithUsp[MAXPLAYERS+1];
 new bool:g_borg_ColorChat[MAXPLAYERS+1];
 new bool:g_borg_InfoPanel[MAXPLAYERS+1];
@@ -453,16 +486,19 @@ new bool:g_borg_ShowSpecs[MAXPLAYERS+1];
 new bool:g_borg_CPTextMessage[MAXPLAYERS+1]; 
 new bool:g_borg_AdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_borg_AutoBhopClient[MAXPLAYERS+1];
+new bool:g_borg_JumpBeam[MAXPLAYERS+1];
+new bool:g_bJumpBeam[MAXPLAYERS+1];
+new bool:g_bBeam[MAXPLAYERS+1];
 new bool:g_bOnGround[MAXPLAYERS+1];
+new bool:g_bLegitButtons[MAXPLAYERS+1];
 new bool:g_bPrestrafeTooHigh[MAXPLAYERS+1];
-new g_GlowSprite;
-new g_Beam[2];
-new g_BhopDoorList[MAX_BHOPBLOCKS];
-new g_BhopDoorTeleList[MAX_BHOPBLOCKS];
-new g_BhopDoorCount;
+new g_Beam[3];
 new g_BhopMultipleList[MAX_BHOPBLOCKS];
 new g_BhopMultipleTeleList[MAX_BHOPBLOCKS];
 new g_BhopMultipleCount;
+new g_BhopDoorList[MAX_BHOPBLOCKS];
+new g_BhopDoorTeleList[MAX_BHOPBLOCKS];
+new g_BhopDoorCount;
 new g_BhopButtonList[MAX_BHOPBLOCKS];
 new g_BhopButtonTeleList[MAX_BHOPBLOCKS];
 new g_BhopButtonCount;
@@ -498,9 +534,9 @@ new g_pr_Recalc_AdminID=-1;
 new g_pr_AllPlayers;
 new g_pr_RankedPlayers;
 new g_pr_MapCount;
+new g_pr_rank_Percentage[9];
 new g_pr_PointUnit;
 new g_pr_TableRowCount;
-new g_pr_rank_Percentage[9];
 new g_pr_points[MAX_PR_PLAYERS];
 new g_pr_maprecords_row_counter[MAX_PR_PLAYERS];
 new g_pr_maprecords_row_count[MAX_PR_PLAYERS];
@@ -512,20 +548,23 @@ new g_js_Personal_LjBlock_Record[MAX_PR_PLAYERS]=-1;
 new g_js_BhopRank[MAX_PR_PLAYERS];
 new g_js_MultiBhopRank[MAX_PR_PLAYERS];
 new g_js_LjRank[MAX_PR_PLAYERS];
+new g_js_LadderJumpRank[MAX_PR_PLAYERS];
 new g_js_LjBlockRank[MAX_PR_PLAYERS];
 new g_js_DropBhopRank[MAX_PR_PLAYERS];
 new g_js_WjRank[MAX_PR_PLAYERS];
 new g_js_TotalGroundFrames[MAXPLAYERS+1];
+new g_js_LadderDirectionCounter[MAXPLAYERS+1];
 new g_js_Sync_Final[MAXPLAYERS+1];
-new g_AttackCounter[MAXPLAYERS + 1];
 new g_js_GroundFrames[MAXPLAYERS+1];
+new g_js_LadderFrames[MAXPLAYERS+1];
 new g_js_StrafeCount[MAXPLAYERS+1];
 new g_js_Strafes_Final[MAXPLAYERS+1];
 new g_js_LeetJump_Count[MAXPLAYERS+1]; 
 new g_js_MultiBhop_Count[MAXPLAYERS+1];
 new g_js_Last_Ground_Frames[MAXPLAYERS+1];
-new g_SelectedTeam[MAXPLAYERS+1];
+new g_PlayerRank[MAXPLAYERS+1];
 new g_LastGroundEnt[MAXPLAYERS+1];
+new g_SelectedTeam[MAXPLAYERS+1];
 new g_BotMimicRecordTickCount[MAXPLAYERS+1] = {0,...};
 new g_BotActiveWeapon[MAXPLAYERS+1] = {-1,...};
 new g_CurrentAdditionalTeleportIndex[MAXPLAYERS+1];
@@ -534,23 +573,23 @@ new g_RecordPreviousWeapon[MAXPLAYERS+1];
 new g_OriginSnapshotInterval[MAXPLAYERS+1];
 new g_BotMimicTick[MAXPLAYERS+1] = {0,...};
 new g_BlockDist[MAXPLAYERS + 1];
+new g_AttackCounter[MAXPLAYERS + 1];
 new g_aiJumps[MAXPLAYERS+1] = {0, ...};
 new g_aiAutojumps[MAXPLAYERS+1] = {0, ...};
 new g_aaiLastJumps[MAXPLAYERS+1][30];
 new g_aiIgnoreCount[MAXPLAYERS+1];
 new g_NumberJumpsAbove[MAXPLAYERS+1];
-new g_MouseAbsCount[MAXPLAYERS+1];
 new g_MenuLevel[MAXPLAYERS+1];
 new g_Challenge_Bet[MAXPLAYERS+1];
 new g_MapRankTp[MAXPLAYERS+1];
 new g_MapRankPro[MAXPLAYERS+1];
 new g_OldMapRankPro[MAXPLAYERS+1];
-new g_OldMapRankTp[MAXPLAYERS+1];
 new g_Time_Type[MAXPLAYERS+1];
 new g_Sound_Type[MAXPLAYERS+1];
 new g_TpRecordCount[MAXPLAYERS+1];
 new g_ProRecordCount[MAXPLAYERS+1];
 new g_FinishingType[MAXPLAYERS+1];
+new g_OldMapRankTp[MAXPLAYERS+1];
 new g_Challenge_WinRatio[MAX_PR_PLAYERS];
 new g_CountdownTime[MAXPLAYERS+1];
 new g_Challenge_PointsRatio[MAX_PR_PLAYERS];
@@ -566,7 +605,14 @@ new g_MVPStars[MAXPLAYERS+1];
 new g_Tp_Final[MAXPLAYERS+1];
 new g_AdminMenuLastPage[MAXPLAYERS+1];
 new g_OptionsMenuLastPage[MAXPLAYERS+1];
-new String:g_szMapTag[2][32];  
+new String:g_js_szLastJumpDistance[MAXPLAYERS+1][256];
+new String:g_pr_chat_coloredrank[MAXPLAYERS+1][32];
+new String:g_pr_rankname[MAXPLAYERS+1][32];  
+new String:g_pr_szrank[MAXPLAYERS+1][512];  
+new String:g_pr_szName[MAX_PR_PLAYERS][64];  
+new String:g_pr_szSteamID[MAX_PR_PLAYERS][32]; 
+new String:g_szMapPrefix[2][32]; 
+new String:g_szMapmakers[100][32];  
 new String:g_szReplayName[128];  
 new String:g_szReplayTime[128]; 
 new String:g_szReplayNameTp[128];  
@@ -574,40 +620,35 @@ new String:g_szReplayTimeTp[128];
 new String:g_szChallenge_OpponentID[MAXPLAYERS+1][32]; 
 new String:g_szTimeDifference[MAXPLAYERS+1][32]; 
 new String:g_szFinalTime[MAXPLAYERS+1][32];
-new String:g_szMapName[MAX_MAP_LENGTH];
-new String:g_szMapTopName[MAXPLAYERS+1][MAX_MAP_LENGTH];
-new String:g_szMenuTitleRun[MAXPLAYERS+1][255];
+new String:g_szMapName[128];
+new String:g_szMapTopName[MAXPLAYERS+1][128];
+new String:g_szTimerTitle[MAXPLAYERS+1][255];
 new String:g_szRecordPlayerPro[MAX_NAME_LENGTH];
 new String:g_szRecordPlayer[MAX_NAME_LENGTH];
 new String:g_szProfileName[MAXPLAYERS+1][MAX_NAME_LENGTH];
 new String:g_szPlayerPanelText[MAXPLAYERS+1][512];
 new String:g_szProfileSteamId[MAXPLAYERS+1][32];
-new String:g_js_szLastJumpDistance[MAXPLAYERS+1][256];
 new String:g_szCountry[MAXPLAYERS+1][100];
 new String:g_szCountryCode[MAXPLAYERS+1][16]; 
-new String:g_pr_chat_coloredrank[MAXPLAYERS+1][32];
-new String:g_pr_rankname[MAXPLAYERS+1][32];  
 new String:g_szSteamID[MAXPLAYERS+1][32];  
-new String:g_pr_szrank[MAXPLAYERS+1][512];  
-new String:g_pr_szName[MAX_PR_PLAYERS][64];  
-new String:g_pr_szSteamID[MAX_PR_PLAYERS][32]; 
 new String:g_szSkillGroups[9][32];
 new String:g_szServerName[64];  
 new String:g_szMapPath[256]; 
-new String:g_szServerIp[32];  
+new String:g_szServerIp[32];   
 new String:g_szServerCountry[100]; 
-new String:g_szServerCountryCode[32];
-new String:EntityList[][] = {"logic_timer", "team_round_timer", "logic_relay"};  
+new String:g_szServerCountryCode[32];  
+new String:EntityList[][] = {"logic_timer", "team_round_timer", "logic_relay"};
 new const String:MAPPERS_PATH[] = "configs/kztimer/mapmakers.txt";
 new const String:KZ_REPLAY_PATH[] = "data/kz_replays/";
 new const String:ANTICHEAT_LOG_PATH[] = "logs/kztimer_anticheat.log";
-new const String:EXCEPTION_LIST_PATH[] = "configs/kztimer/exception_list.txt";
 new const String:BLOCKED_LIST_PATH[] = "configs/kztimer/hidden_chat_commands.txt";
+new const String:EXCEPTION_LIST_PATH[] = "configs/kztimer/exception_list.txt";
 new const String:CP_FULL_SOUND_PATH[] = "sound/quake/wickedsick.mp3";
 new const String:CP_RELATIVE_SOUND_PATH[] = "*quake/wickedsick.mp3";
 new const String:PRO_FULL_SOUND_PATH[] = "sound/quake/holyshit.mp3";
 new const String:PRO_RELATIVE_SOUND_PATH[] = "*quake/holyshit.mp3";
-new const String:RELATIVE_BUTTON_PATH[] = "*buttons/button3.wav";
+new const String:UNSTOPPABLE_SOUND_PATH[] = "sound/quake/unstoppable.mp3";
+new const String:UNSTOPPABLE_RELATIVE_SOUND_PATH[] = "*quake/unstoppable.mp3";
 new const String:LEETJUMP_FULL_SOUND_PATH[] = "sound/quake/godlike.mp3";
 new const String:LEETJUMP_RELATIVE_SOUND_PATH[] = "*quake/godlike.mp3";
 new const String:LEETJUMP_RAMPAGE_FULL_SOUND_PATH[] = "sound/quake/rampage.mp3";
@@ -620,7 +661,7 @@ new String:RadioCMDS[][] = {"coverme", "takepoint", "holdpos", "regroup", "follo
 	"getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear", "inposition", "reportingin",
 	"getout", "negative","enemydown","cheer","thanks","nice","compliment"};
 new String:g_BlockedChatText[256][256];
-new String:g_szReplay_PlayerName[MAXPLAYERS+1][MAX_RECORD_NAME_LENGTH];
+new String:g_szReplay_PlayerName[MAXPLAYERS+1][64];
 
 #include "kztimer/admin.sp"
 #include "kztimer/commands.sp"
@@ -631,6 +672,8 @@ new String:g_szReplay_PlayerName[MAXPLAYERS+1][MAX_RECORD_NAME_LENGTH];
 #include "kztimer/timer.sp"
 #include "kztimer/replay.sp"
 #include "kztimer/jumpstats.sp"
+
+
 
 //
 //kztimer
@@ -648,11 +691,11 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("KZTimer_GetCurrentTime", Native_GetCurrentTime);
 	MarkNativeAsOptional("HGR_IsHooking");
 	MarkNativeAsOptional("HGR_IsGrabbing");
-	MarkNativeAsOptional("HasEndOfMapVoteFinished");
-	MarkNativeAsOptional("EndOfMapVoteEnabled");	
 	MarkNativeAsOptional("HGR_IsBeingGrabbed");
 	MarkNativeAsOptional("HGR_IsRoping");
 	MarkNativeAsOptional("HGR_IsPushing");
+	MarkNativeAsOptional("HasEndOfMapVoteFinished");
+	MarkNativeAsOptional("EndOfMapVoteEnabled");	
 	g_OnLangChanged = CreateGlobalForward("GeoLang_OnLanguageChanged", ET_Ignore, Param_Cell, Param_Cell);
 	g_bLateLoaded = late;
 	return APLRes_Success;
@@ -660,7 +703,7 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 public OnPluginStart()
 {
-	//get server tickrate
+	//get srv tick
 	new Float:fltickrate = 1.0 / GetTickInterval( );
 	if (fltickrate > 65)
 		if (fltickrate < 103)
@@ -681,15 +724,14 @@ public OnPluginStart()
 		g_hCookie = RegClientCookie("GeoLanguage", "The client's preferred language.", CookieAccess_Protected);
 		SetCookieMenuItem(CookieMenu_GeoLanguage, 0, "Language");
 		g_bUseCPrefs = true;
-	}	
+	}
 	
-	//Convars	
 	CreateConVar("kztimer_version", VERSION, "kztimer Version.", FCVAR_DONTRECORD|FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 
 	g_hConnectMsg = CreateConVar("kz_connect_msg", "1", "on/off - Enables a player connect message with country and disconnect message in chat", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bConnectMsg     = GetConVarBool(g_hConnectMsg);
 	HookConVarChange(g_hConnectMsg, OnSettingChanged);	
-		
+
 	g_hMapEnd = CreateConVar("kz_map_end", "1", "on/off - Allows map changes after the timelimit has run out (mp_timelimit must be greater than 0)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bMapEnd     = GetConVarBool(g_hMapEnd);
 	HookConVarChange(g_hMapEnd, OnSettingChanged);
@@ -697,10 +739,6 @@ public OnPluginStart()
 	g_hReplayBot = CreateConVar("kz_replay_bot", "1", "on/off - Bots mimic the local tp and pro record", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bReplayBot     = GetConVarBool(g_hReplayBot);
 	HookConVarChange(g_hReplayBot, OnSettingChanged);	
-	
-	g_hChallengePoints 	= CreateConVar("kz_challenge_points", "1", "on/off - Allows players to bet points on challenges", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_bChallengePoints     = GetConVarBool(g_hChallengePoints);
-	HookConVarChange(g_hChallengePoints, OnSettingChanged);
 	
 	g_hPreStrafe = CreateConVar("kz_prestrafe", "1", "on/off - Prestrafe", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPreStrafe     = GetConVarBool(g_hPreStrafe);
@@ -738,9 +776,9 @@ public OnPluginStart()
 	g_bPauseServerside    = GetConVarBool(g_hPauseServerside);
 	HookConVarChange(g_hPauseServerside, OnSettingChanged);
 
-	g_hSingleTouching    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a single bhop block multiple times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_bSingleTouching    = GetConVarBool(g_hSingleTouching);
-	HookConVarChange(g_hSingleTouching, OnSettingChanged);
+	g_hSingleTouch    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a single bhop block multiple times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bSingleTouch    = GetConVarBool(g_hSingleTouch);
+	HookConVarChange(g_hSingleTouch, OnSettingChanged);
 	
 	g_hcvarRestore    = CreateConVar("kz_restore", "1", "on/off - Restoring of time and last position after reconnect", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bRestore        = GetConVarBool(g_hcvarRestore);
@@ -748,8 +786,8 @@ public OnPluginStart()
 	
 	g_hcvarNoBlock    = CreateConVar("kz_noblock", "1", "on/off - Player no blocking", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bNoBlock        = GetConVarBool(g_hcvarNoBlock);
-	HookConVarChange(g_hcvarNoBlock, OnSettingChanged);	
-	
+	HookConVarChange(g_hcvarNoBlock, OnSettingChanged);
+
 	g_hAttackSpamProtection    = CreateConVar("kz_attack_spam_protection", "1", "on/off - max 40 shots; +5 new/extra shots per minute; 1 he/flash counts like 9 shots", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bAttackSpamProtection       = GetConVarBool(g_hAttackSpamProtection);
 	HookConVarChange(g_hAttackSpamProtection, OnSettingChanged);
@@ -778,7 +816,7 @@ public OnPluginStart()
 	g_bCleanWeapons     = GetConVarBool(g_hCleanWeapons);
 	HookConVarChange(g_hCleanWeapons, OnSettingChanged);
 
-	g_hJumpStats 	= CreateConVar("kz_jumpstats", "1", "on/off - Measuring of jump distances (longjump,weirdjump, bhop,dropbhop and multibhop)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hJumpStats 	= CreateConVar("kz_jumpstats", "1", "on/off - Measuring of jump distances (longjump, weirdjump, bhop, dropbhop, multibhop, ladderjump)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bJumpStats     = GetConVarBool(g_hJumpStats);
 	HookConVarChange(g_hJumpStats, OnSettingChanged);	
 	
@@ -786,9 +824,17 @@ public OnPluginStart()
 	g_bCountry     = GetConVarBool(g_hCountry);
 	HookConVarChange(g_hCountry, OnSettingChanged);
 	
-	g_hAutoBhop 	= CreateConVar("kz_auto_bhop", "0", "on/off - AutoBhop on bhop_ and surf_ maps (climb maps are not supported)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_bAutoBhop     = GetConVarBool(g_hAutoBhop);
-	HookConVarChange(g_hAutoBhop, OnSettingChanged);
+	g_hChallengePoints 	= CreateConVar("kz_challenge_points", "1", "on/off - Allows players to bet points on their challenges", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bChallengePoints     = GetConVarBool(g_hChallengePoints);
+	HookConVarChange(g_hChallengePoints, OnSettingChanged);
+		
+	g_hAutoBhopConVar 	= CreateConVar("kz_auto_bhop", "0", "on/off - AutoBhop on bhop_ and surf_ maps (climb maps are not supported)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bAutoBhopConVar     = GetConVarBool(g_hAutoBhopConVar);
+	HookConVarChange(g_hAutoBhopConVar, OnSettingChanged);
+	
+	g_hDynamicTimelimit 	= CreateConVar("kz_dynamic_timelimit", "0", "on/off - Sets a suitable timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_bDynamicTimelimit     = GetConVarBool(g_hDynamicTimelimit);
+	HookConVarChange(g_hDynamicTimelimit, OnSettingChanged);
 
 	g_hBhopSpeedCap   = CreateConVar("kz_prespeed_cap", "380.0", "Limits player's pre speed", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 5000.0);
 	g_fBhopSpeedCap    = GetConVarFloat(g_hBhopSpeedCap);
@@ -806,7 +852,7 @@ public OnPluginStart()
 	g_bPointSystem    = GetConVarBool(g_hPointSystem);
 	HookConVarChange(g_hPointSystem, OnSettingChanged);
 	
-	g_hPlayerSkinChange 	= CreateConVar("kz_custom_models", "1", "on/off - Allows kztimer to change the player and bot models", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hPlayerSkinChange 	= CreateConVar("kz_custom_models", "1", "on/off - Allows kztimer to change the models of players and bots", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bPlayerSkinChange     = GetConVarBool(g_hPlayerSkinChange);
 	HookConVarChange(g_hPlayerSkinChange, OnSettingChanged);
 
@@ -838,13 +884,13 @@ public OnPluginStart()
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
-	g_hReplayBotProColor   = CreateConVar("kz_replay_bot_pro_color", "0 0 255","The default pro replay bot color? Format: \"red green blue\" from 0 - 255.", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hReplayBotProColor   = CreateConVar("kz_replay_bot_pro_color", "52 91 248","The default pro replay bot color - Format: \"red green blue\" from 0 - 255.", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	HookConVarChange(g_hReplayBotProColor, OnSettingChanged);	
 	decl String:szProColor[256];
 	GetConVarString(g_hReplayBotProColor,szProColor,256);
 	GetRGBColor(0,szProColor);
 	
-	g_hReplayBotTpColor   = CreateConVar("kz_replay_bot_tp_color", "255 127 59","The default tp replay bot color? Format: \"red green blue\" from 0 - 255.", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hReplayBotTpColor   = CreateConVar("kz_replay_bot_tp_color", "223 213 0","The default tp replay bot color - Format: \"red green blue\" from 0 - 255.", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	HookConVarChange(g_hReplayBotTpColor, OnSettingChanged);	
 	decl String:szTpColor[256];
 	GetConVarString(g_hReplayBotTpColor,szTpColor,256);
@@ -854,7 +900,31 @@ public OnPluginStart()
 	g_bAutoBan     = GetConVarBool(g_hAutoBan);
 	HookConVarChange(g_hAutoBan, OnSettingChanged);	
 	
-	g_hBanDuration   = CreateConVar("kz_anticheat_ban_duration", "72.0", "Ban duration (hours)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 1.0, true, 999999.0);
+	g_hBanDuration   = CreateConVar("kz_anticheat_ban_duration", "72.0", "Ban duration in hours", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 1.0, true, 999999.0);
+
+	//settings enforcer
+	g_hStaminaLandCost = FindConVar("sv_staminalandcost")
+	g_hStaminaJumpCost = FindConVar("sv_staminajumpcost")
+	g_hGravity = FindConVar("sv_gravity")
+	g_hAirAccelerate = FindConVar("sv_airaccelerate")
+	g_hMaxSpeed = FindConVar("sv_maxspeed")
+	g_hWaterAccelerate = FindConVar("sv_wateraccelerate")
+	g_hFriction = FindConVar("sv_friction")
+	g_hAccelerate = FindConVar("sv_accelerate")
+	g_hMaxVelocity = FindConVar("sv_maxvelocity")
+	g_hCheats = FindConVar("sv_cheats")
+	g_hEnableBunnyhoping = FindConVar("sv_enablebunnyhopping")
+	HookConVarChange(g_hStaminaLandCost, OnSettingChanged);
+	HookConVarChange(g_hStaminaJumpCost, OnSettingChanged);
+	HookConVarChange(g_hMaxSpeed, OnSettingChanged);
+	HookConVarChange(g_hGravity, OnSettingChanged);
+	HookConVarChange(g_hWaterAccelerate, OnSettingChanged);
+	HookConVarChange(g_hAirAccelerate, OnSettingChanged);
+	HookConVarChange(g_hFriction, OnSettingChanged);
+	HookConVarChange(g_hAccelerate, OnSettingChanged);
+	HookConVarChange(g_hMaxVelocity, OnSettingChanged);
+	HookConVarChange(g_hCheats, OnSettingChanged);
+	HookConVarChange(g_hEnableBunnyhoping, OnSettingChanged);
 	
 	if (g_Server_Tickrate == 64)
 	{
@@ -874,6 +944,9 @@ public OnPluginStart()
 		g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 		g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "330.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 		g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "340.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
+		g_hdist_good_ladder  = CreateConVar("kz_dist_min_ladder", "100.0", "Minimum distance for ladder jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 70.0, true, 9999.0);
+		g_hdist_pro_ladder  = CreateConVar("kz_dist_pro_ladder", "150.0", "Minimum distance for ladder jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);
+		g_hdist_leet_ladder   = CreateConVar("kz_dist_leet_ladder", "155.0", "Minimum distance for ladder jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);
 	}
 	else
 	{
@@ -894,8 +967,12 @@ public OnPluginStart()
 			g_hdist_leet_bhop   = CreateConVar("kz_dist_leet_bhop", "330.0", "Minimum distance for bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "340.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
-			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "345.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
-			}
+			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "343.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_good_ladder  = CreateConVar("kz_dist_min_ladder", "100.0", "Minimum distance for ladder jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 70.0, true, 9999.0);
+			g_hdist_pro_ladder  = CreateConVar("kz_dist_pro_ladder", "155.0", "Minimum distance for ladder jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);
+			g_hdist_leet_ladder   = CreateConVar("kz_dist_leet_ladder", "160.0", "Minimum distance for ladder jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);
+
+		}
 		else
 		{
 			g_hMaxBhopPreSpeed   = CreateConVar("kz_max_prespeed_bhop_dropbhop", "350.0", "Max counted pre speed for bhop,dropbhop (no speed limiter)", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 300.0, true, 400.0);
@@ -914,9 +991,12 @@ public OnPluginStart()
 			g_hdist_good_multibhop  = CreateConVar("kz_dist_min_multibhop", "300.0", "Minimum distance for multi-bhops to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 			g_hdist_pro_multibhop  = CreateConVar("kz_dist_pro_multibhop", "335.0", "Minimum distance for multi-bhops to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);
 			g_hdist_leet_multibhop   = CreateConVar("kz_dist_leet_multibhop", "340.0", "Minimum distance for multi-bhops to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 9999.0);		
+			g_hdist_good_ladder  = CreateConVar("kz_dist_min_ladder", "100.0", "Minimum distance for ladder jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 70.0, true, 9999.0);
+			g_hdist_pro_ladder  = CreateConVar("kz_dist_pro_ladder", "155.0", "Minimum distance for ladder jumps to be considered pro [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);
+			g_hdist_leet_ladder   = CreateConVar("kz_dist_leet_ladder", "160.0", "Minimum distance for ladder jumps to be considered leet [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 100.0, true, 9999.0);		
 		}
-	}
-	
+	}	
+		
 	g_fBanDuration    = GetConVarFloat(g_hBanDuration);
 	HookConVarChange(g_hBanDuration, OnSettingChanged);	
 	
@@ -967,19 +1047,29 @@ public OnPluginStart()
 	
 	g_dist_leet_lj      = GetConVarFloat(g_hdist_leet_lj);
 	HookConVarChange(g_hdist_leet_lj, OnSettingChanged);	
+
+	g_dist_good_ladder      = GetConVarFloat(g_hdist_good_ladder);
+	HookConVarChange(g_hdist_good_ladder, OnSettingChanged);	
+	
+	g_dist_pro_ladder      = GetConVarFloat(g_hdist_pro_ladder);
+	HookConVarChange(g_hdist_pro_ladder, OnSettingChanged);	
+	
+	g_dist_leet_ladder      = GetConVarFloat(g_hdist_leet_ladder);
+	HookConVarChange(g_hdist_leet_ladder, OnSettingChanged);	
 	
 	db_setupDatabase();
 	
 	//client commands
-	//RegConsoleCmd("sm_aclog", Client_AntiCheatLog, "[KZTimer] prints the anticheat log of kztimer in your console");
 	RegConsoleCmd("sm_usp", Client_Usp, "[KZTimer] spawns a usp silencer");
+	RegConsoleCmd("sm_beam", Client_PlayerJumpBeam, "[KZTimer] on/off showing the trajectory of the jump");
+	RegConsoleCmd("sm_avg", Client_Avg, "[KZTimer] prints in chat the average time of the current map");
 	RegConsoleCmd("sm_accept", Client_Accept, "[KZTimer] allows you to accept a challenge request");
 	RegConsoleCmd("sm_goto", Client_GoTo, "[KZTimer] teleports you to a selected player");
 	RegConsoleCmd("sm_disablegoto", Client_DisableGoTo, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_showkeys", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
+	RegConsoleCmd("sm_language", Client_Language, "[KZTimer] select your language");
 	RegConsoleCmd("sm_menusound", Client_ClimbersMenuSounds,"[KZTimer] on/off checkpoint menu sounds");
 	RegConsoleCmd("sm_sync", Client_StrafeSync,"[KZTimer] on/off strafe sync in chat");
-	RegConsoleCmd("sm_language", Client_Language, "[KZTimer] choose your language");
 	RegConsoleCmd("sm_sound", Client_QuakeSounds,"[KZTimer] on/off quake sounds");
 	RegConsoleCmd("sm_cpmessage", Client_CPMessage,"[KZTimer] on/off checkpoint message in chat");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[KZTimer] surrender your current challenge");
@@ -1000,6 +1090,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_compare", Client_Compare, "[KZTimer] compare your challenge results");
 	RegConsoleCmd("sm_menu", Client_Kzmenu, "[KZTimer] opens checkpoint menu");
 	RegConsoleCmd("sm_cpmenu", Client_Kzmenu, "[KZTimer] opens checkpoint menu");
+	RegConsoleCmd("sm_wr", Client_Wr, "[KZTimer] prints records in chat");
 	RegConsoleCmd("sm_measure",Command_Menu, "[KZTimer] allows you to measure the distance between 2 points");
 	RegConsoleCmd("sm_abort", Client_Abort, "[KZTimer] abort your current challenge");
 	RegConsoleCmd("sm_spec", Client_Spec, "[KZTimer] chooses a player who you want to spectate and switch you to spectators");
@@ -1016,18 +1107,18 @@ public OnPluginStart()
 	RegConsoleCmd("sm_start", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_r", Client_Start, "[KZTimer] go back to start");
 	RegConsoleCmd("sm_stop", Client_Stop, "[KZTimer] stops your timer");
-	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints available player ranks in chat");
+	RegConsoleCmd("sm_ranks", Client_Ranks, "[KZTimer] prints in chat the available player ranks");
 	RegConsoleCmd("sm_speed", Client_InfoPanel, "[KZTimer] on/off speed/showkeys center panel");
 	RegConsoleCmd("sm_pause", Client_Pause,"[KZTimer] on/off pause (timer on hold and movement frozen)");
-	RegConsoleCmd("sm_colorchat", Client_Colorchat, "[KZTimer] on/off jumpstats messages of others in chat");
+	RegConsoleCmd("sm_colorchat", Client_Colorchat, "[KZTimer] on/off prints in chat the jumpstats messages of others");
 	RegConsoleCmd("sm_showsettings", Client_Showsettings,"[KZTimer] shows kztimer server settings");
 	RegConsoleCmd("sm_latest", Client_Latest,"[KZTimer] shows latest map records");
 	RegConsoleCmd("sm_showtime", Client_Showtime,"[KZTimer] on/off - timer text in panel/menu");	
-	RegConsoleCmd("sm_hide", Client_Hide, "[KZTimer] on/off - hides other players"); 
+	RegConsoleCmd("sm_hide", Client_Hide, "[KZTimer] on/off - hides other players");
 	RegConsoleCmd("sm_bhopcheck", Command_Stats, "[KZTimer] checks bhop stats for a given player");
 	RegConsoleCmd("+noclip", NoClip, "[KZTimer] Player noclip on");
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
-	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer admin menu");
+	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer menu panel");
 	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, ADMIN_LEVEL, "[KZTimer] Recalculates player profile for given steam id");
 	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMIN_LEVEL2, "[KZTimer] Resets all player challenges (drops table challenges) - requires z flag");
 	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets all player times (drops table playertimes) - requires z flag");
@@ -1039,12 +1130,14 @@ public OnPluginStart()
 	RegAdminCmd("sm_resetplayerprotime", Admin_ResetRecordPro, ADMIN_LEVEL2, "[KZTimer] Resets pro map time for given steamid and map - requires z flag");
 	RegAdminCmd("sm_resetjumpstats", Admin_DropPlayerJump, ADMIN_LEVEL2, "[KZTimer] Resets jump stats (drops table playerjumpstats) - requires z flag");	
 	RegAdminCmd("sm_resetallljrecords", Admin_ResetAllLjRecords, ADMIN_LEVEL2, "[KZTimer] Resets all lj records - requires z flag");
+	RegAdminCmd("sm_resetallladderjumprecords", Admin_ResetAllLadderJumpRecords, ADMIN_LEVEL2, "[KZTimer] Resets all ladder jump records - requires z flag");
 	RegAdminCmd("sm_resetallljblockrecords", Admin_ResetAllLjBlockRecords, ADMIN_LEVEL2, "[KZTimer] Resets all lj block records - requires z flag");
 	RegAdminCmd("sm_resetallwjrecords", Admin_ResetAllWjRecords, ADMIN_LEVEL2, "[KZTimer] Resets all wj records - requires z flag");
 	RegAdminCmd("sm_resetallbhoprecords", Admin_ResetAllBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all bhop records - requires z flag");
 	RegAdminCmd("sm_resetalldropbhopecords", Admin_ResetAllDropBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all drop bjop records - requires z flag");
 	RegAdminCmd("sm_resetallmultibhoprecords", Admin_ResetAllMultiBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets all multi bhop records - requires z flag");
 	RegAdminCmd("sm_resetljrecord", Admin_ResetLjRecords, ADMIN_LEVEL2, "[KZTimer] Resets lj record for given steamid - requires z flag");
+	RegAdminCmd("sm_resetladderjumprecord", Admin_ResetLadderJumpRecords, ADMIN_LEVEL2, "[KZTimer] Resets ladderjump record for given steamid - requires z flag");
 	RegAdminCmd("sm_resetljblockrecord", Admin_ResetLjBlockRecords, ADMIN_LEVEL2, "[KZTimer] Resets lj block record for given steamid - requires z flag");
 	RegAdminCmd("sm_resetbhoprecord", Admin_ResetBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets bhop record for given steamid - requires z flag");	
 	RegAdminCmd("sm_resetdropbhoprecord", Admin_ResetDropBhopRecords, ADMIN_LEVEL2, "[KZTimer] Resets drop bhop record for given steamid - requires z flag");
@@ -1058,20 +1151,18 @@ public OnPluginStart()
 	//chat command listener
 	AddCommandListener(Say_Hook, "say");
 	AddCommandListener(Say_Hook, "say_team");
-	
-	AddNormalSoundHook(NormalSHook_callback);
-	
+
 	//exec kztimer.cfg
-	AutoExecConfig(true, "kztimer");
+	AutoExecConfig(true, "KZTimer");
 	
 	//mic
 	g_ownerOffset = FindSendPropOffs("CBaseCombatWeapon", "m_hOwnerEntity");
 	g_ragdolls = FindSendPropOffs("CCSPlayer","m_hRagdoll");
-	
+		
 	//Credits: Measure by DaFox
 	//https://forums.alliedmods.net/showthread.php?t=88830
 	g_hMainMenu = CreateMenu(Handler_MainMenu)
-	SetMenuTitle(g_hMainMenu,"Measure")
+	SetMenuTitle(g_hMainMenu,"KZTimer - Measure")
 	AddMenuItem(g_hMainMenu,"","Point 1 (Red)")
 	AddMenuItem(g_hMainMenu,"","Point 2 (Green)")
 	AddMenuItem(g_hMainMenu,"","Find Distance")
@@ -1082,8 +1173,8 @@ public OnPluginStart()
 	if (LibraryExists("adminmenu") && ((topmenu = GetAdminTopMenu()) != INVALID_HANDLE))
 		OnAdminMenuReady(topmenu);
 	
-	//events
-	HookEvent("player_spawn", Event_OnPlayerSpawn);
+	//hooks
+	HookEvent("player_spawn", Event_OnPlayerSpawn, EventHookMode_Post);
 	HookEvent("player_death", Event_OnPlayerDeath);
 	HookEvent("round_start",Event_OnRoundStart,EventHookMode_PostNoCopy);
 	HookEvent("round_end", Event_OnRoundEnd, EventHookMode_Pre);
@@ -1099,23 +1190,11 @@ public OnPluginStart()
 	HookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("trigger_multiple", "OnEndTouch", Teleport_OnEndTouch);	
 	HookEntityOutput("func_button", "OnPressed", ButtonPress);
-
+	
 	//mapcycle array
 	new arraySize = ByteCountToCells(PLATFORM_MAX_PATH);
 	g_MapList = CreateArray(arraySize);	
-	
-	//add command listeners	
-	AddCommandListener(Command_JoinTeam, "jointeam");
-	AddCommandListener(Command_ext_Menu, "radio1");
-	AddCommandListener(Command_ext_Menu, "radio2");
-	AddCommandListener(Command_ext_Menu, "radio3");
-	AddCommandListener(Command_ext_Menu, "sm_nominate");
-	AddCommandListener(Command_ext_Menu, "sm_admin");
-	AddCommandListener(Command_ext_Menu, "sm_votekick");
-	AddCommandListener(Command_ext_Menu, "sm_voteban");
-	AddCommandListener(Command_ext_Menu, "sm_votemenu");
-	AddCommandListener(Command_ext_Menu, "sm_revote");
-	
+
 	//exception list
 	decl String:sPath[PLATFORM_MAX_PATH];
 	decl String:line[64];
@@ -1131,15 +1210,29 @@ public OnPluginStart()
 	}
 	if (fileHandle != INVALID_HANDLE)
 		CloseHandle(fileHandle);
-	
+		
+	//add command listeners	
+	AddCommandListener(Command_JoinTeam, "jointeam");
+	AddCommandListener(Command_ext_Menu, "radio1");
+	AddCommandListener(Command_ext_Menu, "radio2");
+	AddCommandListener(Command_ext_Menu, "radio3");
+	AddCommandListener(Command_ext_Menu, "sm_nominate");
+	AddCommandListener(Command_ext_Menu, "sm_admin");
+	AddCommandListener(Command_ext_Menu, "sm_votekick");
+	AddCommandListener(Command_ext_Menu, "sm_voteban");
+	AddCommandListener(Command_ext_Menu, "sm_votemenu");
+	AddCommandListener(Command_ext_Menu, "sm_revote");
 
 	//hook radio commands
-	for(new y; y < sizeof(RadioCMDS); y++)
-		AddCommandListener(BlockRadio, RadioCMDS[y]);
-	
-	//create .nav files
-	CreateNavFiles();
+	for(new g; g < sizeof(RadioCMDS); g++)
+		AddCommandListener(BlockRadio, RadioCMDS[g]);
 
+	//button sound hook
+	AddNormalSoundHook(NormalSHook_callback);
+	
+	//nav files
+	CreateNavFiles();
+	
 	// Botmimic 2
 	// https://forums.alliedmods.net/showthread.php?t=180114
 	// Optionally setup a hook on CBaseEntity::Teleport to keep track of sudden place changes
@@ -1184,30 +1277,51 @@ public OnPluginStart()
 		SetFailState("Unable to prepare virtual function CBaseEntity::Touch")
 		return
 	}
-
-	// 
-	for(new z=1;z<=MaxClients;z++)
-	{
-		if(IsClientInGame(z))
-			OnClientPutInServer(z);
-	}
-
-	if(g_bLateLoaded) 
-	OnPluginPauseChange(false);	
 		
+	// 		
+	if(g_bLateLoaded) 
+	{ 
+		//OnPluginPauseChange(false);	
+		CreateTimer(3.0, LoadPlayerSettings, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
+	}
+}
+
+public OnPluginPauseChange(bool:pause1) 
+{
+	if (pause1) 
+	{
+		AlterBhopBlocks(true);
+		g_BhopDoorCount = 0;
+		g_BhopButtonCount = 0;
+		for(new i = 0; i < g_BhopMultipleCount; i++) 
+		{
+			new ent = g_BhopMultipleList[i];
+			if(IsValidEntity(ent)) 
+				SDKUnhook(ent,SDKHook_StartTouch,Entity_Touch2);
+		}
+	}
+	else
+	{
+		g_BhopDoorCount = 0;
+		g_BhopButtonCount = 0;	
+		g_BhopMultipleCount = 0;
+		FindBhopBlocks();
+		FindMultipleBlocks();
+	}
 }
 
 public OnLibraryAdded(const String:name[])
 {	
 	if (StrEqual("sourcebans", name))
 		g_bCanUseSourcebans = true;	
+	if (StrEqual("hookgrabrope", name))
+		g_bHookMod = true;
 	new Handle:tmp = FindPluginByFile("mapchooser_extended.smx");
 	if ((StrEqual("mapchooser", name)) ||(tmp != INVALID_HANDLE && GetPluginStatus(tmp) == Plugin_Running))
 		g_bMapChooser = true;
-	if (StrEqual("hookgrabrope", name))
-		g_bHookMod = true;
 	if (tmp != INVALID_HANDLE)
 		CloseHandle(tmp);
+	
 	//botmimic 2
 	if(StrEqual(name, "dhooks") && g_hTeleport == INVALID_HANDLE)
 	{
@@ -1235,11 +1349,39 @@ public OnLibraryAdded(const String:name[])
 				OnClientPutInServer(i);
 		}
 	}
-	for(new i=1;i<=MaxClients;i++)
+}
+
+public OnPluginEnd()
+{
+	//remove climb buttons
+	DeleteButtons(67);
+	
+	//remove clan tags
+	for (new x = 1; x <= MaxClients; x++)
 	{
-		if(IsClientInGame(i))
-			OnClientPutInServer(i);
-	}
+		if (IsValidClient(x))
+		{
+			SetEntPropEnt(x, Prop_Send, "m_bSpotted", 1);
+			SetEntProp(x, Prop_Send, "m_iHideHUD", 0);
+			SetEntProp(x, Prop_Send, "m_iAccount", 1);			
+			CS_SetClientClanTag(x, "");
+			OnClientDisconnect(x);
+		}
+ 	}
+
+	//unhook
+	UnhookEntityOutput("trigger_teleport", "OnStartTouch", Teleport_OnStartTouch);	
+	UnhookEntityOutput("trigger_multiple", "OnStartTouch", Teleport_OnStartTouch);	
+	UnhookEntityOutput("trigger_teleport", "OnEndTouch", Teleport_OnEndTouch);	
+	UnhookEntityOutput("trigger_multiple", "OnEndTouch", Teleport_OnEndTouch);	
+	UnhookEntityOutput("func_button", "OnPressed", ButtonPress);
+
+	//set server convars back to default
+	ServerCommand("sm_cvar sv_enablebunnyhopping 0;sv_friction 5.2;sv_accelerate 5.5;sv_airaccelerate 10;sv_maxvelocity 2000;sv_staminajumpcost .08;sv_staminalandcost .050");
+	ServerCommand("mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0;mp_respawnwavetime_ct 10.0;mp_respawnwavetime_t 10.0;bot_zombie 0;mp_ignore_round_win_conditions 0");
+	ServerCommand("sv_infinite_ammo 0;mp_endmatch_votenextmap 1;mp_do_warmup_period 1;mp_warmuptime 60;mp_match_can_clinch 1;mp_match_end_changelevel 0");
+	ServerCommand("mp_match_restart_delay 15;mp_endmatch_votenextleveltime 20;mp_endmatch_votenextmap 1;mp_halftime 0;mp_do_warmup_period 1;mp_maxrounds 0;bot_quota 0");		
+	ServerCommand("mp_startmoney 800; mp_playercashawards 1; mp_teamcashawards 1");
 }
 
 public OnLibraryRemoved(const String:name[])
@@ -1264,24 +1406,50 @@ public OnAllPluginsLoaded()
 
 public OnMapStart()
 {	
-	//blocked chat commands
-	for (new x = 0; x < 256; x++)
-		Format(g_BlockedChatText[x],sizeof(g_BlockedChatText), "");
-	
+	//sv_pure 1 could lead to problems with the kztimer models
+	ServerCommand("sv_pure 0");
+			
+	//reload language files
+	LoadTranslations("kztimer.phrases");	
+
 	decl String:sPath[PLATFORM_MAX_PATH];
-	decl String:line[64];	
+	decl String:line[64];
+
+	//add mapmakers list 
+	for (new x = 0; x < 100; x++)
+		Format(g_szMapmakers[x],sizeof(g_szMapmakers), "");	
+	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", MAPPERS_PATH);
+	new count = 0;
+	new Handle:fileHandle = OpenFile(sPath,"r");	
+	while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
+	{			
+		TrimString(line);
+		if ((StrContains(line,"//",true) == -1) && count < 100)
+		{
+			Format(g_szMapmakers[count],sizeof(g_szMapmakers), "%s", line);
+			count++;
+		}		
+	}
+	
+	//add blocked chat commands list
+	for (new x = 0; x < 256; x++)
+		Format(g_BlockedChatText[x],sizeof(g_BlockedChatText), "");	
 	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", BLOCKED_LIST_PATH);
-	new u = 0;
-	new Handle:fileHandle2=OpenFile(sPath,"r");	
-	while(!IsEndOfFile(fileHandle2)&&ReadFileLine(fileHandle2,line,sizeof(line)))
+	count = 0;
+	fileHandle = OpenFile(sPath,"r");	
+	while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
 	{
 		TrimString(line);
-		Format(g_BlockedChatText[u],sizeof(g_BlockedChatText), "%s", line);
-		u++;
+		if ((StrContains(line,"//",true) == -1) && count < 256)
+		{
+			Format(g_BlockedChatText[count],sizeof(g_BlockedChatText), "%s", line);
+			count++;
+		}
 	}
-	if (fileHandle2 != INVALID_HANDLE)
-		CloseHandle(fileHandle2);
+	if (fileHandle != INVALID_HANDLE)
+		CloseHandle(fileHandle);
 	
+	//defaults
 	g_bFirstStartButtonPush=true;
 	g_bFirstEndButtonPush=true;			
 	g_fMapStartTime = GetEngineTime();
@@ -1289,26 +1457,31 @@ public OnMapStart()
 	g_fRecordTimePro=9999999.0;
 	g_fStartButtonPos = Float:{-999999.9,-999999.9,-999999.9};
 	g_fEndButtonPos = Float:{-999999.9,-999999.9,-999999.9};
+	g_fSpawnpointOrigin = Float:{-999999.9,-999999.9,-999999.9};
+	g_fSpawnpointAngle = Float:{-999999.9,-999999.9,-999999.9};
 	g_MapTimesCountPro = 0;
 	g_MapTimesCountTp = 0;
 	g_ProBot = -1;
 	g_TpBot = -1;
 	g_InfoBot = -1
 	g_bAntiCheat = false;
-	g_bAutoBhop2=false;
+	g_bAutoBhop=false;
 	g_bRoundEnd=false;
+	CheatFlag("bot_zombie", false, true);
 	
 	//get mapname
-	GetCurrentMap(g_szMapName, MAX_MAP_LENGTH);
+	new bool: fileFound;
+	GetCurrentMap(g_szMapName, 128);
 	Format(g_szMapPath, sizeof(g_szMapPath), "maps/%s.bsp", g_szMapName); 	
-			
+	fileFound = FileExists(g_szMapPath);
+
 	//workshop fix
 	new String:mapPieces[6][128];
 	new lastPiece = ExplodeString(g_szMapName, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
 	Format(g_szMapName, sizeof(g_szMapName), "%s", mapPieces[lastPiece-1]); 
-   
+	
 	//get map tag
-	ExplodeString(g_szMapName, "_", g_szMapTag, 2, 32);
+	ExplodeString(g_szMapName, "_", g_szMapPrefix, 2, 32);
 
 	//precache
 	InitPrecache();	
@@ -1320,61 +1493,73 @@ public OnMapStart()
 	db_CalculatePlayerCount();
 	db_viewMapProRankCount();
 	db_viewMapTpRankCount();
+	db_ClearLatestRecords();
+	db_GetDynamicTimelimit();
+	db_CalcAvgRunTime();
 	
 	//timers
 	CreateTimer(0.1, KZTimer1, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(1.0, KZTimer2, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
 	CreateTimer(60.0, AttackTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-
+	CreateTimer(600.0, PlayerRanksTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
+	
 	//create buttons
-	CreateTimer(2.0, CreateMapButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
-		
-	//srv settings
-	if (g_bEnforcer)
-		ServerCommand("sm_cvar sv_enablebunnyhopping 1");		
-
+	CreateTimer(2.0, CreateMapButtons, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
+	
+	//set server settings
+	if (g_bEnforcer)		
+	{
+		SetConVarFloat(g_hStaminaLandCost, 0.0);
+		SetConVarFloat(g_hStaminaJumpCost, 0.0);
+		SetConVarFloat(g_hMaxSpeed, 320.0);
+		SetConVarFloat(g_hGravity, 800.0);
+		SetConVarFloat(g_hAirAccelerate, 100.0);
+		SetConVarFloat(g_hFriction, 5.0);
+		SetConVarFloat(g_hAccelerate, 6.5);
+		SetConVarFloat(g_hMaxVelocity, 2000.0);
+		SetConVarFloat(g_hBhopSpeedCap, 380.0);
+		SetConVarFloat(g_hWaterAccelerate, 10.0);
+		SetConVarInt(g_hCheats, 0);
+		SetConVarInt(g_hEnableBunnyhoping, 1);				
+	}
 	if (g_bAutoRespawn)
 		ServerCommand("mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0");
 	else
 		ServerCommand("mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0");
-
-	ServerCommand("mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1");	
-	
-	//check spawn points
+	ServerCommand("sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;	bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1");	
+		
 	CheckSpawnPoints();
 	
-	//Bots
-	CheatFlag("bot_zombie", false, true);	
-	LoadReplays();
-	LoadInfoBot();
-	
 	//AutoBhop?
-	if(StrEqual(g_szMapTag[0],"surf") || StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"mg"))
-		if (g_bAutoBhop)
-			g_bAutoBhop2=true;		
+	if(StrEqual(g_szMapPrefix[0],"surf") || StrEqual(g_szMapPrefix[0],"bhop") || StrEqual(g_szMapPrefix[0],"mg"))
+		if (g_bAutoBhopConVar)
+			g_bAutoBhop=true;		
 			
 	//anticheat
-	if((StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc")  || StrEqual(g_szMapTag[0],"bkz")) || g_bAutoBhop2 == false)
+	if((StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"bkz")) || g_bAutoBhop == false)
 		g_bAntiCheat=true;
 
-	//get implemented map buttons
-	GetButtonsPos();
-	
+	//main cfg
+	CreateTimer(1.0, DelayedStuff, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);	
+
+	//server infos
+	GetServerInfo();
+
 	//Bhop block stuff
 	g_BhopDoorCount = 0;
 	g_BhopButtonCount = 0;	
 	g_BhopMultipleCount = 0;
 	FindBhopBlocks();
 	FindMultipleBlocks();
-	
-	//main cfg
-	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
-		ServerCommand("exec sourcemod/kztimer/main.cfg");
-	else
-		SetFailState("<KZTIMER> cfg/sourcemod/kztimer/main.cfg missing.");
-	
-	//server infos
-	GetServerInfo();
+		
+	//Bots
+	LoadReplays();
+	LoadInfoBot();
+	if (g_bLateLoaded)
+	{
+		OnConfigsExecuted();
+		OnAutoConfigsBuffered();
+	}
 }
 
 public OnMapEnd()
@@ -1389,32 +1574,12 @@ public OnMapEnd()
 	{
 		new ent = g_BhopMultipleList[i];
 		if(IsValidEntity(ent)) 
-			SDKUnhook(ent,SDKHook_StartTouch,Entity_Touch2);
-	}
-}
-
-public OnPluginPauseChange(bool:pause1) 
-{
-	if (pause1) 
-	{
-		AlterBhopBlocks(true);
-		g_BhopDoorCount = 0;
-		g_BhopButtonCount = 0;
-		for(new i = 0; i < g_BhopMultipleCount; i++) 
 		{
-			new ent = g_BhopMultipleList[i];
-			if(IsValidEntity(ent)) 
-				SDKUnhook(ent,SDKHook_StartTouch,Entity_Touch2);
+			SDKUnhook(ent,SDKHook_StartTouch,Entity_Touch2);
 		}
 	}
-	else
-	{
-		g_BhopDoorCount = 0;
-		g_BhopButtonCount = 0;	
-		g_BhopMultipleCount = 0;
-		FindBhopBlocks();
-		FindMultipleBlocks();
-	}
+	
+	db_Cleanup();
 }
 
 public OnConfigsExecuted()
@@ -1447,12 +1612,12 @@ public OnConfigsExecuted()
 			g_pr_MapCount++;
 		}
 	}	
-			
+	
 	//skillgroups
 	SetSkillGroups();
 
 	//get mapname
-	GetCurrentMap(g_szMapName, MAX_MAP_LENGTH);
+	GetCurrentMap(g_szMapName, 128);
 	Format(g_szMapPath, sizeof(g_szMapPath), "maps/%s.bsp", g_szMapName); 	
 			
 	//workshop fix
@@ -1461,11 +1626,37 @@ public OnConfigsExecuted()
 	Format(g_szMapName, sizeof(g_szMapName), "%s", mapPieces[lastPiece-1]); 
    
 	//get map tag
-	ExplodeString(g_szMapName, "_", g_szMapTag, 2, 32);
+	ExplodeString(g_szMapName, "_", g_szMapPrefix, 2, 32);
+		
+
+	//AutoBhop?
+	if(StrEqual(g_szMapPrefix[0],"surf") || StrEqual(g_szMapPrefix[0],"bhop") || StrEqual(g_szMapPrefix[0],"mg"))
+		if (g_bAutoBhopConVar)
+			g_bAutoBhop=true;		
+	
+	//cheat protection
+	if((StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc") || StrEqual(g_szMapPrefix[0],"bkz")) || g_bAutoBhop == false)
+		g_bAntiCheat=true;
+		
+	ServerCommand("sv_pure 0");
+}
+
+
+public OnAutoConfigsBuffered() 
+{
+	//just to be sure that it's not empty
+	decl String:szMap[128];  
+	decl String:szPrefix[2][32];  
+	GetCurrentMap(szMap, 128);
+	decl String:mapPieces[6][128];
+	new lastPiece = ExplodeString(szMap, "/", mapPieces, sizeof(mapPieces), sizeof(mapPieces[])); 
+	Format(szMap, sizeof(szMap), "%s", mapPieces[lastPiece-1]); 
+ 	ExplodeString(szMap, "_", szPrefix, 2, 32);
+
 	
 	//map config
 	decl String:szPath[256];
-	Format(szPath, sizeof(szPath), "sourcemod/kztimer/map_types/%s_.cfg",g_szMapTag[0]);
+	Format(szPath, sizeof(szPath), "sourcemod/kztimer/map_types/%s_.cfg",szPrefix[0]);
 	decl String:szPath2[256];
 	Format(szPath2, sizeof(szPath2), "cfg/%s",szPath);
 	if (FileExists(szPath2))
@@ -1473,23 +1664,7 @@ public OnConfigsExecuted()
 	else
 		SetFailState("<KZTIMER> %s not found.", szPath2);
 	
-	//main cfg
-	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
-		ServerCommand("exec sourcemod/kztimer/main.cfg");
-	else
-		SetFailState("<KZTIMER> cfg/sourcemod/kztimer/main.cfg not found.");
-	
-	//add kztimer tag
 	SetServerTags();
-	
-	//AutoBhop?
-	if(StrEqual(g_szMapTag[0],"surf") || StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"mg"))
-		if (g_bAutoBhop)
-			g_bAutoBhop2=true;		
-	
-	//cheat protection
-	if((StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bkz")) || g_bAutoBhop2 == false)
-		g_bAntiCheat=true;
 }
 
 public OnClientConnected(client)
@@ -1499,7 +1674,7 @@ public OnClientPutInServer(client)
 {
 	if (!IsValidClient(client))
 		return;
-
+		
 	//SDKHooks/Dhooks
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
@@ -1531,19 +1706,22 @@ public OnClientPutInServer(client)
 		if (AreClientCookiesCached(client) && !g_bLoaded[client])
 			LoadCookies(client);
 			
+
 	if(LibraryExists("dhooks"))
 		DHookEntity(g_hTeleport, false, client);	
 	
 	//get client data
 	GetClientAuthString(client, g_szSteamID[client], 32);	
+	db_viewPlayerOptions(client, g_szSteamID[client]);	
  	db_viewPersonalRecords(client,g_szSteamID[client],g_szMapName);	
 	db_viewPersonalBhopRecord(client, g_szSteamID[client]);
 	db_viewPersonalMultiBhopRecord(client, g_szSteamID[client]);	
 	db_viewPersonalWeirdRecord(client, g_szSteamID[client]);
 	db_viewPersonalDropBhopRecord(client, g_szSteamID[client]); 
 	db_viewPersonalLJBlockRecord(client, g_szSteamID[client]);
+	db_viewPersonalLadderJumpRecord(client, g_szSteamID[client]);
 	db_viewPersonalLJRecord(client, g_szSteamID[client]);
-	db_viewPlayerOptions(client, g_szSteamID[client]);	
+	
 	
 	// ' char fix
 	FixPlayerName(client);
@@ -1554,6 +1732,52 @@ public OnClientPutInServer(client)
 			
 	//console info
 	PrintConsoleInfo(client);
+	
+	if (g_bLateLoaded && IsPlayerAlive(client))
+		PlayerSpawn(client);
+}
+
+public OnClientAuthorized(client)
+{
+	if (g_bConnectMsg && !IsFakeClient(client))
+	{
+		decl String:s_Country[32];
+		decl String:s_clientName[32];
+		decl String:s_address[32];		
+		GetClientIP(client, s_address, 32);
+		GetClientName(client, s_clientName, 32);
+		Format(s_Country, 100, "Unknown");
+		GeoipCountry(s_address, s_Country, 100);     
+		if(!strcmp(s_Country, NULL_STRING))
+			Format( s_Country, 100, "Unknown", s_Country );
+		else				
+			if( StrContains( s_Country, "United", false ) != -1 || 
+				StrContains( s_Country, "Republic", false ) != -1 || 
+				StrContains( s_Country, "Federation", false ) != -1 || 
+				StrContains( s_Country, "Island", false ) != -1 || 
+				StrContains( s_Country, "Netherlands", false ) != -1 || 
+				StrContains( s_Country, "Isle", false ) != -1 || 
+				StrContains( s_Country, "Bahamas", false ) != -1 || 
+				StrContains( s_Country, "Maldives", false ) != -1 || 
+				StrContains( s_Country, "Philippines", false ) != -1 || 
+				StrContains( s_Country, "Vatican", false ) != -1 )
+			{
+				Format( s_Country, 100, "The %s", s_Country );
+			}				
+					
+		if (StrEqual(s_Country, "Unknown",false) || StrEqual(s_Country, "Localhost",false))
+		{	
+			for (new i = 1; i <= MaxClients; i++)
+			if (IsValidClient(i) && i != client)
+				PrintToChat(i, "%t", "Connected1", WHITE,MOSSGREEN, s_clientName, WHITE);
+		}
+		else
+		{
+			for (new i = 1; i <= MaxClients; i++)
+				if (IsValidClient(i) && i != client)
+					PrintToChat(i, "%t", "Connected2", WHITE, MOSSGREEN,s_clientName, WHITE,GREEN,s_Country);
+		}
+	}
 }
 
 public OnClientDisconnect(client)
@@ -1572,8 +1796,7 @@ public OnClientDisconnect(client)
 		else
 			g_fPlayerLastTime[client] = g_fCurrentRunTime[client];
 	}
-
-	//SDK Unhook's
+		
 	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	SDKUnhook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
 	SDKUnhook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
@@ -1601,15 +1824,12 @@ public OnClientDisconnect(client)
 		db_updatePlayerOptions(client);
 	}	
 	
-	//stop recording
+	// Stop recording
 	if(g_hRecording[client] != INVALID_HANDLE)
 		StopRecording(client);
 
-	// Measure-Plugin by DaFox
-	//https://forums.alliedmods.net/showthread.php?t=88830?t=88830
+	// Macrodox
 	ResetPos(client);
-	
-	//Macrodox
 	g_aiJumps[client] = 0;
 	g_fafAvgJumps[client] = 5.0;
 	g_fafAvgSpeed[client] = 250.0;
@@ -1618,26 +1838,26 @@ public OnClientDisconnect(client)
 	g_aiIgnoreCount[client] = 0;
 	g_bFlagged[client] = false;
 	g_favVEL[client][2] = 0.0;
-	
+
 	//language
 	g_bLoaded[client] = false;
 }
 
 public OnSettingChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {	
-	if(convar == g_hChallengePoints)
-	{
-		if(newValue[0] == '1')
-			g_bChallengePoints = true;
-		else
-			g_bChallengePoints = false;
-	}	
 	if(convar == g_hGoToServer)
 	{
 		if(newValue[0] == '1')
 			g_bGoToServer = true;
 		else
 			g_bGoToServer = false;
+	}		
+	if(convar == g_hChallengePoints)
+	{
+		if(newValue[0] == '1')
+			g_bChallengePoints = true;
+		else
+			g_bChallengePoints = false;
 	}
 	if(convar == g_hPreStrafe)
 	{
@@ -1647,7 +1867,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{
 			for (new i = 1; i <= MaxClients; i++)
 				if (IsValidClient(i))	
-					SetEntPropFloat(i, Prop_Send, "m_flVelocityModifier", 1.0);				
+					SetEntPropFloat(i, Prop_Send, "m_flVelocityModifier", 1.0);						
 			g_bPreStrafe = false;
 		}
 	}	
@@ -1664,7 +1884,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bAutoBan = true;
 		else
 			g_bAutoBan = false;
-	}
+	}	
 	if(convar == g_hReplayBot)
 	{
 		if(newValue[0] == '1')
@@ -1743,6 +1963,13 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 			g_bPauseServerside = false;
 	}
+	if(convar == g_hDynamicTimelimit)
+	{
+		if(newValue[0] == '1')
+			g_bDynamicTimelimit = true;
+		else
+			g_bDynamicTimelimit = false;
+	}	
 	if(convar == g_hAutohealing_Hp)
 		g_Autohealing_Hp = StringToInt(newValue[0]);	
 	
@@ -1793,7 +2020,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 			g_bConnectMsg = true;			
 		else
 			g_bConnectMsg = false;
-	}		
+	}
 	if(convar == g_hPlayerSkinChange)
 	{
 		if(newValue[0] == '1')
@@ -1871,7 +2098,7 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		{	
 			g_bAttackSpamProtection = false;
 		}
-	}	
+	}		
 	if(convar == g_hCleanWeapons)
 	{
 		if(newValue[0] == '1')
@@ -1907,7 +2134,18 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		if(newValue[0] == '1')		
 		{
 			g_bEnforcer = true;
-			ServerCommand("sm_cvar sv_enablebunnyhopping 1");
+			SetConVarFloat(g_hStaminaLandCost, 0.0);
+			SetConVarFloat(g_hStaminaJumpCost, 0.0);
+			SetConVarFloat(g_hMaxSpeed, 320.0);
+			SetConVarFloat(g_hGravity, 800.0);
+			SetConVarFloat(g_hAirAccelerate, 100.0);
+			SetConVarFloat(g_hFriction, 5.0);
+			SetConVarFloat(g_hAccelerate, 6.5);
+			SetConVarFloat(g_hMaxVelocity, 2000.0);
+			SetConVarFloat(g_hBhopSpeedCap, 380.0);
+			SetConVarFloat(g_hWaterAccelerate, 10.0);
+			SetConVarInt(g_hCheats, 0);
+			SetConVarInt(g_hEnableBunnyhoping, 1);		
 		}
 		else
 			g_bEnforcer = false;
@@ -1919,28 +2157,28 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		else
 			g_bJumpStats = false;
 	}	
-	if(convar == g_hSingleTouching)
+	if(convar == g_hSingleTouch)
 	{
 		if(newValue[0] == '1')		
-			g_bSingleTouching = true;
+			g_bSingleTouch = true;
 		else
-			g_bSingleTouching = false;
-	}	
-	if(convar == g_hAutoBhop)
+			g_bSingleTouch = false;
+	}		
+	if(convar == g_hAutoBhopConVar)
 	{
 		if(newValue[0] == '1')		
 		{		
-			g_bAutoBhop = true;		
-			if(StrEqual(g_szMapTag[0],"surf") || StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"mg"))
+			g_bAutoBhopConVar = true;		
+			if(StrEqual(g_szMapPrefix[0],"surf") || StrEqual(g_szMapPrefix[0],"bhop") || StrEqual(g_szMapPrefix[0],"mg"))
 			{
 				g_bAntiCheat	= false;
-				g_bAutoBhop2 = true;
+				g_bAutoBhop = true;
 			}
 		}
 		else
 		{
+			g_bAutoBhopConVar = false;
 			g_bAutoBhop = false;
-			g_bAutoBhop2 = false;
 			g_bAntiCheat = true;
 		}
 	}		
@@ -1968,12 +2206,11 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 					if (IsValidClient(i))				
 						CreateTimer(0.5, SetClanTag, i,TIMER_FLAG_NO_MAPCHANGE);		
 		}
-	}
-
+	}		
 	if(convar == g_hExtraPoints)
 		g_ExtraPoints = StringToInt(newValue[0]);	
 	if(convar == g_hExtraPoints2)
-		g_ExtraPoints2 = StringToInt(newValue[0]);	
+		g_ExtraPoints2 = StringToInt(newValue[0]);			
 	if(convar == g_hdist_good_multibhop)
 		g_dist_good_multibhop = StringToFloat(newValue[0]);	
 	
@@ -2019,11 +2256,17 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 	if(convar == g_hdist_leet_lj)
 		g_dist_leet_lj = StringToFloat(newValue[0]);
 	
+	if(convar == g_hdist_good_ladder)
+		g_dist_good_ladder = StringToFloat(newValue[0]);
+	
+	if(convar == g_hdist_pro_ladder)
+		g_dist_pro_ladder = StringToFloat(newValue[0]);
+	
+	if(convar == g_hdist_leet_ladder)
+		g_dist_leet_ladder = StringToFloat(newValue[0]);
+	
 	if(convar == g_hBanDuration)
 		g_fBanDuration = StringToFloat(newValue[0]);
-		
-	if(convar == g_hBhopSpeedCap)
-		g_fBhopSpeedCap = StringToFloat(newValue[0]);	
 	
 	if(convar == g_hMaxBhopPreSpeed)
 		g_fMaxBhopPreSpeed = StringToFloat(newValue[0]);	
@@ -2143,6 +2386,85 @@ public OnSettingChanged(Handle:convar, const String:oldValue[], const String:new
 		Format(color,256,"%s", newValue[0]);
 		GetRGBColor(0,color);
 	}		
+	
+	//Settings Enforcer
+	if(convar == g_hBhopSpeedCap)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 380.0)
+			SetConVarFloat(g_hBhopSpeedCap, 380.0);
+		else
+			g_fBhopSpeedCap = StringToFloat(newValue[0]);	
+	}
+	
+	if(convar == g_hStaminaLandCost)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 0.0)
+			SetConVarFloat(g_hStaminaLandCost, 0.0);			
+	}	
+	if(convar == g_hStaminaJumpCost)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 0.0)
+			SetConVarFloat(g_hStaminaJumpCost, 0.0);			
+	}	
+	if(convar == g_hMaxSpeed)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 320.0)
+			SetConVarFloat(g_hMaxSpeed, 320.0);			
+	}
+	
+	if(convar == g_hGravity)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 800.0)
+			SetConVarFloat(g_hGravity, 800.0);			
+	}
+	if(convar == g_hAirAccelerate)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 100.0)
+			SetConVarFloat(g_hAirAccelerate, 100.0);			
+	}
+	if(convar == g_hFriction)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 5.0)
+			SetConVarFloat(g_hFriction, 5.0);			
+	}
+	if(convar == g_hAccelerate)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 6.5)
+			SetConVarFloat(g_hAccelerate, 6.5);			
+	}
+	if(convar == g_hMaxVelocity)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 2000.0)
+			SetConVarFloat(g_hMaxVelocity, 2000.0);			
+	}
+	if(convar == g_hWaterAccelerate)
+	{
+		new Float:fTmp = StringToFloat(newValue[0]);
+		if (g_bEnforcer && fTmp != 10.0)
+			SetConVarFloat(g_hWaterAccelerate, 10.0);	
+	}
+	if(convar == g_hCheats)
+	{			
+		new iTmp = StringToInt(newValue[0]);
+		if (g_bEnforcer && iTmp != 0)
+			SetConVarInt(g_hCheats, 0);			
+	}
+	
+	if(convar == g_hEnableBunnyhoping)
+	{
+		new iTmp = StringToInt(newValue[0]);
+		if (g_bEnforcer && iTmp != 1)
+			SetConVarInt(g_hEnableBunnyhoping, 1);	
+	}
 }
 
 public Native_GetTimerStatus(Handle:plugin, numParams)
@@ -2180,9 +2502,8 @@ public Native_EmulateStopButtonPress(Handle:plugin, numParams)
 	CL_OnEndTimerPress(GetNativeCell(1))
 }		
 
-
-//MACRODOX BHOP PROTECTION
-//https://forums.alliedmods.net/showthread.php?p=1678026
+	
+//Credits: Macrodox by Inami (https://forums.alliedmods.net/showthread.php?p=1678026)
 public OnGameFrame()
 {
 	if (g_TickCount2 > 1*MaxClients)
@@ -2191,7 +2512,8 @@ public OnGameFrame()
 	{
 		if (g_TickCount2 % 1 == 0)
 		{
-			new index = g_TickCount2 / 1;
+			decl index;
+			index = g_TickCount2 / 1;
 			if (g_bSurfCheck[index] && IsValidClient(index) && IsPlayerAlive(index))
 			{	
 				GetEntPropVector(index, Prop_Data, "m_vecVelocity", g_favVEL[index]);

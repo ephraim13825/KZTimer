@@ -12,7 +12,28 @@ public Action:NormalSHook_callback(clients[64], &numClients, String:sample[PLATF
     return Plugin_Continue;
 }  
 
-//usp attack spam protection
+//trigger_teleport/trigger_multiple hook
+public Teleport_OnStartTouch(const String:output[], bhop_block, client, Float:delay)
+{
+	if (!IsValidClient(client))
+		return;
+	
+	//checkpoints on bhop plattforms allowed?
+	if (g_bOnGround[client])
+		g_bOnBhopPlattform[client]=true;
+	
+	//Jumpstats/Failstats: ljblock with teleport trigger
+	if (g_js_block_lj_valid[client] && g_bJumpStats && g_js_bPlayerJumped[client] && !g_bKickStatus[client])
+	{
+		GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
+		g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
+		Postthink(client);
+		g_fLastPositionOnGround[client] = g_fLastPosition[client];
+		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];	
+	}	
+}  
+
+//attack spam protection
 public Action:Event_OnFire(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client   = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -42,147 +63,135 @@ public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBr
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if(client != 0)
 	{	
-		g_fStartCommandUsed_LastTime[client] = GetEngineTime();
-		g_js_bPlayerJumped[client] = false;
-		g_SpecTarget[client] = -1;	
-		g_bOnGround[client] = true;
-		g_MouseAbsCount[client] = 0;
-		g_bPause[client] = false;
-		SetEntityMoveType(client, MOVETYPE_WALK);
-		SetEntityRenderMode(client, RENDER_NORMAL);
-		
-		//strip weapons
-		if ((GetClientTeam(client) > 1) && IsValidClient(client))
-		{			
-			StripAllWeapons(client);
-			if (!IsFakeClient(client))
-				GivePlayerItem(client, "weapon_usp_silencer");
-			if (!g_bStartWithUsp[client])
-			{
-				new weapon = GetPlayerWeaponSlot(client, 2);
-				if (weapon != -1 && !IsFakeClient(client))
-					 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-			}
-		}	
-		
-		//godmode
-		if (g_bgodmode || IsFakeClient(client))
-			SetEntProp(client, Prop_Data, "m_takedamage", 0, 1);
-		else
-			SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
-			
-		//NoBlock
-		if(g_bNoBlock || IsFakeClient(client))
-			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
-		else
-			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
-							
-		//botmimic2		
-		if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsFakeClient(client))
-		{
-			g_BotMimicTick[client] = 0;
-			g_CurrentAdditionalTeleportIndex[client] = 0;
-		}	
-		
-		if (IsFakeClient(client))	
-		{
-			if (client==g_InfoBot)
-				CS_SetClientClanTag(client, ""); 	
-			else
-				CS_SetClientClanTag(client, "LOCALHOST"); 	
-			return Plugin_Continue;
-		}
-		
-		//fps Check
-		QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
-		
-		//change player skin
-		if (g_bPlayerSkinChange && (GetClientTeam(client) > 1))
-		{
-			SetEntPropString(client, Prop_Send, "m_szArmsModel", g_sArmModel);
-			SetEntityModel(client,  g_sPlayerModel);
-		}		
-
-		//1st spawn & t/ct
-		if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))		
-		{
-			StartRecording(client);
-			CreateTimer(1.5, CenterMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
-			g_bFirstSpawn[client] = false;
-		}
-		
-		//get start pos for challenge
-		GetClientAbsOrigin(client, g_fSpawnPosition[client]);
-		
-		//restore position (before spec or last session) && Climbers Menu
-		if ((GetClientTeam(client) > 1))
-		{
-			if (g_bRestorePosition[client])
-			{			
-				g_bPositionRestored[client] = true;
-				TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
-				g_bRestorePosition[client]  = false;
-			}
-			else
-				if (g_bRespawnPosition[client])
-				{
-					TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
-					g_bRespawnPosition[client] = false;
-				}		
-				else
-					if (g_bAutoTimer)
-						CreateTimer(0.1, StartTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
-					else
-					{
-						g_bTimeractivated[client] = false;	
-						g_fStartTime[client] = -1.0;
-						g_fCurrentRunTime[client] = -1.0;	
-					}			
-			CreateTimer(0.0, ClimbersMenuTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-		}
-
-		
-		//hide radar
-		CreateTimer(0.0, HideRadar, client,TIMER_FLAG_NO_MAPCHANGE);
-		
-		//set clantag
-		CreateTimer(1.5, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);	
-				
-		//set speclist
-		Format(g_szPlayerPanelText[client], 512, "");		
-		
-		if (g_bClimbersMenuwasOpen[client] && (GetClientTeam(client) > 1))
-		{
-			g_bClimbersMenuwasOpen[client] = false;
-			ClimbersMenu(client);
-		}
-
-		//get speed & origin
-		g_fLastSpeed[client] = GetSpeed(client);
-		GetClientAbsOrigin(client, g_fLastPosition[client]);				
+		PlayerSpawn(client);
 	}
 	return Plugin_Continue;
 }
 
-public Action:Event_PlayerDisconnect(Handle:event, const String:name[], bool:dontBroadcast)
+PlayerSpawn(client)
 {
-	if (g_bConnectMsg)
-	{
-		decl String:szName[64];
-		new String:disconnectReason[64];
-		new clientid = GetEventInt(event,"userid");
-		new client = GetClientOfUserId(clientid);
-		if (!IsValidClient(client) || IsFakeClient(client))
-			return Plugin_Handled;
-		GetEventString(event, "name", szName, sizeof(szName));
-		GetEventString(event, "reason", disconnectReason, sizeof(disconnectReason));  
-		for (new i = 1; i <= MaxClients; i++)
-			if (IsValidClient(i) && i != client && !IsFakeClient(i))
-				PrintToChat(i, "%t", "Disconnected1",WHITE, MOSSGREEN, szName, WHITE, disconnectReason);	
-		return Plugin_Handled;
-	}
+	if (!IsValidClient(client))
+		return;
+	g_fStartCommandUsed_LastTime[client] = GetEngineTime();
+	g_js_bPlayerJumped[client] = false;
+	g_SpecTarget[client] = -1;	
+	g_bPause[client] = false;
+	g_bFirstButtonTouch[client]=true;
+	SetEntityMoveType(client, MOVETYPE_WALK);
+	SetEntityRenderMode(client, RENDER_NORMAL);
+	
+	//strip weapons
+	if ((GetClientTeam(client) > 1) && IsValidClient(client))
+	{			
+		StripAllWeapons(client);
+		if (!IsFakeClient(client))
+			GivePlayerItem(client, "weapon_usp_silencer");
+		if (!g_bStartWithUsp[client])
+		{
+			new weapon = GetPlayerWeaponSlot(client, 2);
+			if (weapon != -1 && !IsFakeClient(client))
+				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+		}
+	}	
+
+	//godmode
+	if (g_bgodmode || IsFakeClient(client))
+		SetEntProp(client, Prop_Data, "m_takedamage", 0, 1);
 	else
-		return Plugin_Continue;
+		SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
+		
+	//NoBlock
+	if(g_bNoBlock || IsFakeClient(client))
+		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
+	else
+		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
+						
+	//botmimic2		
+	if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsFakeClient(client))
+	{
+		g_BotMimicTick[client] = 0;
+		g_CurrentAdditionalTeleportIndex[client] = 0;
+	}	
+	
+	if (IsFakeClient(client))	
+	{
+		if (client==g_InfoBot)
+			CS_SetClientClanTag(client, ""); 	
+		else
+			CS_SetClientClanTag(client, "LOCALHOST"); 	
+		return;
+	}
+	
+	//fps Check
+	QueryClientConVar(client, "fps_max", ConVarQueryFinished:FPSCheck, client);		
+	
+	
+	//change player skin
+	if (g_bPlayerSkinChange && (GetClientTeam(client) > 1))
+	{
+		SetEntPropString(client, Prop_Send, "m_szArmsModel", g_sArmModel);
+		SetEntityModel(client,  g_sPlayerModel);
+	}		
+
+	//1st spawn & t/ct
+	if (g_bFirstSpawn[client] && (GetClientTeam(client) > 1))		
+	{
+		StartRecording(client);
+		CreateTimer(1.5, CenterMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);		
+		g_bFirstSpawn[client] = false;
+	}
+	
+	//get start pos for challenge
+	GetClientAbsOrigin(client, g_fSpawnPosition[client]);
+	
+	//restore position (before spec or last session) && Climbers Menu
+	if ((GetClientTeam(client) > 1))
+	{
+		if (g_bRestorePosition[client])
+		{		
+			g_bPositionRestored[client] = true;
+			TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+			g_bRestorePosition[client]  = false;
+		}
+		else
+			if (g_bRespawnPosition[client])
+			{
+				TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+				g_bRespawnPosition[client] = false;
+			}		
+			else
+				if (g_bAutoTimer)
+				{
+					CreateTimer(0.1, StartTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
+				}
+				else
+				{
+					g_bTimeractivated[client] = false;	
+					g_fStartTime[client] = -1.0;
+					g_fCurrentRunTime[client] = -1.0;	
+				}			
+		CreateTimer(0.0, ClimbersMenuTimer, client,TIMER_FLAG_NO_MAPCHANGE);
+	}
+
+	
+	//hide radar
+	CreateTimer(0.0, HideRadar, client,TIMER_FLAG_NO_MAPCHANGE);
+	
+	//set clantag
+	CreateTimer(1.5, SetClanTag, client,TIMER_FLAG_NO_MAPCHANGE);	
+			
+	//set speclist
+	Format(g_szPlayerPanelText[client], 512, "");		
+	
+	if (g_bClimbersMenuwasOpen[client] && (GetClientTeam(client) > 1))
+	{
+		g_bClimbersMenuwasOpen[client] = false;
+		ClimbersMenu(client);
+	}
+
+	//get speed & origin
+	g_fLastSpeed[client] = GetSpeed(client);
+	GetClientAbsOrigin(client, g_fLastPosition[client]);	
 }
 
 public Action:Say_Hook(client, const String:command[], argc)
@@ -220,7 +229,7 @@ public Action:Say_Hook(client, const String:command[], argc)
 		ReplaceString(sText,1024,"{darkblue}","",false);
 		ReplaceString(sText,1024,"{pink}","",false);
 		ReplaceString(sText,1024,"{lightred}","",false);
-		
+
 		//empty message
 		if(StrEqual(sText, " ") || StrEqual(sText, ""))
 		{
@@ -275,7 +284,6 @@ public Action:Say_Hook(client, const String:command[], argc)
 		ReplaceString(szName,32,"{darkblue}","",false);
 		ReplaceString(szName,32,"{pink}","",false);
 		ReplaceString(szName,32,"{lightred}","",false);
-		
 		////////////////
 		//say stuff
 		//
@@ -289,7 +297,7 @@ public Action:Say_Hook(client, const String:command[], argc)
 		else
 		{
 			decl String:szChatRank[64];
-			Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);	
+			Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);			
 			
 			if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
 			{						
@@ -317,8 +325,8 @@ public Action:Say_Hook(client, const String:command[], argc)
 					if (IsPlayerAlive(client))
 						CPrintToChatAllEx(client,"%s {teamcolor}%s{default}: %s",szChatRank,szName,sText);	
 					else
-						CPrintToChatAllEx(client,"%s {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);	
-					g_bSayHook[client]=false;					
+						CPrintToChatAllEx(client,"%s {teamcolor}*DEAD* %s{default}: %s",szChatRank,szName,sText);
+					g_bSayHook[client]=false;						
 					return Plugin_Handled;							
 				}
 				else
@@ -365,7 +373,6 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 				g_fStartPauseTime[client] = g_fStartPauseTime[client] - g_fPauseTime[client];	
 		}
 		g_bSpectate[client] = true;
-		//PrintToChat(client, "%t", "SpecInfo",MOSSGREEN,WHITE,GREEN,WHITE);
 		if (g_bPause[client])
 			g_bPauseWasActivated[client]=true;
 		g_bPause[client]=false;
@@ -373,6 +380,26 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 	return Plugin_Continue;
 }
 
+public Action:Event_PlayerDisconnect(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	if (g_bConnectMsg)
+	{
+		decl String:szName[64];
+		decl String:disconnectReason[64];
+		new clientid = GetEventInt(event,"userid");
+		new client = GetClientOfUserId(clientid);
+		if (!IsValidClient(client) || IsFakeClient(client))
+			return Plugin_Handled;
+		GetEventString(event, "name", szName, sizeof(szName));
+		GetEventString(event, "reason", disconnectReason, sizeof(disconnectReason));  
+		for (new i = 1; i <= MaxClients; i++)
+			if (IsValidClient(i) && i != client && !IsFakeClient(i))
+				PrintToChat(i, "%t", "Disconnected1",WHITE, MOSSGREEN, szName, WHITE, disconnectReason);	
+		return Plugin_Handled;
+	}
+	else
+		return Plugin_Continue;
+}
 
 public Action:Hook_SetTransmit(entity, client) 
 { 
@@ -393,14 +420,13 @@ public Action:Hook_SetTransmit(entity, client)
     return Plugin_Continue; 
 }  
 
-// - PlayerDeath -
 public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetEventInt(event,"userid");
 	if (IsValidClient(client))
 	{
 		if (!IsFakeClient(client))
-		{			
+		{	
 			if(g_hRecording[client] != INVALID_HANDLE)
 				StopRecording(client);			
 			CreateTimer(2.0, RemoveRagdoll, client);
@@ -429,7 +455,6 @@ public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 	return Plugin_Continue;
 }  
 
-
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	g_bRoundEnd=true;
@@ -450,6 +475,12 @@ public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroad
 		SDKUnhook(ent,SDKHook_Touch,Push_Touch);
 	return Plugin_Continue;
 }
+
+public OnPlayerThink(entity)
+{
+	SetEntPropEnt(entity, Prop_Send, "m_bSpotted", 0); 
+}
+
 
 // OnRoundRestart
 public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
@@ -478,26 +509,27 @@ public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBro
 			AcceptEntityInput(iEnt, "Kill");
 		}
 	}
-		
+	
 	g_bRoundEnd=false;
 	db_selectMapButtons();
 	OnPluginPauseChange(false);
 	return Plugin_Continue; 
 }
 
-public OnPlayerThink(entity)
+public Action:Push_Touch(ent,client)
 {
-	SetEntPropEnt(entity, Prop_Send, "m_bSpotted", 0); 
+	if(IsValidClient(client) && g_js_bPlayerJumped[client])
+	{
+		ResetJump(client);
+	}
+	return Plugin_Continue;
 }
 
-
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
 public Action:Touch_Wall(ent,client)
 {
 	if(IsValidClient(client))
 	{
-		if(!(GetEntityFlags(client)&FL_ONGROUND)  && g_js_bPlayerJumped[client])
+		if(GetEntityMoveType(client) != MOVETYPE_LADDER && !(GetEntityFlags(client)&FL_ONGROUND)  && g_js_bPlayerJumped[client])
 		{
 			new Float:origin[3], Float:temp[3];
 			GetGroundOrigin(client, origin);
@@ -511,16 +543,6 @@ public Action:Touch_Wall(ent,client)
 	return Plugin_Continue;
 }
 
-//Credits: Timer by zipcore
-//https://github.com/Zipcore/Timer/
-public Action:Push_Touch(ent,client)
-{
-	if(IsValidClient(client) && g_js_bPlayerJumped[client])
-	{
-		ResetJump(client);
-	}
-	return Plugin_Continue;
-}
 
 // PlayerHurt 
 public Action:Event_OnPlayerHurt(Handle:event, const String:name[], bool:dontBroadcast)
@@ -553,16 +575,16 @@ public FPSCheck(QueryCookie:cookie, client, ConVarQueryResult:result, const Stri
 {
 	if (IsValidClient(client) && !IsFakeClient(client) && !g_bKickStatus[client])
 	{
-		new fps_max = StringToInt(cvarValue);  	  
+		new fps_max = StringToInt(cvarValue);    
 		if (fps_max > 0 && fps_max < 120)
 		{
 			CreateTimer(10.0, KickPlayer, client, TIMER_FLAG_NO_MAPCHANGE);
 			g_bKickStatus[client]=true;
-		}	
+		}		
 	}
 }
 
-//Credits: TnTSCS
+//thx to TnTSCS (player slap stops timer)
 //https://forums.alliedmods.net/showthread.php?t=233966
 public Action:OnLogAction(Handle:source, Identity:ident, client, target, const String:message[])
 {	
@@ -570,7 +592,7 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
         return Plugin_Continue;
     if (IsValidClient(target) && IsPlayerAlive(target) && g_bTimeractivated[target] && !IsFakeClient(target))
 	{
-		new String:logtag[PLATFORM_MAX_PATH];
+		decl String:logtag[PLATFORM_MAX_PATH];
 		if (ident == Identity_Plugin)
 			GetPluginFilename(source, logtag, sizeof(logtag));
 		else
@@ -584,227 +606,117 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
 // OnPlayerRunCmd
 public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon, &subtype, &cmdnum, &tickcount, &seed, mouse[2])
 {
-	new Float:speed, Float:origin[3],Float:ang[3];
+	
 	if (g_bRoundEnd || !IsValidClient(client))
 		return Plugin_Continue;	
-	
-	//client information
-	g_CurrentButton[client] = buttons;
-	GetClientAbsOrigin(client, origin);
-	GetClientEyeAngles(client, ang);			
-	speed = GetSpeed(client);	
-	
-	//Set ground frames
-	if (g_js_bPlayerJumped[client] == false && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
-		g_js_GroundFrames[client]++;
-	
-	//some methods..	
+
 	if(IsPlayerAlive(client))	
 	{	
+		decl Float:speed, Float:origin[3],Float:ang[3];
+		g_CurrentButton[client] = buttons;
+		GetClientAbsOrigin(client, origin);
+		GetClientEyeAngles(client, ang);		
+		new MoveType:movetype = GetEntityMoveType(client);
+		speed = GetSpeed(client);		
+		if (GetEntityFlags(client) & FL_ONGROUND)
+			g_bOnGround[client]=true;
+		else
+			g_bOnGround[client]=false;
+			
+		//ground frames counter
+		if (!g_js_bPlayerJumped[client] && g_bOnGround[client] && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)))
+			g_js_GroundFrames[client]++;
+		
 		//menu refreshing
-		MenuTitleRefreshing(client);	
-		
-		//get player speed
-		g_fSpeed[client] = speed;
-		
+		MenuTitleRefreshing(client);
+
 		//undo check
 		if(g_bUndo[client] || g_bUndoTimer[client])
 		{
 			buttons &= ~IN_JUMP;
 			buttons &= ~IN_DUCK;
-			if ((GetEntityFlags(client) & FL_ONGROUND) && g_bUndo[client])
+			if ((g_bOnGround[client]) && g_bUndo[client])
 			{
 				CreateTimer(0.5, ResetUndo, client, TIMER_FLAG_NO_MAPCHANGE);
-				g_bUndo[client]	= false;
+				g_bUndo[client] = false;
 			}
 		}
 			
-		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
-		
-		//movement modifications
-		SpeedCap(client);	
+		SpeedCap(client);		
 		AutoBhopFunction(client, buttons);
-		Prestrafe(client, ang[1], buttons);
-
-		//usp attack spam protection
-		if (g_bAttackSpamProtection && client > 0 && IsClientInGame(client))
-		{
-			decl String:classnamex[64];
-			GetClientWeapon(client, classnamex, 64);
-			if(StrContains(classnamex,"knife",true) == -1 && g_AttackCounter[client] >= 40)
-			{
-				if(buttons & IN_ATTACK)
-				{
-					new weaponx = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
-					SetEntPropFloat(weaponx, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
-				}
-			}
-		}
-		
-		//hook mod enabled?
-		if (g_bHookMod)
-		{
-			if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
-			{
-				g_js_bPlayerJumped[client] = false;
-				g_bTimeractivated[client] = false;
-			}
-		}
-		
-		//several methods
+		Prestrafe(client,ang[1], buttons);
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
 		NoClipCheck(client);
 		WaterCheck(client);
 		BoosterCheck(client);
+		LadderCheck(client);
+		AttackProtection(client, buttons);
 		WjJumpPreCheck(client,buttons);
 		CalcJumpMaxSpeed(client, speed);
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
 		CalcLastJumpHeight(client, buttons, origin);		
 		BhopHackAntiCheat(client, buttons);
-
-		//LJ Blocks
-		if (!g_js_bPlayerJumped[client] && GetEntityFlags(client) & FL_ONGROUND && ((buttons & IN_JUMP)))
-		{
-			decl Float:temp[3], Float: pos[3];
-			GetClientAbsOrigin(client,pos);
-			g_bLJBlockValidJumpoff[client]=false;
-			if(g_bLJBlock[client])
-			{
-				g_bLJBlockValidJumpoff[client]=true;
-				g_bLjStarDest[client]=false;
-				GetEdgeOrigin(client, origin, temp);
-				g_fEdgeDist[client] = GetVectorDistance(temp, origin);
-				if(!IsCoordInBlockPoint(pos,g_fOriginBlock[client],false))				
-					if(IsCoordInBlockPoint(pos,g_fDestBlock[client],false))
-					{
-						g_bLjStarDest[client]=true;
-					}
-					else
-						g_bLJBlockValidJumpoff[client]=false;
-			}
-		}
-		if(g_bLJBlock[client])
-		{
-			TE_SendBlockPoint(client, g_fDestBlock[client][0], g_fDestBlock[client][1], g_Beam[0]);
-			TE_SendBlockPoint(client, g_fOriginBlock[client][0], g_fOriginBlock[client][1], g_Beam[0]);
-		}	
-	}
+		LjBlockCheck(client,origin);
+		HookCheck(client);
+		SetPlayerBeam(client, origin);
 	
-	// jumpstats (landing)	
-	if(GetEntityFlags(client) & FL_ONGROUND && !g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
-	{		
-		GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
-		g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
-		if (g_bJumpStats && !g_bKickStatus[client])
-			Postthink(client);
-	}	
-				
-	// reset/save current values
-	if (GetEntityFlags(client) & FL_ONGROUND)
-	{
-		g_fLastPositionOnGround[client] = origin;
-		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];
+		if (g_bOnGround[client])
+		{
+			g_bBeam[client] = false;
+			// JumpStats -- Landing
+			if(!g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
+			{					
+				GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
+				g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
+				if (g_bJumpStats && !g_bKickStatus[client])
+					Postthink(client);
+			}	
+			g_fLastPositionOnGround[client] = origin;
+			g_bLastInvalidGround[client] = g_js_bInvalidGround[client];	
+		}
+		else
+		{
+			if (!g_js_bPlayerJumped[client])
+				g_js_GroundFrames[client] = 0;			
+		}		
+		g_fLastAngles[client] = ang;
+		g_LastMoveType[client] = movetype;
+		g_fLastSpeed[client] = speed;
+		g_fLastPosition[client] = origin;
+		g_LastButton[client] = buttons;
 	}
-	if (!(GetEntityFlags(client) & FL_ONGROUND) && g_js_bPlayerJumped[client] == false)
-		g_js_GroundFrames[client] = 0;			
-	g_fLastAngles[client] = ang;
-	g_fLastSpeed[client] = speed;
-	g_fLastPosition[client] = origin;
-	g_LastButton[client] = buttons;
 	return Plugin_Continue;
 }
 
 public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-
-	new Float: flEngineTime = GetEngineTime()
+	decl client;
+	client = GetClientOfUserId(GetEventInt(Event, "userid"));	
+	g_bBeam[client]=true;
+	
 	//noclip check
-	new Float:flDiff = flEngineTime - g_fLastTimeNoClipUsed[client];
+	decl Float: flEngineTime;
+	flEngineTime = GetEngineTime()
+	decl Float:flDiff;
+	flDiff = flEngineTime - g_fLastTimeNoClipUsed[client];
 	if (flDiff < 4.0)
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, Float:{0.0,0.0,-100.0});
-	g_fLastJump[client] = flEngineTime;
-	g_fAirTime[client] = flEngineTime;
-	new bool:touchwall = WallCheck(client);	
+
+	decl bool:touchwall;
+	touchwall = WallCheck(client);	
 	if (g_bJumpStats && !touchwall)
-		Prethink(client, Float:{0.0,0.0,0.0},0.0);
+		Prethink(client, false);
 }
+		
 			
 public Hook_PostThinkPost(entity)
 {
 	SetEntProp(entity, Prop_Send, "m_bInBuyZone", 0);
 } 
-
-public Hook_OnTouch(client, other)
-{
-	if (IsValidClient(client) && IsPlayerAlive(client))
-	{
-		new String:classname[32];
-		if (IsValidEdict(other))
-			GetEntityClassname(other, classname, 32);		
-		if (StrEqual(classname,"func_movelinear"))
-		{
-			g_js_bFuncMoveLinear[client] = true;
-			return;
-		}
-		if (!(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
-			ResetJump(client);	
-	}
-}  
-
-public Action:Event_JoinTeamFailed(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if(!client || !IsClientInGame(client))
-		return Plugin_Continue;
-	new EJoinTeamReason:m_eReason = EJoinTeamReason:GetEventInt(event, "reason");
-	new m_iTs = GetTeamClientCount(CS_TEAM_T);
-	new m_iCTs = GetTeamClientCount(CS_TEAM_CT);
-	switch(m_eReason)
-	{
-		case k_OneTeamChange:
-		{
-			return Plugin_Continue;
-		}
-
-		case k_TeamsFull:
-		{
-			if(m_iCTs == g_CTSpawns && m_iTs == g_TSpawns)
-				return Plugin_Continue;
-		}
-		case k_TTeamFull:
-		{
-			if(m_iTs == g_TSpawns)
-				return Plugin_Continue;
-		}
-		case k_CTTeamFull:
-		{
-			if(m_iCTs == g_CTSpawns)
-				return Plugin_Continue;
-		}
-		default:
-		{
-			return Plugin_Continue;
-		}
-	}
-	ChangeClientTeam(client, g_SelectedTeam[client]);
-
-	return Plugin_Handled;
-}
-
-public Teleport_OnStartTouch(const String:output[], caller, client, Float:delay)
-{
-	if (IsValidClient(client))
-	{	
-		if (GetEntityFlags(client) & FL_ONGROUND)
-			g_bOnBhopPlattform[client]=true;
-		g_bValidTeleport[client]=true;
-	}
-}  
 
 public Teleport_OnEndTouch(const String:output[], caller, client, Float:delay)
 {
@@ -812,20 +724,44 @@ public Teleport_OnEndTouch(const String:output[], caller, client, Float:delay)
 	{
 		g_bOnBhopPlattform[client] = false;
 		g_fLastTimeBhopBlock[client] = GetEngineTime();
+	}	
+}  
+
+
+public Hook_OnTouch(client, other)
+{
+	if (IsValidClient(client) && IsPlayerAlive(client))
+	{		
+		decl String:classname[32];
+		if (IsValidEdict(other))
+			GetEntityClassname(other, classname, 32);		
+		if (StrEqual(classname,"func_movelinear"))
+		{
+			g_js_bFuncMoveLinear[client] = true;
+			return;
+		}
+		if (g_js_block_lj_valid[client])
+			return;
+		if (GetEntityMoveType(client) != MOVETYPE_LADDER && !(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
+		{
+			ResetJump(client);	
+		}
 	}
 }  
 
 //https://forums.alliedmods.net/showthread.php?p=1678026 by Inami
 public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-	if(IsValidClient(client) && !IsFakeClient(client) && !g_bAutoBhop2)
+	decl client;
+	client = GetClientOfUserId(GetEventInt(Event, "userid"));	
+	if(IsValidClient(client) && !IsFakeClient(client) && !g_bAutoBhop)
 	{	
 		g_fafAvgJumps[client] = ( g_fafAvgJumps[client] * 9.0 + float(g_aiJumps[client]) ) / 10.0;	
 		decl Float:vec_vel[3];
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", vec_vel);
 		vec_vel[2] = 0.0;
-		new Float:speed = GetVectorLength(vec_vel);
+		decl Float:speed;
+		speed = GetVectorLength(vec_vel);
 		g_fafAvgSpeed[client] = (g_fafAvgSpeed[client] * 9.0 + speed) / 10.0;
 		
 		g_aaiLastJumps[client][g_NumberJumpsAbove[client]] = g_aiJumps[client];
@@ -868,11 +804,12 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		}
 
 		g_aiJumps[client] = 0;
-		new Float:tempvec[3];
+		decl Float:tempvec[3];
 		tempvec = g_favLastPos[client];
 		GetEntPropVector(client, Prop_Send, "m_vecOrigin", g_favLastPos[client]);
 		
-		new Float:len = GetVectorDistance(g_favLastPos[client], tempvec, true);
+		decl Float:len;
+		len = GetVectorDistance(g_favLastPos[client], tempvec, true);
 		if (len < 30.0)
 		{   
 			g_aiIgnoreCount[client] = 2;
@@ -882,7 +819,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		{
 			if (g_bAntiCheat && !g_bFlagged[client])
 			{
-				new String:banstats[256];
+				decl String:banstats[256];
 				GetClientStatsLog(client, banstats, sizeof(banstats));		
 				decl String:sPath[512];
 				BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
@@ -900,3 +837,42 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 	}
 }
 
+public Action:Event_JoinTeamFailed(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	new client = GetClientOfUserId(GetEventInt(event, "userid"));
+	if(!client || !IsClientInGame(client))
+		return Plugin_Continue;
+	new EJoinTeamReason:m_eReason = EJoinTeamReason:GetEventInt(event, "reason");
+	new m_iTs = GetTeamClientCount(CS_TEAM_T);
+	new m_iCTs = GetTeamClientCount(CS_TEAM_CT);
+	switch(m_eReason)
+	{
+		case k_OneTeamChange:
+		{
+			return Plugin_Continue;
+		}
+
+		case k_TeamsFull:
+		{
+			if(m_iCTs == g_CTSpawns && m_iTs == g_TSpawns)
+				return Plugin_Continue;
+		}
+		case k_TTeamFull:
+		{
+			if(m_iTs == g_TSpawns)
+				return Plugin_Continue;
+		}
+		case k_CTTeamFull:
+		{
+			if(m_iCTs == g_CTSpawns)
+				return Plugin_Continue;
+		}
+		default:
+		{
+			return Plugin_Continue;
+		}
+	}
+	ChangeClientTeam(client, g_SelectedTeam[client]);
+
+	return Plugin_Handled;
+}

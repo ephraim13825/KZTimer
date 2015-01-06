@@ -6,12 +6,6 @@ public Action:RefreshAdminMenu(Handle:timer, any:client)
 		KzAdminMenu(client);
 }
 
-public Action:UpdatePlayerProfile(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))	
-		db_updateStat(client);	
-}
-
 public Action:SetPlayerWeapons(Handle:timer, any:client)
 {
 	if ((GetClientTeam(client) > 1) && IsValidClient(client))
@@ -21,11 +15,29 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 			GivePlayerItem(client, "weapon_usp_silencer");
 		if (!g_bStartWithUsp[client])
 		{
-			new weapon = GetPlayerWeaponSlot(client, 2);
+			decl weapon;
+			weapon = GetPlayerWeaponSlot(client, 2);
 			if (weapon != -1 && !IsFakeClient(client))
 				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
 		}
 	}	
+}
+
+public Action:PlayerRanksTimer(Handle:timer)
+{
+	for (new i = 1; i <= MaxClients; i++)
+	{	
+		if (!IsValidClient(i) || IsFakeClient(i))
+			continue;			
+		db_GetPlayerRank(i);
+	}
+	return Plugin_Continue;
+}
+
+public Action:UpdatePlayerProfile(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))	
+		db_updateStat(client);	
 }
 
 public Action:StartTimer(Handle:timer, any:client)
@@ -55,44 +67,64 @@ public Action:AttackTimer(Handle:timer)
 				g_AttackCounter[i] = g_AttackCounter[i]  - 5;
 		}
 	}
+	return Plugin_Continue;
 }
 
 public Action:KZTimer1(Handle:timer)
 {
 	if (g_bRoundEnd)
 		return Plugin_Continue;
-	for (new client = 1; client <= MaxClients; client++)
+	decl client;
+	for (client = 1; client <= MaxClients; client++)
 	{		
 		if (IsValidClient(client))
 		{			
 			if(IsPlayerAlive(client))
-			{				
+			{			
 				//1st team join + in-game
 				if (g_bFirstTeamJoin[client])		
 				{
+					g_bFirstTeamJoin[client] = false;
 					CreateTimer(0.0, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 					CreateTimer(10.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
-					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);			
-					g_bFirstTeamJoin[client] = false;
+					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
+					CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);				
 				}
 				CenterHudAlive(client);			
 				
-				//bhop plattform
-				if (GetEntityFlags(client) & FL_ONGROUND)
+				
+				//bhop plattform & movement direction
+				if (g_bOnGround[client])
 					g_js_TotalGroundFrames[client]++;
 				else
-					g_js_TotalGroundFrames[client]=0;
-				if (g_js_TotalGroundFrames[client] > 1 && g_bOnBhopPlattform[client])
-					g_bOnBhopPlattform[client] = false;
-						
-				//Wall check (JumpStats)
+				{
+					if(g_bLadderJump[client])
+					{
+						g_js_fLadderDirection[client]+= GetClientMovingDirection(client,true);
+						g_js_LadderDirectionCounter[client]++;						
+					}		
+					g_fMovingDirection[client]+= GetClientMovingDirection(client,false);
+					g_js_TotalGroundFrames[client] = 0;				
+				}
+				if (g_js_TotalGroundFrames[client] > 1 && g_bOnBhopPlattform[client])	
+					g_bOnBhopPlattform[client] = false;	
+				
 				SurfCheck(client);
+				MovementCheck(client);
 			}
 			else
 				CenterHudDead(client);				
 		}
 	}	
 	return Plugin_Continue;		
+}
+
+public Action:DelayedStuff(Handle:timer)
+{
+	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
+		ServerCommand("exec sourcemod/kztimer/main.cfg");
+	else
+		SetFailState("<KZTIMER> cfg/sourcemod/kztimer/main.cfg not found.");
 }
 
 public Action:KZTimer2(Handle:timer)
@@ -104,12 +136,13 @@ public Action:KZTimer2(Handle:timer)
 	{
 		new Handle:hTmp;	
 		hTmp = FindConVar("mp_timelimit");
-		new iTimeLimit = GetConVarInt(hTmp);			
+		decl iTimeLimit;
+		iTimeLimit = GetConVarInt(hTmp);			
 		if (hTmp != INVALID_HANDLE)
 			CloseHandle(hTmp);	
 		if (iTimeLimit > 0)
 		{
-			new timeleft;
+			decl timeleft;
 			GetMapTimeLeft(timeleft);		
 			switch(timeleft)
 			{
@@ -137,15 +170,11 @@ public Action:KZTimer2(Handle:timer)
 		}
 	}
 
-	//settings enforcer
-	if (g_bEnforcer)		
-		ServerCommand("kz_prespeed_cap 380.0;sv_staminalandcost 0;sv_maxspeed 320; sv_staminajumpcost 0; sv_gravity 800; sv_airaccelerate 100; sv_friction 5;sv_accelerate 6.5;sv_maxvelocity 2000;sv_cheats 0"); 
-	
 	//info bot name
 	SetInfoBotName(g_InfoBot);	
 	
-
-	for (new i = 1; i <= MaxClients; i++)
+	decl i;
+	for (i = 1; i <= MaxClients; i++)
 	{	
 		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;	
@@ -156,14 +185,16 @@ public Action:KZTimer2(Handle:timer)
 		//overlay check
 		if (g_bOverlay[i] && GetEngineTime()-g_fLastOverlay[i] > 5.0)
 			g_bOverlay[i] = false;
-		
+	
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
-			new Float:fltime = GetEngineTime() - g_fStartTime[i] - g_fPauseTime[i] + 1.0;
+			decl Float:fltime;
+			fltime = GetEngineTime() - g_fStartTime[i] - g_fPauseTime[i] + 1.0;
 			if (IsPlayerAlive(i) && g_bTimeractivated[i])
 			{
-				new time = RoundToZero(fltime);
+				decl time; 
+				time = RoundToZero(fltime);
 				Client_SetScore(i,time); 
 				Client_SetAssists(i,g_OverallCp[i]);		
 				Client_SetDeaths(i,g_OverallTp[i]);								
@@ -182,18 +213,21 @@ public Action:KZTimer2(Handle:timer)
 		if (IsPlayerAlive(i)) 
 		{	
 			//spec hud
-			SpecListMenuAlive(i);					
+			SpecListMenuAlive(i);
 			
+				
 			//challenge check
 			if (g_bChallenge_Request[i])
 			{
-				new Float:time= GetEngineTime() - g_fChallenge_RequestTime[i];
+				decl Float:time;
+				time= GetEngineTime() - g_fChallenge_RequestTime[i];
 				if (time>20.0)
 				{
 					PrintToChat(i, "%t", "ChallengeRequestExpired", RED,WHITE,YELLOW);
 					g_bChallenge_Request[i] = false;
 				}
 			}
+			
 			//Last Cords & Angles
 			GetClientAbsOrigin(i,g_fPlayerCordsLastPosition[i]);
 			GetClientEyeAngles(i,g_fPlayerAnglesLastPosition[i]);
@@ -203,11 +237,13 @@ public Action:KZTimer2(Handle:timer)
 	}
 	
 	//clean weapons on ground
-	new maxEntities = GetMaxEntities();
+	decl maxEntities;
+	maxEntities = GetMaxEntities();
 	decl String:classx[20];
 	if (g_bCleanWeapons)
 	{
-		for (new j = MaxClients + 1; j < maxEntities; j++)
+		decl j;
+		for (j = MaxClients + 1; j < maxEntities; j++)
 		{
 			if (IsValidEdict(j) && (GetEntDataEnt2(j, g_ownerOffset) == -1))
 			{
@@ -221,7 +257,7 @@ public Action:KZTimer2(Handle:timer)
 	}
 	return Plugin_Continue;
 }
-
+			
 public Action:CreateMapButtons(Handle:timer)
 {
 	db_selectMapButtons();
@@ -238,7 +274,6 @@ public Action:KickPlayer(Handle:Timer, any:client)
 }
 
 
-
 //challenge start countdown
 public Action:Timer_Countdown(Handle:timer, any:client)
 {
@@ -253,12 +288,9 @@ public Action:Timer_Countdown(Handle:timer, any:client)
 			PrintToChat(client, "%t", "ChallengeStarted2",RED,WHITE,YELLOW);
 			PrintToChat(client, "%t", "ChallengeStarted3",RED,WHITE,YELLOW);
 			PrintToChat(client, "%t", "ChallengeStarted4",RED,WHITE,YELLOW);
-			KillTimer(timer);
-			return Plugin_Handled;
+			return Plugin_Stop;
 		}
 	}
-	else
-		KillTimer(timer);
 	return Plugin_Continue;
 }
 
@@ -266,7 +298,8 @@ public Action:ResetUndo(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !g_bUndo[client])
 	{
-		new Float: diff = GetEngineTime() - g_fLastUndo[client];
+		decl Float: diff;
+		diff = GetEngineTime() - g_fLastUndo[client];
 		if (diff >= 0.5)
 			g_bUndoTimer[client] = false;
 	}
@@ -286,7 +319,8 @@ public Action:ProReplayTimer(Handle:timer, any:client)
 
 public Action:CheckChallenge(Handle:timer, any:client)
 {
-	new bool:oppenent=false;
+	decl bool:oppenent;
+	oppenent=false;
 	decl String:szSteamId[128];
 	decl String:szName[32];
 	decl String:szNameTarget[32];
@@ -295,7 +329,7 @@ public Action:CheckChallenge(Handle:timer, any:client)
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && i != client)
-			{	
+			{			
 				if (StrEqual(g_szSteamID[i],g_szChallenge_OpponentID[client]))
 				{
 					oppenent=true;		
@@ -335,12 +369,9 @@ public Action:CheckChallenge(Handle:timer, any:client)
 			if (IsValidClient(client))
 				PrintToChat(client, "%t", "ChallengeWon",RED,WHITE,YELLOW,WHITE);
 					
-			KillTimer(timer);
-			return Plugin_Handled;
+			return Plugin_Stop;
 		}
 	}
-	else
-		KillTimer(timer);
 	return Plugin_Continue;
 }
 
@@ -363,8 +394,8 @@ public Action:SetClanTag(Handle:timer, any:client)
 	
 	decl String:old_pr_rankname[32];  
 	decl String:tag[32];  
-	new bool:oldrank;
-	
+	decl bool:oldrank;
+	oldrank=false;
 	if (!StrEqual(g_pr_rankname[client], "", false))
 	{
 		oldrank=true;
@@ -394,8 +425,6 @@ public Action:TerminateRoundTimer(Handle:timer)
 	CS_TerminateRound(1.0, CSRoundEnd_CTWin, true);
 }
 
-
-
 public Action:WelcomeMsgTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client) && !StrEqual(g_sWelcomeMsg,""))
@@ -408,14 +437,20 @@ public Action:HelpMsgTimer(Handle:timer, any:client)
 		PrintToChat(client, "%t", "HelpMsg", MOSSGREEN,WHITE,GREEN,WHITE);
 }
 
-public Action:GetTakeOffSpeedTimer(Handle:timer, any:client)
+public Action:SteamGroupTimer(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+		PrintToChat(client, " %c>>%c Join the steam group of KZTimer to be more informed on updates as well as new climb maps, type %c!join%c in chat!", YELLOW,GRAY,LIMEGREEN,GRAY);	
+}
+
+public Action:GetJumpOffSpeedTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client))
 	{
 		decl Float:fVelocity[3];
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 		fVelocity[2] = 0.0;
-		g_js_fTakeOff_Speed[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));
+		g_js_fJumpOff_Speed[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));
 	}
 }
 
@@ -458,13 +493,12 @@ public Action:CenterMsgTimer(Handle:timer, any:client)
 	}
 }
 
-
 public Action:ClimbersMenuTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		if (g_bAllowCheckpoints)
-			if(StrEqual(g_szMapTag[0],"kz") || StrEqual(g_szMapTag[0],"xc") || StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"bkz"))
+			if(StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc") || StrEqual(g_szMapPrefix[0],"bhop") || StrEqual(g_szMapPrefix[0],"bkz"))
 				Client_Kzmenu(client,0);
 	}
 }
@@ -473,9 +507,10 @@ public Action:RemoveRagdoll(Handle:timer, any:victim)
 {
     if (IsValidEntity(victim) && !IsPlayerAlive(victim))
     {
-        new player_ragdoll = GetEntDataEnt2(victim, g_ragdolls);
-        if (player_ragdoll != -1)
-            RemoveEdict(player_ragdoll);
+	decl player_ragdoll;
+	player_ragdoll = GetEntDataEnt2(victim, g_ragdolls);
+	if (player_ragdoll != -1)
+		RemoveEdict(player_ragdoll);
     }
 }
 
@@ -487,4 +522,14 @@ public Action:HideRadar(Handle:timer, any:client)
 		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);	
 	}
 }
+
+public Action:LoadPlayerSettings(Handle:timer)
+{
+	for(new c=1;c<=MaxClients;c++)
+	{
+		if(IsValidClient(c))
+			OnClientPutInServer(c);
+	}
+}
+
 

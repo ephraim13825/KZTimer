@@ -1,41 +1,61 @@
+public Action:Client_PlayerJumpBeam(client, args) 
+{
+	PlayerJumpBeam(client);
+	if (g_bJumpBeam[client])
+		PrintToChat(client, "%t", "PlayerJumpBeam1", MOSSGREEN,WHITE);
+	else
+		PrintToChat(client, "%t", "PlayerJumpBeam2", MOSSGREEN,WHITE);
+	return Plugin_Handled;
+}
+
+public PlayerJumpBeam(client)
+{
+	if (g_bJumpBeam[client])
+		g_bJumpBeam[client] = false;
+	else
+		g_bJumpBeam[client] = true;
+}
+
 public Action:Client_Ljblock(client, args)
 {
 	if (IsValidClient(client) && IsPlayerAlive(client))
 		LJBlockMenu(client);
 	return Plugin_Handled;
 }
-
-public Action:Client_AntiCheatLog(client, args)
+public Action:Client_Wr(client, args)
 {
-	if (!IsValidClient(client))
-			return Plugin_Handled;
-
-	decl String:sPath[PLATFORM_MAX_PATH];
-	decl String:line[512];
-	BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
-	new Handle:fileHandle=OpenFile(sPath,"r");
-	if (fileHandle == INVALID_HANDLE)
-		PrintToChat(client, "[%cKZ%c] Anti-cheat log is empty.",MOSSGREEN,WHITE);
-	else
+	if (IsValidClient(client))
 	{
-		PrintToConsole(client," ");
-		PrintToConsole(client,"KZTimer Anti-cheat log file:");
-		while(!IsEndOfFile(fileHandle)&&ReadFileLine(fileHandle,line,sizeof(line)))
-		{
-			if (StrContains(line,"hyperscrolling") == -1)
-				PrintToConsole(client, "%s", line);
-		}
-		if (fileHandle != INVALID_HANDLE)
-			CloseHandle(fileHandle);
-		PrintToConsole(client," ");
-		PrintToChat(client, "[%cKZ%c] See console for output!", MOSSGREEN,WHITE);	
+		if (g_fRecordTimePro == 9999999.0 && g_fRecordTime == 9999999.0)
+			PrintToChat(client, "%t", "NoRecordTop", MOSSGREEN,WHITE);
+		else
+			PrintMapRecords(client);
 	}
 	return Plugin_Handled;
 }
+
+public Action:Client_Avg(client, args)
+{
+	if(!IsValidClient(client))
+		return Plugin_Handled;	
+	
+	decl String:szTpTime[32];
+	FormatTimeFloat(client, g_favg_tptime, 3, szTpTime, sizeof(szTpTime));	
+	decl String:szProTime[32];
+	FormatTimeFloat(client, g_favg_protime, 3, szProTime, sizeof(szProTime));
+
+	if (g_MapTimesCountPro==0)
+		Format(szProTime,32,"00:00:00");
+	if (g_MapTimesCountTp==0)
+		Format(szTpTime,32,"00:00:00");
+	PrintToChat(client, "%t", "AvgTime", MOSSGREEN,WHITE,GRAY,DARKBLUE,WHITE,szProTime,g_MapTimesCountPro,YELLOW,WHITE,szTpTime,g_MapTimesCountTp);
+	return Plugin_Handled;
+}
+
 public LJBlockMenu(client)
 {	
 	new Handle:menu = CreateMenu(LjBlockMenuHandler);
-	SetMenuTitle(menu, "Block Jump Menu");
+	SetMenuTitle(menu, "KZTimer - Block Jump");
 	AddMenuItem(menu, "0", "Select Destination");
 	AddMenuItem(menu, "0", "Reset Destination");
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
@@ -100,7 +120,6 @@ public Action:Command_Stats(client, args)
 }
 
 
-
 public Action:Client_Challenge(client, args)
 {
 	if (!g_bChallenge[client] && !g_bChallenge_Request[client])
@@ -113,11 +132,11 @@ public Action:Client_Challenge(client, args)
 				new Handle:menu = CreateMenu(ChallengeMenuHandler1);
 				if (g_bAllowCheckpoints)
 				{
-					SetMenuTitle(menu, "Challenge - Checkpoints?");
+					SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?");
 					AddMenuItem(menu, "Yes", "Yes");	
 				}
 				else
-					SetMenuTitle(menu, "Challenge - Checkpoints?\nCheckpoints disabled");
+					SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?\nCheckpoints disabled");
 				AddMenuItem(menu, "No", "No");	
 				SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 				DisplayMenu(menu, client, MENU_TIME_FOREVER);			
@@ -147,9 +166,9 @@ public ChallengeMenuHandler1(Handle:menu, MenuAction:action, param1,param2)
 		g_bMenuOpen[param1]=true;
 		decl String:tmp[64];
 		if (g_bPointSystem)
-			Format(tmp, 64, "Challenge - Player Bet?\nYour Points: %i", g_pr_points[param1]);
+			Format(tmp, 64, "KZTimer - Challenge: Player Bet?\nYour Points: %i", g_pr_points[param1]);
 		else
-			Format(tmp, 64, "Challenge - Player Bet?\nPlayer point system disabled", g_pr_points[param1]);
+			Format(tmp, 64, "KZTimer - Challenge: Player Bet?\nPlayer point system disabled", g_pr_points[param1]);
 		SetMenuTitle(menu2, tmp);		
 		AddMenuItem(menu2, "0", "No bet");			
 		if (g_bPointSystem)
@@ -203,7 +222,7 @@ public ChallengeMenuHandler2(Handle:menu, MenuAction:action, param1,param2)
 						g_Challenge_Bet[param1] = 0;		
 		decl String:szPlayerName[MAX_NAME_LENGTH];	
 		new Handle:menu2 = CreateMenu(ChallengeMenuHandler3);
-		SetMenuTitle(menu2, "Challenge - Select your Opponent");
+		SetMenuTitle(menu2, "KZTimer - Challenge: Select your Opponent");
 		new playerCount=0;
 		for (new i = 1; i <= MaxClients; i++)
 		{
@@ -400,16 +419,32 @@ public Action:Client_Accept(client, args)
 public Action:Client_Usp(client, args)
 {
 	if(!IsValidClient(client) || !IsPlayerAlive(client))
-		return Plugin_Handled;		
-
+		return Plugin_Handled;	
+	
 	if(Client_HasWeapon(client, "weapon_hkp2000"))
 	{			
 		new weapon = Client_GetWeapon(client, "weapon_hkp2000");
-		Client_SetActiveWeapon(client, weapon);
+		FakeClientCommand(client, "use %s", weapon);
+		InstantSwitch(client, weapon);
 	}
 	else
 		GivePlayerItem(client, "weapon_usp_silencer");
 	return Plugin_Handled;
+}
+
+InstantSwitch(client, weapon, timer = 0) 
+{
+    new Float:GameTime = GetGameTime();
+
+    if (!timer) 
+	{
+        SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+        SetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack", GameTime);
+    }
+
+    SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GameTime);
+    new ViewModel = GetEntPropEnt(client, Prop_Send, "m_hViewModel");
+    SetEntProp(ViewModel, Prop_Send, "m_nSequence", 0);
 }
 
 public Action:Client_Surrender (client, args)
@@ -466,6 +501,7 @@ public Action:Client_Surrender (client, args)
 	}
 	return Plugin_Handled;
 }
+
 //public Action:Command_ext_Menu(client, String:command[32])
 public Action:Command_ext_Menu(client, const String:command[], argc) 
 {
@@ -491,11 +527,11 @@ public StopClimbersMenu(client)
 public Action:Command_JoinTeam(client, const String:command[], argc)
 { 
 	if(!IsValidClient(client) || argc < 1)
-		return Plugin_Handled;
-		
+		return Plugin_Handled;		
 	decl String:arg[4];
 	GetCmdArg(1, arg, sizeof(arg));
-	new toteam = StringToInt(arg);
+	new toteam = StringToInt(arg);	
+
 	TeamChangeActual(client, toteam);
 	return Plugin_Handled;
 }
@@ -517,6 +553,7 @@ TeamChangeActual(client, toteam)
 	return;
 }
 
+
 public Action:Client_OptionMenu(client, args)
 {
 	OptionMenu(client);
@@ -530,7 +567,7 @@ public Action:Client_Next(client, args)
 		PrintToChat(client, "%t", "NoCheckpointsFound", MOSSGREEN,WHITE);
 		return Plugin_Handled;
 	}
-	TeleClient(client,1);
+	DoTeleport(client,1);
 	return Plugin_Handled;
 }
 
@@ -540,26 +577,29 @@ public Action:Client_Undo(client, args)
 	{
 		if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
 			return Plugin_Handled;
-		g_bValidTeleport[client]=true;
 		g_bUndo[client]	= true;
 		g_bUndoTimer[client] = true;
-		g_fLastUndo[client] = GetEngineTime();
+		g_fLastUndo[client] = GetEngineTime();	
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
 		g_js_LeetJump_Count[client] = 0;
 	}
 	return Plugin_Handled;
 }
 
+
+
+
+
 public Action:NoClip(client, args)
 {
 	if (!IsValidClient(client))					
 		return Plugin_Handled;	
-	if (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER") || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922"))
+	if (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER"))
 	{
 		if (!g_bMapFinished[client])
 		{
 			//BEST RANK || ADMIN || VIP
-			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922") || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
 				Action_NoClip(client);
 			else
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
@@ -588,19 +628,19 @@ public Action:Client_Prev(client, args)
 		PrintToChat(client, "%t", "NoCheckpointsFound", MOSSGREEN,WHITE);
 		return Plugin_Handled;
 	}
-	TeleClient(client,-1);
+	DoTeleport(client,-1);
 	return Plugin_Handled;
 }
 
 public Action:Client_Save(client, args)
 {
-	SaveClientLocation(client)
+	DoCheckpoint(client)
 	return Plugin_Handled;	
 }
 
 public Action:Client_Tele(client, args)
 {
-	TeleClient(client,0);
+	DoTeleport(client,0);
 	return Plugin_Handled;
 }
 
@@ -691,9 +731,9 @@ public SpecPlayer(client,args)
 		new Handle:menu = CreateMenu(SpecMenuHandler);
 		
 		if(g_bSpectate[client])
-			SetMenuTitle(menu, "spec menu (press 'm' to rejoin a team!)\nselect a player:");	
+			SetMenuTitle(menu, "KZTimer - Spec menu (press 'm' to rejoin a team!)");	
 		else
-			SetMenuTitle(menu, "spec menu\nselect a player:");	
+			SetMenuTitle(menu, "KZTimer - Spec menu");	
 		new playerCount=0;
 		
 		//add replay bots
@@ -701,35 +741,47 @@ public SpecPlayer(client,args)
 		{
 			if (g_ProBot != -1 && IsValidClient(g_ProBot) && IsPlayerAlive(g_ProBot))
 			{
-				Format(szPlayerName2, 128, "PRO Replay (%s)",g_szReplayTime);
+				Format(szPlayerName2, 128, "Pro record replay (%s)",g_szReplayTime);
 				AddMenuItem(menu, "PRO RECORD REPLAY", szPlayerName2);
 				playerCount++;
 			}
 			if (g_TpBot != -1 && IsValidClient(g_TpBot) && IsPlayerAlive(g_TpBot))
 			{
-				Format(szPlayerName2, 128, "TP Replay (%s)",g_szReplayTimeTp);
+				Format(szPlayerName2, 128, "TP record replay (%s)",g_szReplayTimeTp);
 				AddMenuItem(menu, "TP RECORD REPLAY", szPlayerName2);
 				playerCount++;
 			}
 		}
 		
-		new x = 0;
+		new count = 0;
 		//add players
 		for (new i = 1; i <= MaxClients; i++)
 		{
 			if (IsValidClient(i) && IsPlayerAlive(i) && i != client && !IsFakeClient(i))
 			{
-				if (x==0)
-					AddMenuItem(menu, "brp123123xcxc", ">> PLAYER WITH MOST EXP. POINTS <<");
+				if (count==0)
+				{
+					new bestrank = 99999999;
+					for (new x = 1; x <= MaxClients; x++)
+					{
+						if (IsValidClient(x) && IsPlayerAlive(x) && x != client && !IsFakeClient(x) && g_PlayerRank[x] > 0)
+							if (g_PlayerRank[x] <= bestrank)
+								bestrank = g_PlayerRank[x];					
+					}
+					decl String:szMenu[128];
+					Format (szMenu,128,"Highest ranked player (#%i)",bestrank);
+					AddMenuItem(menu, "brp123123xcxc", szMenu);
+					AddMenuItem(menu, "", "",ITEMDRAW_SPACER);					
+				}
 				GetClientName(i, szPlayerName, MAX_NAME_LENGTH);	
 				Format(szPlayerName2, 128, "%s (%s)",szPlayerName, g_pr_rankname[i]);
 				AddMenuItem(menu, szPlayerName, szPlayerName2);
 				playerCount++;		
-				x++;
+				count++;
 			}
 		}
 		
-		if (playerCount>0)
+		if (playerCount>0 || g_ProBot != -1 || g_TpBot != -1)
 		{
 			g_bMenuOpen[client]=true;
 			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
@@ -737,6 +789,7 @@ public SpecPlayer(client,args)
 		}		
 		else
 			PrintToChat(client, "%t", "ChallengeFailed4",MOSSGREEN,WHITE);
+			
 	}
 	else 
 	{
@@ -763,7 +816,7 @@ public SpecPlayer(client,args)
 				{
 					ChangeClientTeam(client, 1);
 					SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", i);  
-					SetEntProp(client, Prop_Send, "m_iObserverMode", 4);	
+					SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
 					return;
 				}
 			}
@@ -784,14 +837,14 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		{
 			new playerid;
 			new count = 0;
-			new points = -1;
+			new bestrank = 99999999;
 			for (new i = 1; i <= MaxClients; i++)
 			{
 				if (IsValidClient(i) && IsPlayerAlive(i) && i != param1 && !IsFakeClient(i))
 				{
-					if (g_pr_points[i] > points)
+					if (g_PlayerRank[i] <= bestrank)
 					{
-						points = g_pr_points[i];
+						bestrank = g_PlayerRank[i];
 						playerid = i;
 						count++;
 					}
@@ -859,7 +912,7 @@ public CompareMenu(client,args)
 	{
 		Format(szPlayerName, MAX_NAME_LENGTH, "");
 		new Handle:menu = CreateMenu(CompareSelectMenuHandler);
-		SetMenuTitle(menu, "compare menu\nselect a player:");		
+		SetMenuTitle(menu, "KZTimer - Compare menu");		
 		new playerCount=0;
 		for (new i = 1; i <= MaxClients; i++)
 		{
@@ -974,7 +1027,7 @@ public ProfileMenu(client,args)
 	{
 		decl String:szPlayerName[MAX_NAME_LENGTH];	
 		new Handle:menu = CreateMenu(ProfileSelectMenuHandler);
-		SetMenuTitle(menu, "profile menu\nselect a player:");		
+		SetMenuTitle(menu, "KZTimer - Profile menu");		
 		GetClientName(client, szPlayerName, MAX_NAME_LENGTH);	
 		AddMenuItem(menu, szPlayerName, szPlayerName);	
 		new playerCount=1;
@@ -1082,7 +1135,7 @@ public ProfileSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 public Action:Client_AutoBhop(client, args) 
 { 	
 	AutoBhop(client);
-	if (g_bAutoBhop2)
+	if (g_bAutoBhop)
 	{
 		if (!g_bAutoBhopClient[client])
 			PrintToChat(client, "%t", "AutoBhop2",MOSSGREEN,WHITE);
@@ -1094,7 +1147,7 @@ public Action:Client_AutoBhop(client, args)
 
 public AutoBhop(client)
 {
-	if (!g_bAutoBhop2)
+	if (!g_bAutoBhop)
 		PrintToChat(client, "%t", "AutoBhop3",MOSSGREEN,WHITE);
 	if (!g_bAutoBhopClient[client])
 		g_bAutoBhopClient[client] = true; 
@@ -1160,6 +1213,13 @@ public Action:Client_Compare(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_RankingSystem(client, args)
+{
+	PrintToChat(client,"[%cKZ%c]%c Loading html page.. (requires cl_disablehtmlmotd 0)", MOSSGREEN,WHITE,LIMEGREEN);
+	ShowMOTDPanel(client, "rankingsystem" ,"http://kuala-lumpur-court-8417.pancakeapps.com/ranking_index.html", 2);
+	return Plugin_Handled;
+}
+
 public Action:Client_Start(client, args)
 {
 	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
@@ -1173,22 +1233,26 @@ public Action:Client_Start(client, args)
 	//spawn at Timer
 	if (g_bRespawnAtTimer[client]==true)
 	{
-		g_bValidTeleport[client]=true;
 		TeleportEntity(client, g_fPlayerCordsRestart[client],g_fPlayerAnglesRestart[client], Float:{0.0,0.0,-100.0});		
 	}
 	else //else spawn at spawnpoint
-		CS_RespawnPlayer(client);	
-		
+	{	
+		if (g_fSpawnpointOrigin[0] != -999999.9)
+		{
+			TeleportEntity(client, g_fSpawnpointOrigin,g_fSpawnpointAngle, Float:{0.0,0.0,-100.0});					
+		}
+		else
+			CS_RespawnPlayer(client);	
+	}	
 	if (g_bAutoTimer)
 		CL_OnStartTimerPress(client);
 		
 	g_js_bPlayerJumped[client] = false;
 	g_bNoClip[client] = false;
-	
-	if(StrEqual(g_szMapTag[0],"bhop") || StrEqual(g_szMapTag[0],"surf"))
-		CL_OnStartTimerPress(client);
+
 	return Plugin_Handled;	
 }
+
 
 public Action:Client_Pause(client, args) 
 {
@@ -1305,6 +1369,7 @@ public AdvClimbersMenu(client)
 }
 
 
+
 public Action:Client_Showtime(client, args) 
 {
 	ShowTime(client)
@@ -1380,13 +1445,6 @@ public GoToMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	}
 }
 
-public Action:Client_RankingSystem(client, args)
-{
-	PrintToChat(client,"[%cKZ%c]%c Loading html page.. (requires cl_disablehtmlmotd 0)", MOSSGREEN,WHITE,LIMEGREEN);
-	ShowMOTDPanel(client, "rankingsystem" ,"http://kuala-lumpur-court-8417.pancakeapps.com/ranking_index.html", 2);
-	return Plugin_Handled;
-}
-
 public GotoMethod(client, i)
 {	
 	if (!IsValidClient(client) || IsFakeClient(client))
@@ -1427,6 +1485,7 @@ public GotoMethod(client, i)
 	}
 }
 
+
 public Action:Client_GoTo(client, args) 
 {
 	if (!g_bGoToServer)
@@ -1446,7 +1505,7 @@ public Action:Client_GoTo(client, args)
 		if (args==0)
 		{
 			new Handle:menu = CreateMenu(GoToMenuHandler);
-			SetMenuTitle(menu, "goto menu\nselect a player:");
+			SetMenuTitle(menu, "KZTimer - Goto menu");
 			new playerCount=0;
 			for (new i = 1; i <= MaxClients; i++)
 			{
@@ -1502,6 +1561,7 @@ public Action:Client_GoTo(client, args)
 	}
 	return Plugin_Handled;
 }
+
 
 public Action:Client_StrafeSync(client, args) 
 {
@@ -1620,12 +1680,11 @@ public Action:Client_bhop(client, args)
 	return Plugin_Handled;
 }
 
-public SaveClientLocation(client)
+public DoCheckpoint(client)
 {
 	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client]) 
 		return;
 			
-		
 		
 	if (!g_bChallenge_Checkpoints[client] && g_bChallenge[client])
 	{
@@ -1635,7 +1694,7 @@ public SaveClientLocation(client)
 
 	
 	//if player on ground
-	if(GetEntDataEnt2(client, FindSendPropOffs("CBasePlayer", "m_hGroundEntity")) != -1)
+	if(g_bOnGround[client])
 	{
 		if (CPLIMIT == g_CounterCp[client]) 
 		{
@@ -1646,11 +1705,11 @@ public SaveClientLocation(client)
 		//on bhop block?
 		if (g_bOnBhopPlattform[client])
 		{
-			if (g_bClimbersMenuSounds[client])
-				EmitSoundToClient(client,"buttons/button10.wav",client);
+			EmitSoundToClient(client,"buttons/button10.wav",client);
 			PrintToChat(client, "%t", "CheckpointsNotonBhopPlattforms", MOSSGREEN,WHITE,RED);
 			return;
 		}
+		
 		
 		//save coordinates for new cp
 		GetClientAbsOrigin(client,g_fPlayerCords[client][g_CounterCp[client]]);
@@ -1663,19 +1722,18 @@ public SaveClientLocation(client)
 		if (g_bClimbersMenuSounds[client])
 			EmitSoundToClient(client,"buttons/blip1.wav",client);
 		if (g_bCPTextMessage[client])
-			PrintToChat(client, "%t", "CheckpointSaved", MOSSGREEN,WHITE,GRAY);
+			PrintToChat(client, "%t", "CheckpointSaved", MOSSGREEN,WHITE,GRAY, LIGHTBLUE, g_OverallCp[client], GRAY);
 	}
 	else
 	{
-		if (g_bClimbersMenuSounds[client])
-			EmitSoundToClient(client,"buttons/button10.wav",client);
+		EmitSoundToClient(client,"buttons/button10.wav",client);
 		PrintToChat(client, "%t", "CheckpointsNotinAir", MOSSGREEN,WHITE,RED);
 	}
 }
 
-public TeleClient(client,pos)
+public DoTeleport(client,pos)
 {
-	if (!IsValidClient(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1  || g_bPause[client]) 
+	if (!IsValidClient(client) || IsFakeClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_CurrentCp[client] == -1 || g_bPause[client]) 
 		return;
 		
 	if (!g_bAllowCheckpoints)
@@ -1740,13 +1798,12 @@ public TeleClient(client,pos)
 			
 			if (g_fPlayerCords[client][actual][0] == 0.0 && g_fPlayerCords[client][actual][1] && g_fPlayerCords[client][actual][2])
 				PrintToChat(client, "[%cKZ%c] %cFailed!", MOSSGREEN,WHITE,RED);
-				
+			
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
-			g_bValidTeleport[client]=true;
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
 				g_js_LeetJump_Count[client] = 0;
-			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});
+			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});		
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
 				EmitSoundToClient(client,"buttons/blip1.wav",client);
@@ -1819,7 +1876,7 @@ public ClimbersMenu(client)
 	if (g_bTimeractivated[client])
 	{
 		GetcurrentRunTime(client);
-		SetMenuTitle(g_hclimbersmenu[client], g_szMenuTitleRun[client]);
+		SetMenuTitle(g_hclimbersmenu[client], g_szTimerTitle[client]);
 		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu1_1", client, g_OverallCp[client]);
 		AddMenuItem(g_hclimbersmenu[client], "!save", buffer);
 		Format(buffer, sizeof(buffer), "%T", "ClimbersMenu2_1", client, g_OverallTp[client]);	
@@ -1912,7 +1969,6 @@ public ClimbersMenu(client)
 }
 
 
-
 public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 {
 	if(action == MenuAction_Select)
@@ -1923,8 +1979,8 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 			{
 				switch(param2)
 				{
-					case 0: SaveClientLocation(param1);
-					case 1: TeleClient(param1,0);
+					case 0: DoCheckpoint(param1);
+					case 1: DoTeleport(param1,0);
 					case 2: Client_Prev(param1,0);
 					case 3: Client_Next(param1,0); 
 					case 4: Client_Undo(param1,0); 
@@ -1935,8 +1991,8 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 			else
 				switch(param2)
 				{
-					case 0: SaveClientLocation(param1);
-					case 1: TeleClient(param1,0);
+					case 0: DoCheckpoint(param1);
+					case 1: DoTeleport(param1,0);
 					case 2: PauseMethod(param1);
 					case 3: Client_Start(param1, 0);
 				}
@@ -1946,8 +2002,8 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 			if (g_bAdvancedClimbersMenu[param1])
 			switch(param2)
 			{
-				case 0: SaveClientLocation(param1);
-				case 1: TeleClient(param1,0);
+				case 0: DoCheckpoint(param1);
+				case 1: DoTeleport(param1,0);
 				case 2: Client_Prev(param1,0);
 				case 3: Client_Next(param1,0); 
 				case 4: Client_Start(param1, 0);
@@ -1956,8 +2012,8 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 			else
 				switch(param2)
 				{
-					case 0: SaveClientLocation(param1);
-					case 1: TeleClient(param1,0);
+					case 0: DoCheckpoint(param1);
+					case 1: DoTeleport(param1,0);
 					case 2: Client_Start(param1, 0);
 					case 3: OptionMenu(param1);
 				}		
@@ -1993,15 +2049,15 @@ public TopMenu(client)
 	g_bTopMenuOpen[client]=true;
 	g_bClimbersMenuOpen[client]=false;
 	new Handle:topmenu = CreateMenu(TopMenuHandler);
-	SetMenuTitle(topmenu, "Top Menu");
+	SetMenuTitle(topmenu, "KZTimer - Top Menu");
 	if (g_bPointSystem)
 		AddMenuItem(topmenu, "Top 100 Players", "Top 100 Players");
 	AddMenuItem(topmenu, "Top 5 Challengers", "Top 5 Challengers");
-	AddMenuItem(topmenu, "Top 5 Record Holders", "Top 5 Pro Record Holders");
+	AddMenuItem(topmenu, "Top 5 Pro Jumpers", "Top 5 Pro Jumpers");
 	if (g_bAllowCheckpoints)
-		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Record Holders");
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers");
 	else
-		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Record Holders",ITEMDRAW_DISABLED);
+		AddMenuItem(topmenu, "Top 5 TP Jumpers", "Top 5 TP Jumpers",ITEMDRAW_DISABLED);
 	AddMenuItem(topmenu, "Map Top", "Map Top");	
 	if (g_bJumpStats)
 		AddMenuItem(topmenu, "Jump Top", "Jump Top");
@@ -2056,7 +2112,9 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 public MapTopMenu(client)
 {
 	new Handle:topmenu2 = CreateMenu(MapTopMenuHandler);
-	SetMenuTitle(topmenu2, "Map Top");
+	decl String:title[128];
+	Format(title, 128, "Map Top (Tickrate %i)",g_Server_Tickrate);
+	SetMenuTitle(topmenu2, title);
 		
 	if (g_bAllowCheckpoints)
 	{
@@ -2102,13 +2160,17 @@ public JumpTopMenu(client)
 	g_bTopMenuOpen[client]=true;
 	g_bClimbersMenuOpen[client]=false;
 	new Handle:topmenu2 = CreateMenu(JumpTopMenuHandler);
-	SetMenuTitle(topmenu2, "Jump Top");
+	decl String:title[128];
+	Format(title, 128, "Jump Top (tickrate %i)",g_Server_Tickrate);
+	SetMenuTitle(topmenu2, title);
 	AddMenuItem(topmenu2, "!lj", "Top 20 Longjump");
 	AddMenuItem(topmenu2, "!ljblock", "Top 20 Block Longjump");
-	AddMenuItem(topmenu2, "!bhop", "Top 20 Bunnyhop");	
-	AddMenuItem(topmenu2, "!multibhop", "Top 20 Multi-Bunnyhop");
-	AddMenuItem(topmenu2, "!dropbhop", "Top 20 Drop-Bunnyhop");	
+	AddMenuItem(topmenu2, "!bhop", "Top 20 Bhop");
+	AddMenuItem(topmenu2, "!multibhop", "Top 20 MultiBhop");
+	AddMenuItem(topmenu2, "!dropbhop", "Top 20 DropBhop");	
 	AddMenuItem(topmenu2, "!wj", "Top 20 Weirdjump");
+	AddMenuItem(topmenu2, "!ladderjump", "Top 20 Ladderjump");
+	SetMenuPagination(topmenu2, MENU_NO_PAGINATION); 
 	SetMenuOptionFlags(topmenu2, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(topmenu2, client, MENU_TIME_FOREVER);
 }
@@ -2125,6 +2187,7 @@ public JumpTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 3: db_selectTopMultiBhop(param1);
 			case 4: db_selectTopDropBhop(param1);
 			case 5: db_selectTopWj(param1);
+			case 6: db_selectTopLadderJump(param1);
 		}
 	}
 	else
@@ -2140,6 +2203,7 @@ public JumpTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 
 public HelpPanel(client)
 {
+	PrintConsoleInfo(client);
 	g_bMenuOpen[client] = true;
 	g_bClimbersMenuOpen[client]=false;
 	new Handle:panel = CreatePanel();
@@ -2152,11 +2216,11 @@ public HelpPanel(client)
 	DrawPanelText(panel, "!menu - checkpoint menu");
 	DrawPanelText(panel, "!options - player options menu");	
 	DrawPanelText(panel, "!top - top menu");
-	DrawPanelText(panel, "!latest - latest local records");
-	DrawPanelText(panel, "!profile [<name>] - player profile");
+	DrawPanelText(panel, "!latest - prints in console the last map records");
+	DrawPanelText(panel, "!profile/!ranks - opens your profile");
 	DrawPanelText(panel, "!checkpoint / !gocheck - checkpoint / gocheck");
 	DrawPanelText(panel, "!prev / !next - previous or next checkpoint");
-	DrawPanelText(panel, "!undo - undoes your last gocheck");
+	DrawPanelText(panel, "!undo - undoes your last teleport");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "next page");
 	DrawPanelItem(panel, "exit");
@@ -2187,7 +2251,7 @@ public HelpPanel2(client)
 	DrawPanelText(panel, " ")	
 	DrawPanelText(panel, "!start/!r - go back to start");
 	DrawPanelText(panel, "!stop - stops the timer");
-	DrawPanelText(panel, "!pause - on/off pause (timer on hold and movement frozen)");	
+	DrawPanelText(panel, "!pause - on/off pause");	
 	DrawPanelText(panel, "!usp - spawns a usp silencer");
 	DrawPanelText(panel, "!challenge - allows you to start a race against others");	
 	DrawPanelText(panel, "!spec [<name>] - select a player you want to watch");	
@@ -2201,6 +2265,7 @@ public HelpPanel2(client)
 	SendPanelToClient(panel, client, HelpPanel2Handler, 10000);
 	CloseHandle(panel);
 }
+
 public HelpPanel2Handler(Handle:menu, MenuAction:action, param1, param2)
 {
 	if (action == MenuAction_Select)
@@ -2232,6 +2297,8 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!ranks - prints in chat the available ranks");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
 	DrawPanelText(panel, "!language - opens the language menu");
+	DrawPanelText(panel, "!wr - prints in chat the record of the current map");
+	DrawPanelText(panel, "!avg - prints in chat the average map time");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "exit");
@@ -2261,11 +2328,11 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_admin_clantag %b", g_bAdminClantag);
 	PrintToConsole(client, "kz_attack_spam_protection %b", g_bAttackSpamProtection);
 	PrintToConsole(client, "kz_anticheat_ban_duration %.1fh", g_fBanDuration);
-	PrintToConsole(client, "kz_auto_bhop %i (bhop_ & surf_ maps)", g_bAutoBhop);
+	PrintToConsole(client, "kz_auto_bhop %i (bhop_ & surf_ maps)", g_bAutoBhopConVar);
 	PrintToConsole(client, "kz_auto_timer %i", g_bAutoTimer);
-	PrintToConsole(client, "kz_autoheal %i", g_Autohealing_Hp);
+	PrintToConsole(client, "kz_autoheal %i (requires kz_godmode 0)", g_Autohealing_Hp);
 	PrintToConsole(client, "kz_autorespawn %b", g_bAutoRespawn);
-	PrintToConsole(client, "kz_bhop_single_touch %b", g_bSingleTouching);
+	PrintToConsole(client, "kz_bhop_single_touch %b", g_bSingleTouch);
 	PrintToConsole(client, "kz_challenge_points %b", g_bChallengePoints);
 	PrintToConsole(client, "kz_checkpoints %b", g_bAllowCheckpoints);
 	PrintToConsole(client, "kz_clean_weapons %b", g_bCleanWeapons);
@@ -2287,6 +2354,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_dist_min_wj %.1f (...)", g_dist_good_weird);
 	PrintToConsole(client, "kz_dist_pro_wj %.1f (...)", g_dist_pro_weird);
 	PrintToConsole(client, "kz_dist_leet_wj %.1f (...)", g_dist_leet_weird);
+	PrintToConsole(client, "kz_dynamic_timelimit %b (requires kz_map_end 1)", g_bDynamicTimelimit);
 	PrintToConsole(client, "kz_godmode %b", g_bgodmode);
 	PrintToConsole(client, "kz_goto %b", g_bGoToServer);
 	PrintToConsole(client, "kz_info_bot %b", g_bInfoBot);
@@ -2350,7 +2418,7 @@ public OptionMenu(client)
 {
 	g_bMenuOpen[client] = true;
 	new Handle:optionmenu = CreateMenu(OptionMenuHandler);
-	SetMenuTitle(optionmenu, "Options Menu");
+	SetMenuTitle(optionmenu, "KZTimer - Options Menu");
 	if (g_bAdvancedClimbersMenu[client])
 		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Advanced checkpoint menu  -  Enabled");
 	else
@@ -2399,19 +2467,24 @@ public OptionMenu(client)
 	if (g_bInfoPanel[client])
 		AddMenuItem(optionmenu, "Speed/Keys panel  -  Enabled", "Speed/Keys panel  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");	
+		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");					
 	//10
-	if (g_bGoToClient[client])
-		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");					
-	//11
 	if (g_bStartWithUsp[client])
 		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Start weapon  -  USP");
 	else
 		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Start weapon  -  Knife");
+	//11
+	if (g_bJumpBeam[client])
+		AddMenuItem(optionmenu, "Jump beam  -  Enabled", "Jump beam/trail  -  Enabled");
+	else
+		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam/trail  -  Disabled");			
 	//12
-	if (g_bAutoBhop2)
+	if (g_bGoToClient[client])
+		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
+	else
+		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");	
+	//13
+	if (g_bAutoBhop)
 	{
 		if (g_bAutoBhopClient[client])
 			AddMenuItem(optionmenu, "AutoBhop  -  Enabled", "AutoBhop  -  Enabled");
@@ -2431,6 +2504,7 @@ public OptionMenu(client)
 				DisplayMenuAtItem(optionmenu, client, 12, MENU_TIME_FOREVER);
 }
 
+
 public SwitchStartWeapon(client)
 {
 	if (g_bStartWithUsp[client])
@@ -2438,6 +2512,7 @@ public SwitchStartWeapon(client)
 	else
 		g_bStartWithUsp[client] = true;
 }
+
 
 public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 {
@@ -2454,10 +2529,11 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 6: StrafeSync(param1);
 			case 7: ShowTime(param1);
 			case 8: HideSpecs(param1);
-			case 9: InfoPanel(param1);
-			case 10: DisableGoTo(param1);
-			case 11: SwitchStartWeapon(param1);
-			case 12: AutoBhop(param1);		
+			case 9: InfoPanel(param1);	
+			case 10: SwitchStartWeapon(param1);
+			case 11: PlayerJumpBeam(param1);
+			case 12: DisableGoTo(param1);
+			case 13: AutoBhop(param1);		
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);					

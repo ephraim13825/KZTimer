@@ -1,5 +1,45 @@
 "Phrases"
 {
+	"PlayerJumpBeam1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"chi"        "[{1}KZ{2}] Jump beam enabled."
+	}
+	"PlayerJumpBeam2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"chi"        "[{1}KZ{2}] Jump beam disabled."
+	}
+	"ClientLadderJump1"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.2f},{5:c},{6:i},{7:c},{8:c},{9:.0f},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:i},{16:c},{17:c}"
+		"chi"       "[{1}KZ{2}] {3}LAJ: {4} 单位 [{5}{6}{7} 加速 | {8}{9}{10} 起跳 | {11}{12}{13} 高度 | {14}{15}{16}{17} 同步率]"
+	}
+	"ClientLadderJump2"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.2f},{5:c},{6:i},{7:c},{8:c},{9:.0f},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:.0f},{16:c},{17:c},{18:i},{19:c},{20:c}"
+		"chi"       "[{1}KZ{2}] {3}LAJ: {4} 单位 [{5}{6}{7} 加速 | {8}{9}{10} 起跳 | {11}{12}{13} 空速 | {14}{15}{16} 高度 | {17}{18}{19}{20} 同步率]"
+	}
+	"Jumpstats_LadderJumpTop"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:i},{6:.3f}"
+		"chi"        "[{1}KZ{2}] {3}{4} 现在进入LadderJump排行榜第{5}位[跳出: {6} 单位]"
+	}
+	"Jumpstats_BeatLadderJumpBest"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.3f}"
+		"chi"        "[{1}KZ{2}] {3}LadderJump 跳出: {4} 打破个人记录!"
+	}
+	"Jumpstats_LadderJumpAll"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}LadderJump{10}{5} 跳出 {6}{7} 单位{8}"
+	}
+	"AvgTime"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:c},{6:s},{7:i},{8:c},{9:c},{10:s},{11:i}"
+		"chi"        "[{1}KZ{2}] {3}Avg. time {4}PRO{5}: {6} ({7}) {8}TP{9}: {10} ({11})"
+	}
 	"TimerStartReminder"
 	{	
 		"#format"   ""
@@ -27,13 +67,13 @@
 	{
 	
 		"#format"   "{1:s},{2:s}"
-		"chi"        "<b>计时开始</b>\n<font color='#AB79DC'><b>裸跳记录</b></font>: {1}\n<font color='#D3CE6D'><b>存点记录</b></font>: {2}"
+		"chi"        "<b>计时开始</b>\n<font color='#4A66FC'><b>裸跳记录</b></font>: {1}\n<font color='#D3CE6D'><b>存点记录</b></font>: {2}"
 	}
 	"TimerStarted2"
 	{
 	
 		"#format"   "{1:s},{2:s}"
-		"chi"        "<b>计时开始</b>\n<font color='#AB79DC'><b>裸跳记录</b></font>: {1}\n<font color='#D3CE6D'><b>存点记录</b></font>: {2}"
+		"chi"        "<b>计时开始</b>\n<font color='#4A66FC'><b>裸跳记录</b></font>: {1}\n<font color='#D3CE6D'><b>存点记录</b></font>: {2}"
 	}
 	"TimerStopped"
 	{
@@ -592,8 +632,8 @@
 	}
 	"CheckpointSaved"
 	{
-		"#format"   "{1:c},{2:c},{3:c}"
-		"chi"        "[{1}KZ{2}] {3}存点."
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
+		"chi"        "[{1}KZ{2}] {3}存点. {4}#{5}{6}"
 	}
 	"CheckpointsNotinAir"
 	{
@@ -632,28 +672,28 @@
 	}
 	"Jumpstats_LjAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
-		"chi"        "[{1}KZ{2}] {3}{4} {9}LongJump {10}{5} 跳出 {6}{7} 单位{8}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s},{11:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}LongJump {10}{11}{5} 跳出 {6}{7} 单位{8}"
 	}
 	"Jumpstats_BhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"chi"        "[{1}KZ{2}] {3}{4} {9}Bunnyhop{5} 跳出 {6}{7} 单位{8}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}Bunnyhop{10}{5} 跳出 {6}{7} 单位{8}"
 	}
 	"Jumpstats_WeirdAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"chi"        "[{1}KZ{2}] {3}{4} {9}WeirdJump{5} 跳出 {6}{7} 单位{8}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}WeirdJump{10}{5} 跳出 {6}{7} 单位{8}"
 	}
 	"Jumpstats_DropBhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"chi"        "[{1}KZ{2}] {3}{4} {9}DropBhop{5} 跳出 {6}{7} 单位{8}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}DropBhop{10}{5} 跳出 {6}{7} 单位{8}"
 	}
 	"Jumpstats_MultiBhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"chi"        "[{1}KZ{2}] {3}{4} {9}MultiBhop{5} 跳出 {6}{7} 单位{8}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"chi"        "[{1}KZ{2}] {3}{4} {9}MultiBhop{10}{5} 跳出 {6}{7} 单位{8}"
 	}
 	"Jumpstats_OnRampage"//Don't understand
  	{
@@ -1004,6 +1044,11 @@
 	{
 		"chi"       "读点"
 	}
+	"ClientLongJumpBlockFailstats"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:c},{6:.2f},{7:c},{8:c},{9:i},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:.0f},{16:c},{17:c},{18:.0f},{19:c},{20:c},{21:i},{22:c},{23:c},{24:c},{25:.3f},{26:c},{27:s}"
+		"chi"       "[{1}KZ{2}] {3}距离{4}: {5}{6} 单位{7} [{8}{9}{10} 加速 | {11}{12}{13} 地速 | {14}{15}{16} 空速 | {17}{18}{19} 高度 | {20}{21}{22}{23} 同步率 | {24}{25}{26} 起跳]{27}"
+	}	
 	"ClientLongJump1"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:.2f},{5:c},{6:i},{7:c},{8:c},{9:.0f},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:.0f},{16:c},{17:c},{18:i},{19:c},{20:c},{21:s}"

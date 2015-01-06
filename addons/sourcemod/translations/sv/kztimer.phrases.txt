@@ -1,5 +1,50 @@
 ﻿"Phrases"
 {
+	"PlayerJumpBeam1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"sv"        "[{1}KZ{2}] Jump beam aktiverat."
+	}
+	"PlayerJumpBeam2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"sv"        "[{1}KZ{2}] Jump beam avaktiverad."
+	}
+	"ClientLadderJump1"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.2f},{5:c},{6:i},{7:c},{8:c},{9:.0f},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:i},{16:c},{17:c}"
+		"sv"       "[{1}KZ{2}] {3}LAJ: {4} units [{5}{6}{7} Strafes | {8}{9}{10} Pre | {11}{12}{13} Höjd | {14}{15}{16}{17} Sync]"
+	}
+	"ClientLadderJump2"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.2f},{5:c},{6:i},{7:c},{8:c},{9:.0f},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:.0f},{16:c},{17:c},{18:i},{19:c},{20:c}"
+		"sv"       "[{1}KZ{2}] {3}LAJ: {4} units [{5}{6}{7} Strafes | {8}{9}{10} Pre | {11}{12}{13} Max | {14}{15}{16} Höjd | {17}{18}{19}{20} Sync]"
+	}
+	"Jumpstats_LadderJumpTop"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:i},{6:.3f}"
+		"sv"        "[{1}KZ{2}] {3}{4} är nu #{5} i LadderJump Top 20! [{6} units]"
+	}
+	"Jumpstats_BeatLadderJumpBest"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:.3f}"
+		"sv"        "[{1}KZ{2}] {3}Du slog ditt personbästa för LadderJump med ett {4} hopp!"
+	}
+	"Jumpstats_LadderJumpAll"
+ 	{
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}LadderJump{10}"
+	}
+	"AvgTime"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:c},{6:s},{7:i},{8:c},{9:c},{10:s},{11:i}"
+		"sv"        "[{1}KZ{2}] {3}Avg. time {4}PRO{5}: {6} ({7}) {8}TP{9}: {10} ({11})"
+	}
+	"ClientLongJumpBlockFailstats"
+	{
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:c},{6:.2f},{7:c},{8:c},{9:i},{10:c},{11:c},{12:.0f},{13:c},{14:c},{15:.0f},{16:c},{17:c},{18:.0f},{19:c},{20:c},{21:i},{22:c},{23:c},{24:c},{25:.3f},{26:c},{27:s}"
+		"sv"       "[{1}KZ{2}] {3}Distance{4}: {5}{6} units{7} [{8}{9}{10} Strafes | {11}{12}{13} Pre | {14}{15}{16} Max | {17}{18}{19} Höjd | {20}{21}{22}{23} Sync | {24}{25}{26} JumpOff Edge]{27}"
+	}
 	"TimerStartReminder"
 	{	
 		"#format"   ""
@@ -27,13 +72,13 @@
 	{
 	
 		"#format"   "{1:s},{2:s}"
-		"sv"        "<b>Tiden startades om</b>\n<font color='#AB79DC'><b>Pro</b></font>: {1}\n<font color='#D3CE6D'><b>TP</b></font>: {2}"
+		"sv"        "<b>Tiden startades om</b>\n<font color='#4A66FC'><b>Pro</b></font>: {1}\n<font color='#D3CE6D'><b>TP</b></font>: {2}"
 	}
 	"TimerStarted2"
 	{
 	
 		"#format"   "{1:s},{2:s}"
-		"sv"        "<b>Tiden startades</b>\n<font color='#AB79DC'><b>Pro</b></font>: {1}\n<font color='#D3CE6D'><b>TP</b></font>: {2}"
+		"sv"        "<b>Tiden startades</b>\n<font color='#4A66FC'><b>Pro</b></font>: {1}\n<font color='#D3CE6D'><b>TP</b></font>: {2}"
 	}
 	"TimerStopped"
 	{
@@ -562,8 +607,8 @@
 	}
 	"CheckpointSaved"
 	{
-		"#format"   "{1:c},{2:c},{3:c}"
-		"sv"        "[{1}KZ{2}] {3}Checkpoint sparad."
+		"#format"   "{1:c},{2:c},{3:c},{4:c},{5:i},{6:c}"
+		"sv"        "[{1}KZ{2}] {3}Checkpoint {4}#{5}{6} saved."
 	}
 	"CheckpointsNotinAir"
 	{
@@ -602,28 +647,28 @@
 	}
 	"Jumpstats_LjAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
-		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}LongJump{10}"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s},{11:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}LongJump{10}{11}"
 	}
 	"Jumpstats_BhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}Bunnyhop"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}Bunnyhop{10}"
 	}
 	"Jumpstats_WeirdAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}WeirdJump"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}WeirdJump{10}"
 	}
 	"Jumpstats_DropBhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}DropBhop"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med ett {9}DropBhop{10}"
 	}
 	"Jumpstats_MultiBhopAll"
  	{
-		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c}"
-		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med {9}MultiBhop"
+		"#format"   "{1:c},{2:c},{3:c},{4:s},{5:c},{6:c},{7:.3f},{8:c},{9:c},{10:s}"
+		"sv"        "[{1}KZ{2}] {3}{4}{5} hoppade {6}{7} units{8} med {9}MultiBhop{10}"
 	}
 	"Jumpstats_OnRampage"
  	{
@@ -758,7 +803,7 @@
 	"Colorchat2"
 	{
 		"#format"   "{1:c},{2:c}"
-		"sv"        "[{1}KZ{2}] Colorchat avaktiverat."
+		"sv"        "[{1}KZ{2}] Colorchat avaktiverad."
 	}
 	"Info1"
 	{

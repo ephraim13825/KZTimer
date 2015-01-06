@@ -20,26 +20,16 @@ public TopMenuHandler2(Handle:topmenu, TopMenuAction:action, TopMenuObject:objec
 
 public Action:Admin_KzPanel(client, args)
 {
-	KzAdminMenu(client);
-	PrintToChat(client, "[%cKZ%c] See console for more commands", LIMEGREEN,WHITE);
-	PrintToConsole(client,"\n \n[KZ Admin]\n");
-	PrintToConsole(client,"more server cvars:");
-	PrintToConsole(client," rcon kz_ranking_extra_points_firsttime - Gives players x (tp time = x, pro time = 2 * x) extra points for finishing a map (tp and pro) for the first time.\n rcon kz_ranking_extra_points_improvements - Gives players x extra points for improving their time.\n rcon kz_anticheat_auto_ban - auto-ban (bhop hack and strafe hack) including deletion of all player records");
-	PrintToConsole(client," rcon kz_anticheat_ban_duration - ban duration in hours\n rcon kz_prespeed_cap - Limits player's pre speed\n rcon kz_max_prespeed_bhop_dropbhop - Max counted pre speed for bhop & dropbhop (jumpstats)\n rcon kz_replay_bot_pro_color - Pro replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_replay_bot_tp_color - Tp replay bot color. Format: \"red green blue\" from 0 - 255\n rcon kz_dist_min_bhop - Minimum distance for bhops to be considered good");
-	PrintToConsole(client," rcon kz_dist_pro_bhop - Minimum distance for bhops to be considered pro\n rcon kz_dist_leet_bhop - Minimum distance for bhops to be considered leet\n rcon kz_dist_min_wj - Minimum distance for weirdjumps to be considered good\n rcon kz_dist_min_lj - Minimum distance for longjumps to be considered good");
-	PrintToConsole(client," rcon kz_dist_pro_lj - Minimum distance for longjumps to be considered pro\n rcon kz_dist_leet_lj - Minimum distance for longjumps to be considered leet\n rcon kz_dist_pro_wj - Minimum distance for weirdjumps to be considered pro\n rcon kz_dist_leet_wj - Minimum distance for weirdjumps to be considered leet");
-	PrintToConsole(client," rcon kz_dist_min_dropbhop - Minimum distance for dropbhop to be considered good\n rcon kz_dist_pro_dropbhop - Minimum distance for dropbhop to be considered pro\n rcon kz_dist_leet_dropbhop - Minimum distance for dropbhop to be considered leet\n rcon kz_dist_min_multibhop - Minimum distance for multibhop to be considered good");
-	PrintToConsole(client," rcon kz_dist_pro_multibhop - Minimum distance for multibhop to be considered pro\n rcon kz_dist_leet_multibhop - Minimum distance for multibhop to be considered leet");		
-	PrintToConsole(client," gray = min, green = pro, red = leet");	
+	KzAdminMenu(client);	
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
-		PrintToConsole(client,"\nCOMMANDS:\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
-		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table - BE CAREFUL!!!)\n sm_resetchallenges (Drops challenges table - BE CAREFUL!!!)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
-		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table - BE CAREFUL!!!)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)");
-		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)");
-		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)");
-		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)");
-		
+		PrintToChat(client, "[%cKZ%c] See console for more commands", LIMEGREEN,WHITE);
+		PrintToConsole(client,"\n[KZTimer root admin]\n");
+		PrintToConsole(client,"\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
+		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table)\n sm_resetchallenges (Drops challenges table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
+		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)\n sm_resetalldropbhopecords (Resets all drop bhop records)\n sm_resetallladderjumprecords (Resets all ladder jump records)");
+		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)\n sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)");
+		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)\n sm_resetladderjumprecord <steamid> (Resets ladder jump record for given steamid)");
 	}
 	else
 		PrintToConsole(client," >> FULL ACCESS requires a 'z' (root) flag.) << ");
@@ -60,16 +50,21 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "KZTimer %s Admin Menu (limited access)\nNoclip: bind KEY +noclip",VERSION); 	
 	SetMenuTitle(adminmenu, szTmp);
-	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers || !(GetUserFlagBits(client) & ADMFLAG_ROOT))
-		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
+	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers && (GetUserFlagBits(client) & ADMFLAG_ROOT))
+		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks (Disabled. Too many players in the DB)",ITEMDRAW_DISABLED);
 	else
 	{	
-		if (!g_pr_RankingRecalc_InProgress)
-			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks");
+		if (GetUserFlagBits(client) & ADMFLAG_ROOT)
+		{
+			if (!g_pr_RankingRecalc_InProgress)
+				AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks");
+			else
+				AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Stop the recalculation");
+		}
 		else
-			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Stop the recalculation");
+			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
 	}
-	AddMenuItem(adminmenu, "", "-------------------------------------",ITEMDRAW_DISABLED);		
+	AddMenuItem(adminmenu, "", "", ITEMDRAW_SPACER);		
 	AddMenuItem(adminmenu, "[3.] Set start button", "[3.] Set start button");
 	AddMenuItem(adminmenu, "[4.] Set stop button", "[4.] Set stop button");
 	AddMenuItem(adminmenu, "[5.] Remove buttons", "[5.] Remove buttons");
@@ -163,7 +158,7 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
-	if (g_bAutoBhop)
+	if (g_bAutoBhopConVar)
 		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop (only surf_/bhop_ maps)  -  Enabled"); 	
 	else
 		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop  -  Disabled"); 				
@@ -203,10 +198,10 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bSingleTouching)
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Enabled"); 	
+	if (g_bSingleTouch)
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop block single-touch  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop single touching  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[32.] Bhop block single-touch  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bChallengePoints)
 		Format(szTmp, sizeof(szTmp), "[33.] Allow challenges points  -  Enabled"); 	
@@ -407,7 +402,7 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		}	
 		if(param2 == 23)
 		{
-			if (!g_bAutoBhop)
+			if (!g_bAutoBhopConVar)
 				ServerCommand("kz_auto_bhop 1");
 			else
 				ServerCommand("kz_auto_bhop 0");
@@ -463,10 +458,10 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		}
 		if(param2 == 31)
 		{
-			if (!g_hSingleTouching)
-				ServerCommand("kz_bhop_multi_touching 1");
+			if (!g_bSingleTouch)
+				ServerCommand("kz_bhop_single_touch 1");
 			else
-				ServerCommand("kz_bhop_multi_touching 0");
+				ServerCommand("kz_bhop_single_touch 0");
 		}
 		if(param2 == 32)
 		{
@@ -526,7 +521,7 @@ public Action:Admin_ResetAllLjRecords(client, args)
  	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET ljrecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	       
-	PrintToConsole(client, "lj records reseted.");
+	PrintToConsole(client, "ladder jump records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i))
@@ -537,6 +532,24 @@ public Action:Admin_ResetAllLjRecords(client, args)
 	}
 	return Plugin_Handled;
 }
+
+public Action:Admin_ResetAllLadderJumpRecords(client, args)
+{
+ 	decl String:szQuery[255];      
+	Format(szQuery, 255, "UPDATE playerjumpstats3 SET ladderjumprecord=-1.0");
+	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	       
+	PrintToConsole(client, "lj records reseted.");
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (IsValidClient(i))
+		{	
+			g_js_LadderJumpRank[i] = 99999999;
+			g_js_fPersonal_LadderJump_Record[i] = -1.0;
+		}
+	}
+	return Plugin_Handled;
+}
+
 
 public Action:Admin_ResetAllWjRecords(client, args)
 {
@@ -648,13 +661,37 @@ public Action:Admin_ResetRecords(client, args)
 		}
 		else if(args == 6)
 		{
-			decl String:szMapName[MAX_MAP_LENGTH];
+			decl String:szMapName[128];
 			GetCmdArg(6, szMapName, 128);	
 			db_resetPlayerRecords2(client, szSteamID, szMapName);
 		}
 	}
 	return Plugin_Handled;
 }
+
+public Action:Admin_RefreshProfile(client, args)
+{
+	if(args == 0)
+	{
+		ReplyToCommand(client, "[KZ] Usage: sm_refreshprofile <steamid>");
+		return Plugin_Handled;
+	}
+	if(args > 0)
+	{
+		decl String:szSteamID[128];
+		decl String:szArg[128];
+		Format(szSteamID, 128, "");
+		for (new i = 1; i < 6; i++)
+		{
+			GetCmdArg(i, szArg, 128);
+			if (!StrEqual(szArg, "", false))
+				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
+		}
+		RecalcPlayerRank(client, szSteamID);
+	}
+	return Plugin_Handled;
+}
+
 
 public Action:Admin_ResetRecordTp(client, args)
 {
@@ -676,7 +713,7 @@ public Action:Admin_ResetRecordTp(client, args)
 		}
 		if(args == 6)
 		{
-			decl String:szMapName[MAX_MAP_LENGTH];
+			decl String:szMapName[128];
 			GetCmdArg(6, szMapName, 128);	
 			db_resetPlayerRecordTp(client, szSteamID, szMapName);
 		}
@@ -704,14 +741,13 @@ public Action:Admin_ResetRecordPro(client, args)
 		}
 		if(args == 6)
 		{
-			decl String:szMapName[MAX_MAP_LENGTH];
+			decl String:szMapName[128];
 			GetCmdArg(6, szMapName, 128);	
 			db_resetPlayerRecordPro(client, szSteamID, szMapName);
 		}
 	}
 	return Plugin_Handled;
 }
-
 
 public Action:Admin_ResetChallenges(client, args)
 {
@@ -752,6 +788,28 @@ public Action:Admin_ResetMapRecords(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Admin_ResetLadderJumpRecords(client, args)
+{
+	if(args == 0)
+	{
+		ReplyToCommand(client, "[KZ] Usage: sm_resetladderjumprecord <steamid>");
+		return Plugin_Handled;
+	}
+	if(args > 0)
+	{
+		decl String:szSteamID[128];
+		decl String:szArg[128];
+		Format(szSteamID, 128, "");
+		for (new i = 1; i < 6; i++)
+		{
+			GetCmdArg(i, szArg, 128);
+			if (!StrEqual(szArg, "", false))
+				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
+		}
+		db_resetPlayerLadderJumpRecord(client, szSteamID);
+	}
+	return Plugin_Handled;
+}
 public Action:Admin_ResetLjRecords(client, args)
 {
 	if(args == 0)
@@ -774,31 +832,6 @@ public Action:Admin_ResetLjRecords(client, args)
 	}
 	return Plugin_Handled;
 }
-
-
-public Action:Admin_RefreshProfile(client, args)
-{
-	if(args == 0)
-	{
-		ReplyToCommand(client, "[KZ] Usage: sm_refreshprofile <steamid>");
-		return Plugin_Handled;
-	}
-	if(args > 0)
-	{
-		decl String:szSteamID[128];
-		decl String:szArg[128];
-		Format(szSteamID, 128, "");
-		for (new i = 1; i < 6; i++)
-		{
-			GetCmdArg(i, szArg, 128);
-			if (!StrEqual(szArg, "", false))
-				Format(szSteamID, 128, "%s%s",  szSteamID, szArg); 
-		}
-		RecalcPlayerRank(client, szSteamID);
-	}
-	return Plugin_Handled;
-}
-
 
 public Action:Admin_ResetLjBlockRecords(client, args)
 {

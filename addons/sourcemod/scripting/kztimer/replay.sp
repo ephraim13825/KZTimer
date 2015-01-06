@@ -1,7 +1,6 @@
 
 //
-// replay.sp
-// Credits: Botmimic2 by Peacemaker
+// Botmimic2 - modified by 1NutWunDeR
 // http://forums.alliedmods.net/showthread.php?t=164148
 //
 
@@ -156,9 +155,7 @@ WriteRecordToDisk(const String:sPath[], iFileHeader[FILE_HEADER_LENGTH])
 public LoadReplays()
 {
 	if (!g_bReplayBot)
-		return;
-	
-	
+		return;	
 	ClearTrie(g_hLoadedRecordsAdditionalTeleport);
 
 	decl String:sPath1[256]; 
@@ -176,7 +173,6 @@ public LoadReplays()
 		g_bProReplay=true;
 		CloseHandle(hFilex);		
 	}
-	
 	new Handle:hFilex2 = OpenFile(sPath2, "r");
 	if(hFilex2 != INVALID_HANDLE)
 	{
@@ -358,11 +354,11 @@ public LoadReplayPro()
 	{
 		new count = 0;
 		if (g_bTpReplay)
-			count+=1;
+			count++;
 		if (g_bProReplay)
-			count+=1;
+			count++;
 		if (g_bInfoBot)
-			count+=1;
+			count++;
 		if (count==0)
 			return;
 		decl String:szBuffer[64];
@@ -381,7 +377,7 @@ public LoadReplayTp()
 			continue;
 		if(!IsPlayerAlive(i))
 		{
-			CS_RespawnPlayer(i);			
+			CS_RespawnPlayer(i);
 			continue;
 		}
 		g_TpBot = i;
@@ -390,7 +386,7 @@ public LoadReplayTp()
 	}
 
 	if(g_TpBot > 0 && IsValidClient(g_TpBot))
-	{		
+	{			
 		PlayRecord(g_TpBot,1);
 		SetEntityRenderColor(g_TpBot, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
 		if (g_bPlayerSkinChange)
@@ -403,11 +399,11 @@ public LoadReplayTp()
 	{
 		new count = 0;
 		if (g_bTpReplay)
-			count+=1;
+			count++;
 		if (g_bProReplay)
-			count+=1;
+			count++;
 		if (g_bInfoBot)
-			count+=1;
+			count++;
 		if (count==0)
 			return;
 		decl String:szBuffer[64];
@@ -550,10 +546,10 @@ public RecordReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:
 			if(IsValidEntity(iNewWeapon) && IsValidEdict(iNewWeapon))
 			{
 				g_RecordPreviousWeapon[client] = iNewWeapon;				
-				new String:sClassName[64];
+				decl String:sClassName[64];
 				GetEdictClassname(iNewWeapon, sClassName, sizeof(sClassName));
 				ReplaceString(sClassName, sizeof(sClassName), "weapon_", "", false);					
-				new String:sWeaponAlias[64];
+				decl String:sWeaponAlias[64];
 				CS_GetTranslatedWeaponAlias(sClassName, sWeaponAlias, sizeof(sWeaponAlias));
 				new CSWeaponID:weaponId = CS_AliasToWeaponID(sWeaponAlias);			
 				iFrame[newWeapon] = weaponId;
@@ -586,7 +582,7 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 		subtype = iFrame[playerSubtype];
 		seed = iFrame[playerSeed];
 		weapon = 0;					
-		decl Float:fAcutalVelocity[3];
+		new Float:fAcutalVelocity[3];
 		Array_Copy(iFrame[actualVelocity], fAcutalVelocity, 3);
 		if(iFrame[additionalFields] & (ADDITIONAL_FIELD_TELEPORTED_ORIGIN|ADDITIONAL_FIELD_TELEPORTED_ANGLES|ADDITIONAL_FIELD_TELEPORTED_VELOCITY))
 		{
@@ -610,16 +606,24 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 					if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_ANGLES)
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
+						{
 							TeleportEntity(client, fOrigin, fAngles, fVelocity);
+						}
 						else
+						{
 							TeleportEntity(client, fOrigin, fAngles, NULL_VECTOR);
+						}
 					}
 					else
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
+						{
 							TeleportEntity(client, fOrigin, NULL_VECTOR, fVelocity);
+						}
 						else
+						{
 							TeleportEntity(client, fOrigin, NULL_VECTOR, NULL_VECTOR);
+						}
 					}
 				}
 				else
@@ -627,14 +631,20 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 					if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_ANGLES)
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
+						{
 							TeleportEntity(client, NULL_VECTOR, fAngles, fVelocity);
+						}
 						else
+						{
 							TeleportEntity(client, NULL_VECTOR, fAngles, NULL_VECTOR);
+						}
 					}
 					else
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
-						TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
+						{
+							TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
+						}
 					}
 				}
 				g_CurrentAdditionalTeleportIndex[client]++;
@@ -698,7 +708,7 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 				}
 			}
 		}		
-		g_BotMimicTick[client]++;	
+		g_BotMimicTick[client]++;		
 	}
 }
 
