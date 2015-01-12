@@ -1,5 +1,8 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                         
+Do you have trouble with huge red error boxes on your server?  That's because a few  map makers don't pack the button textures/models. The following plugin will fix the issue:
+https://www.dropbox.com/s/hxm91jpyrjxgqa5/ButtonDownloader.zip
+
 
 **Please read the following information carefully (!!):**
 - Download includes DHooks2 extension, Cleaner extension and latest GeoIP database
