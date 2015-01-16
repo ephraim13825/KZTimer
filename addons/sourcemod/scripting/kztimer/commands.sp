@@ -573,7 +573,7 @@ public Action:Client_Next(client, args)
 
 public Action:Client_Undo(client, args)
 {	
-	if (IsValidClient(client))
+	if (IsValidClient(client) && !g_bPause[client])
 	{
 		if(g_fPlayerCordsUndoTp[client][0] == 0.0 && g_fPlayerCordsUndoTp[client][1] == 0.0 && g_fPlayerCordsUndoTp[client][2] == 0.0)
 			return Plugin_Handled;
@@ -1222,7 +1222,7 @@ public Action:Client_RankingSystem(client, args)
 
 public Action:Client_Start(client, args)
 {
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1) 
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client])
 		return Plugin_Handled;
 	
 	new Float: e_time = GetEngineTime();
@@ -1451,7 +1451,7 @@ public GotoMethod(client, i)
 		return;
 	decl String:szTargetName[MAX_NAME_LENGTH];
 	GetClientName(i, szTargetName, MAX_NAME_LENGTH);	
-	if (GetEntityFlags(i) & FL_ONGROUND)
+	if (GetEntityFlags(i)&FL_ONGROUND)
 	{
 		new ducked = GetEntProp(i, Prop_Send, "m_bDucked");
 		new ducking = GetEntProp(i, Prop_Send, "m_bDucking");
@@ -1694,7 +1694,7 @@ public DoCheckpoint(client)
 
 	
 	//if player on ground
-	if(g_bOnGround[client])
+	if (GetEntityFlags(client)&FL_ONGROUND)
 	{
 		if (CPLIMIT == g_CounterCp[client]) 
 		{
@@ -2470,14 +2470,14 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");					
 	//10
 	if (g_bStartWithUsp[client])
-		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Start weapon  -  USP");
+		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Starting weapon  -  USP");
 	else
-		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Start weapon  -  Knife");
+		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Starting weapon  -  Knife");
 	//11
 	if (g_bJumpBeam[client])
-		AddMenuItem(optionmenu, "Jump beam  -  Enabled", "Jump beam/trail  -  Enabled");
+		AddMenuItem(optionmenu, "Jump beam  -  Enabled", "Jump beam  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam/trail  -  Disabled");			
+		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam  -  Disabled");			
 	//12
 	if (g_bGoToClient[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");

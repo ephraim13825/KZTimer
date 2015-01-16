@@ -651,7 +651,7 @@ public Postthink(client)
 		Format(sDirection, 32, " (sw)");
 		
 	//t00-b4d
-	if((g_js_fJump_Distance[client] < 200.0 && !g_bLadderJump[client]) || (g_bLadderJump[client] && g_js_fJump_Distance[client] < 80.0))
+	if((g_js_fJump_Distance[client] < 150.0 && !g_bLadderJump[client]) || (g_bLadderJump[client] && g_js_fJump_Distance[client] < 40.0))
 	{
 		//multibhop count proforma
 		if (g_js_Last_Ground_Frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 67.0 && !g_js_bDropJump[client])
@@ -672,7 +672,7 @@ public Postthink(client)
 	if (client == g_TpBot)
 		Format(szName,sizeof(szName), "%s (TP Replay)", g_szReplayNameTp);	
 	
-		
+	
 	//invalid jump
 	if (g_fAirTime[client] > 0.83)
 	{
@@ -724,14 +724,15 @@ public Postthink(client)
 					ClientCommand(client, buffer); 
 				PlayQuakeSound_Spec(client,buffer);	
 				//all
-				for (new i = 1; i <= MaxClients; i++)
-				{
-					if (IsValidClient(i))
+				if (!IsFakeClient(client))
+					for (new i = 1; i <= MaxClients; i++)
 					{
-						if (g_bColorChat[i]==true && i != client)
-							PrintToChat(i, "%t", "Jumpstats_LadderJumpAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+						if (IsValidClient(i))
+						{
+							if (g_bColorChat[i]==true && i != client)
+								PrintToChat(i, "%t", "Jumpstats_LadderJumpAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+						}
 					}
-				}
 			}
 			//leet
 			else
@@ -759,21 +760,22 @@ public Postthink(client)
 							PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
 							
 					//all
-					for (new i = 1; i <= MaxClients; i++)
-					{
-						if (IsValidClient(i))
+					if (!IsFakeClient(client))
+						for (new i = 1; i <= MaxClients; i++)
 						{
-							if (g_bColorChat[i]==true && i != client)
+							if (IsValidClient(i))
 							{
-								PrintToChat(i, "%t", "Jumpstats_LadderJumpAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client], RED,DARKRED,sDirection);
-								if (g_js_LeetJump_Count[client]==3)
-										PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-								else
-									if (g_js_LeetJump_Count[client]==5)
-										PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
-							}
-						}	
-					}
+								if (g_bColorChat[i]==true && i != client)
+								{
+									PrintToChat(i, "%t", "Jumpstats_LadderJumpAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client], RED,DARKRED,sDirection);
+									if (g_js_LeetJump_Count[client]==3)
+											PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+									else
+										if (g_js_LeetJump_Count[client]==5)
+											PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+								}
+							}	
+						}
 					PlayLeetJumpSound(client);	
 					if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 					{
@@ -939,15 +941,15 @@ public Postthink(client)
 					ClientCommand(client, buffer); 						
 				PlayQuakeSound_Spec(client,buffer);		
 				//chat all
-				for (new i = 1; i <= MaxClients; i++)
-				{
-					if (IsValidClient(i) && i != client)
-					{				 					
-						if (g_bColorChat[i])
-							PrintToChat(i, "%t", "Jumpstats_LjAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection,sBlockDist);
-					}
-				}	
-				
+				if (!IsFakeClient(client))
+					for (new i = 1; i <= MaxClients; i++)
+					{
+						if (IsValidClient(i) && i != client)
+						{				 					
+							if (g_bColorChat[i])
+								PrintToChat(i, "%t", "Jumpstats_LjAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection,sBlockDist);
+						}
+					}				
 			}	
 			//leet?
 			else		
@@ -982,21 +984,22 @@ public Postthink(client)
 							PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
 					
 					//all
-					for (new i = 1; i <= MaxClients; i++)
-					{
-						if (IsValidClient(i))
-						{						
-							if (g_bColorChat[i] && i != client)
-							{
-								PrintToChat(i, "%t", "Jumpstats_LjAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection,sBlockDist);
-								if (g_js_LeetJump_Count[client]==3)
-									PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-								else
-									if (g_js_LeetJump_Count[client]==5)
-										PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+					if (!IsFakeClient(client))
+						for (new i = 1; i <= MaxClients; i++)
+						{
+							if (IsValidClient(i))
+							{						
+								if (g_bColorChat[i] && i != client)
+								{
+									PrintToChat(i, "%t", "Jumpstats_LjAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection,sBlockDist);
+									if (g_js_LeetJump_Count[client]==3)
+										PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+									else
+										if (g_js_LeetJump_Count[client]==5)
+											PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+								}
 							}
 						}
-					}
 					PlayLeetJumpSound(client);
 					if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 					{
@@ -1094,14 +1097,15 @@ public Postthink(client)
 					ClientCommand(client, buffer); 
 				PlayQuakeSound_Spec(client,buffer);				
 				//all
-				for (new i = 1; i <= MaxClients; i++)
-				{
-					if (IsValidClient(i))
+				if (!IsFakeClient(client))
+					for (new i = 1; i <= MaxClients; i++)
 					{
-						if (g_bColorChat[i] && i != client)					
-							PrintToChat(i, "%t", "Jumpstats_MultiBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+						if (IsValidClient(i))
+						{
+							if (g_bColorChat[i] && i != client)					
+								PrintToChat(i, "%t", "Jumpstats_MultiBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+						}
 					}
-				}
 			}
 			//leet?
 			else
@@ -1128,21 +1132,22 @@ public Postthink(client)
 					PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);						
 			
 				//all
-				for (new i = 1; i <= MaxClients; i++)
-				{
-					if (IsValidClient(i))
+				if (!IsFakeClient(client))
+					for (new i = 1; i <= MaxClients; i++)
 					{
-						if (g_bColorChat[i] && i != client)
+						if (IsValidClient(i))
 						{
-							PrintToChat(i, "%t", "Jumpstats_MultiBhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
-							if (g_js_LeetJump_Count[client]==3)
-									PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-								else
-								if (g_js_LeetJump_Count[client]==5)
-									PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+							if (g_bColorChat[i] && i != client)
+							{
+								PrintToChat(i, "%t", "Jumpstats_MultiBhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
+								if (g_js_LeetJump_Count[client]==3)
+										PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+									else
+									if (g_js_LeetJump_Count[client]==5)
+										PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+							}
 						}
 					}
-				}
 				PlayLeetJumpSound(client);	
 				if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 				{
@@ -1222,14 +1227,15 @@ public Postthink(client)
 							ClientCommand(client, buffer); 
 						PlayQuakeSound_Spec(client,buffer);	
 						//all
-						for (new i = 1; i <= MaxClients; i++)
-						{
-							if (IsValidClient(i))
+						if (!IsFakeClient(client))
+							for (new i = 1; i <= MaxClients; i++)
 							{
-								if (g_bColorChat[i]==true && i != client)
-									PrintToChat(i, "%t", "Jumpstats_DropBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+								if (IsValidClient(i))
+								{
+									if (g_bColorChat[i]==true && i != client)
+										PrintToChat(i, "%t", "Jumpstats_DropBhopAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+								}
 							}
-						}
 					}
 					//leet
 					else
@@ -1257,21 +1263,22 @@ public Postthink(client)
 									PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
 									
 							//all
-							for (new i = 1; i <= MaxClients; i++)
-							{
-								if (IsValidClient(i))
+							if (!IsFakeClient(client))
+								for (new i = 1; i <= MaxClients; i++)
 								{
-									if (g_bColorChat[i]==true && i != client)
+									if (IsValidClient(i))
 									{
-										PrintToChat(i, "%t", "Jumpstats_DropBhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client], RED,DARKRED,sDirection);
-										if (g_js_LeetJump_Count[client]==3)
-												PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-										else
-											if (g_js_LeetJump_Count[client]==5)
-												PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
-									}
-								}	
-							}
+										if (g_bColorChat[i]==true && i != client)
+										{
+											PrintToChat(i, "%t", "Jumpstats_DropBhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client], RED,DARKRED,sDirection);
+											if (g_js_LeetJump_Count[client]==3)
+													PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+											else
+												if (g_js_LeetJump_Count[client]==5)
+													PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+										}
+									}	
+								}
 							PlayLeetJumpSound(client);	
 							if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 							{
@@ -1351,14 +1358,15 @@ public Postthink(client)
 								ClientCommand(client, buffer); 
 							PlayQuakeSound_Spec(client,buffer);	
 							//all
-							for (new i = 1; i <= MaxClients; i++)
-							{
-								if (IsValidClient(i))
+							if (!IsFakeClient(client))
+								for (new i = 1; i <= MaxClients; i++)
 								{
-									if (g_bColorChat[i]==true && i != client)
-										PrintToChat(i, "%t", "Jumpstats_WeirdAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+									if (IsValidClient(i))
+									{
+										if (g_bColorChat[i]==true && i != client)
+											PrintToChat(i, "%t", "Jumpstats_WeirdAll",MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+									}
 								}
-							}
 						}
 						//leet?
 						else
@@ -1386,21 +1394,22 @@ public Postthink(client)
 										PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
 													
 								//all
-								for (new i = 1; i <= MaxClients; i++)
-								{
-									if (IsValidClient(i))
+								if (!IsFakeClient(client))
+									for (new i = 1; i <= MaxClients; i++)
 									{
-										if (g_bColorChat[i]==true && i != client)
+										if (IsValidClient(i))
 										{
-											PrintToChat(i, "%t", "Jumpstats_WeirdAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
-											if (g_js_LeetJump_Count[client]==3)
-													PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-												else
-												if (g_js_LeetJump_Count[client]==5)
-													PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+											if (g_bColorChat[i]==true && i != client)
+											{
+												PrintToChat(i, "%t", "Jumpstats_WeirdAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
+												if (g_js_LeetJump_Count[client]==3)
+														PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+													else
+													if (g_js_LeetJump_Count[client]==5)
+														PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+											}
 										}
 									}
-								}
 								PlayLeetJumpSound(client);
 								if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 								{
@@ -1471,14 +1480,15 @@ public Postthink(client)
 							ClientCommand(client, buffer); 
 						PlayQuakeSound_Spec(client,buffer);	
 						//all
-						for (new i = 1; i <= MaxClients; i++)
-						{
-							if (IsValidClient(i))
+						if (!IsFakeClient(client))
+							for (new i = 1; i <= MaxClients; i++)
 							{
-								if (g_bColorChat[i]==true && i != client)
-									PrintToChat(i, "%t", "Jumpstats_BhopAll",	MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+								if (IsValidClient(i))
+								{
+									if (g_bColorChat[i]==true && i != client)
+										PrintToChat(i, "%t", "Jumpstats_BhopAll",	MOSSGREEN,WHITE,GREEN,szName, MOSSGREEN,GREEN, g_js_fJump_Distance[client],MOSSGREEN,GREEN,sDirection);
+								}
 							}
-						}
 					}
 					else
 					{
@@ -1507,21 +1517,22 @@ public Postthink(client)
 										PrintToChat(client, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
 											
 							//all
-							for (new i = 1; i <= MaxClients; i++)
-							{
-								if (IsValidClient(i))
+							if (!IsFakeClient(client))
+								for (new i = 1; i <= MaxClients; i++)
 								{
-									if (g_bColorChat[i]==true && i != client)
+									if (IsValidClient(i))
 									{
-										PrintToChat(i, "%t", "Jumpstats_BhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
-										if (g_js_LeetJump_Count[client]==3)
-											PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
-										else
-											if (g_js_LeetJump_Count[client]==5)
-												PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+										if (g_bColorChat[i]==true && i != client)
+										{
+											PrintToChat(i, "%t", "Jumpstats_BhopAll",MOSSGREEN,WHITE,DARKRED,szName, RED,DARKRED, g_js_fJump_Distance[client],RED,DARKRED,sDirection);
+											if (g_js_LeetJump_Count[client]==3)
+												PrintToChat(i, "%t", "Jumpstats_OnRampage",MOSSGREEN,WHITE,YELLOW,szName);
+											else
+												if (g_js_LeetJump_Count[client]==5)
+													PrintToChat(i, "%t", "Jumpstats_IsDominating",MOSSGREEN,WHITE,YELLOW,szName);
+										}
 									}
 								}
-							}
 							PlayLeetJumpSound(client);
 							if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
 							{

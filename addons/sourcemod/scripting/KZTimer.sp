@@ -10,6 +10,7 @@
 #include <KZTimer>
 #include <geoip>
 #include <colors>
+#include <basecomm>
 #undef REQUIRE_EXTENSIONS
 #include <clientprefs>
 #undef REQUIRE_PLUGIN
@@ -19,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.64"
-#define PLUGIN_VERSION 164
+#define VERSION "1.65"
+#define PLUGIN_VERSION 165
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -43,7 +44,7 @@
 #define QUOTE 0x22
 #define PERCENT 0x25
 #define CPLIMIT 50 
-#define MAX_PR_PLAYERS 20000
+#define MAX_PR_PLAYERS 1066
 #define MAX_BHOPBLOCKS 2048
 #define BLOCK_TELEPORT 0.05	
 #define BLOCK_COOLDOWN 0.1
@@ -59,7 +60,7 @@
 #define FRAME_INFO_SIZE 15
 #define FRAME_INFO_SIZE_V1 14
 #define AT_SIZE 10
-#define ORIGIN_SNAPSHOT_INTERVAL 100
+#define ORIGIN_SNAPSHOT_INTERVAL 150
 #define FILE_HEADER_LENGTH 74
 
 enum FrameInfo 
@@ -314,6 +315,7 @@ new Float:g_favg_protime;
 new Float:g_favg_tptime;
 new Float:g_fSpawnpointOrigin[3];
 new Float:g_fSpawnpointAngle[3];
+new Float:g_js_AvgLadderSpeed[MAXPLAYERS+1];
 new Float:g_js_fJump_JumpOff_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_Landing_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_JumpOff_PosLastHeight[MAXPLAYERS+1];
@@ -545,6 +547,7 @@ new g_js_LeetJump_Count[MAXPLAYERS+1];
 new g_js_MultiBhop_Count[MAXPLAYERS+1];
 new g_js_Last_Ground_Frames[MAXPLAYERS+1];
 new g_PlayerRank[MAXPLAYERS+1];
+new g_Skillgroup[MAXPLAYERS+1];
 new g_LastGroundEnt[MAXPLAYERS+1];
 new g_SelectedTeam[MAXPLAYERS+1];
 new g_BotMimicRecordTickCount[MAXPLAYERS+1] = {0,...};
@@ -671,6 +674,9 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	CreateNative("KZTimer_EmulateStartButtonPress", Native_EmulateStartButtonPress);
 	CreateNative("KZTimer_EmulateStopButtonPress", Native_EmulateStopButtonPress);
 	CreateNative("KZTimer_GetCurrentTime", Native_GetCurrentTime);
+	CreateNative("KZTimer_GetAvgTimeTp", Native_GetAvgTimeTp);
+	CreateNative("KZTimer_GetAvgTimePro", Native_GetAvgTimePro);
+	CreateNative("KZTimer_GetSkillGroup", Native_GetSkillGroup);
 	MarkNativeAsOptional("HGR_IsHooking");
 	MarkNativeAsOptional("HGR_IsGrabbing");
 	MarkNativeAsOptional("HGR_IsBeingGrabbed");
@@ -814,7 +820,7 @@ public OnPluginStart()
 	g_bAutoBhopConVar     = GetConVarBool(g_hAutoBhopConVar);
 	HookConVarChange(g_hAutoBhopConVar, OnSettingChanged);
 	
-	g_hDynamicTimelimit 	= CreateConVar("kz_dynamic_timelimit", "0", "on/off - Sets a suitable timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hDynamicTimelimit 	= CreateConVar("kz_dynamic_timelimit", "1", "on/off - Sets a suitable timelimit by calculating the average run time (This method requires kz_map_end 1, greater than 5 map times and a default timelimit in your server config for maps with less than 5 times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bDynamicTimelimit     = GetConVarBool(g_hDynamicTimelimit);
 	HookConVarChange(g_hDynamicTimelimit, OnSettingChanged);
 
@@ -2471,7 +2477,25 @@ public Native_StopTimer(Handle:plugin, numParams)
 
 public Native_GetCurrentTime(Handle:plugin, numParams)
 	return _:g_fCurrentRunTime[GetNativeCell(1)];
+
+public Native_GetSkillGroup(Handle:plugin, numParams)
+	return g_Skillgroup[GetNativeCell(1)];
 	
+public Native_GetAvgTimeTp(Handle:plugin, numParams)
+{
+	if (g_MapTimesCountTp==0)
+		return _:0.0;
+	else
+		return _:g_favg_tptime;
+}	
+public Native_GetAvgTimePro(Handle:plugin, numParams)
+{
+	if (g_MapTimesCountPro==0)
+		return _:0.0;
+	else
+		return _:g_favg_protime;
+}
+		
 public Native_EmulateStartButtonPress(Handle:plugin, numParams)
 {
 	g_bLegitButtons[GetNativeCell(1)] = false;

@@ -20,15 +20,18 @@ public TopMenuHandler2(Handle:topmenu, TopMenuAction:action, TopMenuObject:objec
 
 public Action:Admin_KzPanel(client, args)
 {
-	KzAdminMenu(client);	
+	StopClimbersMenu(client);
+	g_bClimbersMenuOpen[client] = false;
+	g_bMenuOpen[client]=true;
+	CreateTimer(0.1, OpenAdminMenu, client,TIMER_FLAG_NO_MAPCHANGE);
 	if ((GetUserFlagBits(client) & ADMFLAG_ROOT))
 	{
 		PrintToChat(client, "[%cKZ%c] See console for more commands", LIMEGREEN,WHITE);
-		PrintToConsole(client,"\n[KZTimer root admin]\n");
-		PrintToConsole(client,"\n sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
-		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table)\n sm_resetchallenges (Drops challenges table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n");
-		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map.)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)\n sm_resetalldropbhopecords (Resets all drop bhop records)\n sm_resetallladderjumprecords (Resets all ladder jump records)");
-		PrintToConsole(client," sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)\n sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)");
+		PrintToConsole(client,"\n[KZ ROOT ADMIN]");
+		PrintToConsole(client," sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
+		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table)\n sm_resetchallenges (Drops challenges table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n ");
+		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)\n sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)");
+		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)\n sm_resetallladderjumprecords (Resets all ladder jump records)");
 		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)\n sm_resetladderjumprecord <steamid> (Resets ladder jump record for given steamid)");
 	}
 	else
@@ -50,20 +53,15 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "KZTimer %s Admin Menu (limited access)\nNoclip: bind KEY +noclip",VERSION); 	
 	SetMenuTitle(adminmenu, szTmp);
-	if (MAX_PR_PLAYERS <  g_pr_RankedPlayers && (GetUserFlagBits(client) & ADMFLAG_ROOT))
-		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks (Disabled. Too many players in the DB)",ITEMDRAW_DISABLED);
-	else
-	{	
-		if (GetUserFlagBits(client) & ADMFLAG_ROOT)
-		{
-			if (!g_pr_RankingRecalc_InProgress)
-				AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks");
-			else
-				AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Stop the recalculation");
-		}
+	if (GetUserFlagBits(client) & ADMFLAG_ROOT)
+	{
+		if (!g_pr_RankingRecalc_InProgress)
+			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks");
 		else
-			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
+			AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Stop the recalculation");
 	}
+	else
+		AddMenuItem(adminmenu, "[1.] Recalculate player ranks", "[1.] Recalculate player ranks",ITEMDRAW_DISABLED);
 	AddMenuItem(adminmenu, "", "", ITEMDRAW_SPACER);		
 	AddMenuItem(adminmenu, "[3.] Set start button", "[3.] Set start button");
 	AddMenuItem(adminmenu, "[4.] Set stop button", "[4.] Set stop button");
@@ -204,9 +202,9 @@ public KzAdminMenu(client)
 		Format(szTmp, sizeof(szTmp), "[32.] Bhop block single-touch  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bChallengePoints)
-		Format(szTmp, sizeof(szTmp), "[33.] Allow challenges points  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[33.] Allow challenge points  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[33.] Allow challenges points  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[33.] Allow challenge points  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -538,7 +536,7 @@ public Action:Admin_ResetAllLadderJumpRecords(client, args)
  	decl String:szQuery[255];      
 	Format(szQuery, 255, "UPDATE playerjumpstats3 SET ladderjumprecord=-1.0");
 	SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery);	       
-	PrintToConsole(client, "lj records reseted.");
+	PrintToConsole(client, "ladderjump records reseted.");
 	for (new i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i))

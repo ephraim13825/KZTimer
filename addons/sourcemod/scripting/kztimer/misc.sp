@@ -1,19 +1,29 @@
-public LadderCheck(client)
+public LadderCheck(client,Float:speed)
 {
 	decl Float:pos[3],Float:dist; 
 	GetClientAbsOrigin(client, pos);
 	dist = pos[2]- g_fLastPosition[client][2];
 	if (GetEntityMoveType(client) == MOVETYPE_LADDER && dist > 0.5)
+	{
+		g_js_AvgLadderSpeed[client]+= speed;
 		g_js_LadderFrames[client]++;
+	}
 	
 	if(!(GetEntityFlags(client) & FL_ONGROUND) && GetEntityMoveType(client) == MOVETYPE_WALK && g_LastMoveType[client] == MOVETYPE_LADDER)
 	{
 		//start ladder jump
 		if (g_js_LadderFrames[client] > 20)
-			Prethink(client, true);
+		{
+			new Float:AvgSpeed = g_js_AvgLadderSpeed[client] / g_js_LadderFrames[client];
+			if (AvgSpeed < 100.0)
+				Prethink(client, true);
+		}
 	}
 	if (g_js_LadderFrames[client] > 0 && GetEntityMoveType(client) != MOVETYPE_LADDER)
+	{
+		g_js_AvgLadderSpeed[client] = 0.0;
 		g_js_LadderFrames[client] = 0;	
+	}
 }
 
 public CheckSpawnPoints() 
@@ -75,60 +85,6 @@ public CheckSpawnPoints()
 				}			
 			}
 		}
-	}
-}
-
-
-public SetTimelimit()
-{
-	new maptimes;
-	new Float:time;
-	if (g_fRecordTime < g_fRecordTimePro)
-		time = g_fRecordTime;
-	else
-		time = g_fRecordTimePro;
-	maptimes = g_MapTimesCountPro + g_MapTimesCountTp;
-	if (maptimes < 50)
-	{
-		ServerCommand("mp_timelimit 120");
-		ServerCommand("mp_roundtime 120");
-		ServerCommand("mp_restartgame 1");		
-		return;
-	}
-	if (time <= 180.0)
-	{
-		ServerCommand("mp_timelimit 30");
-		ServerCommand("mp_roundtime 30");
-		ServerCommand("mp_restartgame 1");		
-		return;	
-	}		
-	if (time <= 300.0)
-	{
-		ServerCommand("mp_timelimit 40");
-		ServerCommand("mp_roundtime 40");
-		ServerCommand("mp_restartgame 1");		
-		return;	
-	}		
-	if (time <= 600.0)
-	{
-		ServerCommand("mp_timelimit 60");
-		ServerCommand("mp_roundtime 60");
-		ServerCommand("mp_restartgame 1");		
-		return;	
-	}	
-	if (time <= 1200.0)
-	{
-		ServerCommand("mp_timelimit 90");
-		ServerCommand("mp_roundtime 90");
-		ServerCommand("mp_restartgame 1");		
-		return;	
-	}	
-	if (time > 1200.0)
-	{
-		ServerCommand("mp_timelimit 120");
-		ServerCommand("mp_roundtime 120");
-		ServerCommand("mp_restartgame 1");	
-		return;
 	}
 }
 
@@ -790,6 +746,7 @@ public SetClientDefaults(client)
 	g_js_MultiBhop_Count[client] = 1;
 	g_AdminMenuLastPage[client] = 0;
 	g_OptionsMenuLastPage[client] = 0;	
+	g_Skillgroup[client] = 0;
 	g_MenuLevel[client] = -1;
 	g_CurrentCp[client] = -1;
 	g_AttackCounter[client] = 0;
@@ -873,15 +830,22 @@ public SetPlayerBeam(client, Float:origin[3])
 	if (g_bJumpBeam[client])
 		TE_SendToClient(client);
 }
+
 // - Get Runtime -
 public GetcurrentRunTime(client)
 {
-	g_fCurrentRunTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];	
+	decl String:szTime[32];
+	decl Float:flPause, Float:flTime;	
 	if (g_bPause[client])
-		Format(g_szTimerTitle[client], 255, "%s\nTimer on Hold", g_szPlayerPanelText[client]);
-	else
 	{
-		decl String:szTime[32];
+		flPause = GetEngineTime() - g_fStartPauseTime[client];
+		flTime =  GetEngineTime() - g_fStartTime[client] - flPause;	
+		FormatTimeFloat(client, flTime, 1,szTime,sizeof(szTime));
+		Format(g_szTimerTitle[client], 255, "%s\n%s (PAUSE)", g_szPlayerPanelText[client],szTime);
+	}
+	else
+	{		
+		g_fCurrentRunTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];	
 		FormatTimeFloat(client, g_fCurrentRunTime[client], 1,szTime,sizeof(szTime));
 		if(g_bShowTime[client])
 		{		
@@ -1037,7 +1001,7 @@ public InitPrecache()
 	AddFileToDownloadsTable( LEETJUMP_RAMPAGE_FULL_SOUND_PATH );
 	FakePrecacheSound( LEETJUMP_RAMPAGE_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable( PROJUMP_FULL_SOUND_PATH );
-	FakePrecacheSound( PROJUMP_RELATIVE_SOUND_PATH );
+	FakePrecacheSound( PROJUMP_RELATIVE_SOUND_PATH );	
 	AddFileToDownloadsTable("models/props/switch001.mdl");
 	AddFileToDownloadsTable("models/props/switch001.vvd");
 	AddFileToDownloadsTable("models/props/switch001.phy");
@@ -1231,16 +1195,16 @@ public MapFinishedMsgs(client, type)
 		
 		if (g_Time_Type[client] == 0 || g_Time_Type[client] == 1 || g_Time_Type[client] == 2 || g_Time_Type[client] == 3)
 			CheckMapRanks(client, g_Tp_Final[client]);			
-	
-		//sound all
-		PlayRecordSound(g_Sound_Type[client]);			
-	
-		//sound Client
-		if (g_Sound_Type[client] == 5)
-			PlayUnstoppableSound(client);
 	}
 	//recalc avg
 	db_CalcAvgRunTime();
+	
+	//sound all
+	PlayRecordSound(g_Sound_Type[client]);			
+
+	//sound Client
+	if (g_Sound_Type[client] == 5)
+		PlayUnstoppableSound(client);
 }
 
 public CheckMapRanks(client, tps)
@@ -1449,70 +1413,82 @@ public SetPlayerRank(client)
 	{
 		if (g_pr_points[client] < g_pr_rank_Percentage[1])
 		{
+			g_Skillgroup[client] = 1;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[0]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",WHITE,g_szSkillGroups[0],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[1] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[2])
 		{
+			g_Skillgroup[client] = 2;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[1]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",WHITE,g_szSkillGroups[1],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[2] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[3])
 		{
+			g_Skillgroup[client] = 3;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[2]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",GRAY,g_szSkillGroups[2],WHITE);		
 		}
 		else
 		if (g_pr_rank_Percentage[3] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[4])
 		{
+			g_Skillgroup[client] = 4;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[3]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",LIGHTBLUE,g_szSkillGroups[3],WHITE);		
 		}
 		else
 		if (g_pr_rank_Percentage[4] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[5])
 		{
+			g_Skillgroup[client] = 5;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[4]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",BLUE,g_szSkillGroups[4],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[5] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[6])
 		{
+			g_Skillgroup[client] = 6;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[5]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",DARKBLUE,g_szSkillGroups[5],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[6] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[7])
 		{
+			g_Skillgroup[client] = 7;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[6]);
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",PINK,g_szSkillGroups[6],WHITE);
 		}
 		else
 		if (g_pr_rank_Percentage[7] <= g_pr_points[client] && g_pr_points[client] < g_pr_rank_Percentage[8])
 		{
+			g_Skillgroup[client] = 8;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[7]);	
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",LIGHTRED,g_szSkillGroups[7],WHITE);
 		}
 		else
 		if (g_pr_points[client] >= g_pr_rank_Percentage[8])
 		{
+			g_Skillgroup[client] = 9;
 			Format(g_pr_rankname[client], 32, "%s",g_szSkillGroups[8]);	
 			Format(g_pr_chat_coloredrank[client], 32, "[%c%s%c]",DARKRED,g_szSkillGroups[8],WHITE);
 		}
 	}	
 	else
+	{
+		g_Skillgroup[client] = 0;
 		Format(g_pr_rankname[client], 32, "");	
+	}	
 		
-	// VIP Clantag
+	// VIP tag
 	if (g_bVipClantag)			
 		if ((GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC))
 		{
 			Format(g_pr_chat_coloredrank[client], 32, "%s %cVIP%c",g_pr_chat_coloredrank[client],YELLOW,WHITE);
 			Format(g_pr_rankname[client], 32, "VIP");	
 		}
-
-	// Admin Clantag
+	
+	//ADMIN tag
 	if (g_bAdminClantag)
 	{	if (GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) 
 		{		
@@ -1521,14 +1497,14 @@ public SetPlayerRank(client)
 			return;
 		}
 	}
-	
+		
 	// MAPPER Clantag
 	for (new x = 0; x < 100; x++)
 	{
 		if ((StrContains(g_szMapmakers[x],"STEAM",true) != -1))
 		{
 			if (StrEqual(g_szMapmakers[x],g_szSteamID[client]))
-			{		
+			{			
 				Format(g_pr_chat_coloredrank[client], 32, "%s %cMAPPER%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
 				Format(g_pr_rankname[client], 32, "MAPPER");			
 				break;
@@ -1536,6 +1512,7 @@ public SetPlayerRank(client)
 		}
 	}			
 }
+
 stock Action:PrintSpecMessageAll(client)
 {
 	decl String:szName[32];

@@ -23,6 +23,14 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 	}	
 }
 
+public Action:OpenAdminMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		KzAdminMenu(client);
+	}
+}
+
 public Action:PlayerRanksTimer(Handle:timer)
 {
 	for (new i = 1; i <= MaxClients; i++)

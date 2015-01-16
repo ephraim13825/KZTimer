@@ -23,13 +23,14 @@ new String:sql_insertPlayerRank[] 				= "INSERT INTO playerrank (steamid, name, 
 new String:sql_updatePlayerRankPoints[]			= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i',winratio = '%i',pointsratio = '%i' where steamid='%s'";
 new String:sql_updatePlayerRankPoints2[]		= "UPDATE playerrank SET name ='%s', points ='%i', finishedmapstp ='%i', finishedmapspro='%i',winratio = '%i',pointsratio = '%i', country ='%s' where steamid='%s'";
 new String:sql_updatePlayerRank[]				= "UPDATE playerrank SET finishedmaps ='%i', finishedmapstp ='%i', finishedmapspro='%i', multiplier ='%i'  where steamid='%s'";
-new String:sql_selectPlayerRankAll[] 			= "SELECT name, steamid FROM playerrank where name like '%c%s%c'";
-new String:sql_selectPlayerRankAll2[] 			= "SELECT name, steamid FROM playerrank where name = '%s'";
+new String:sql_selectPlayerRankAll[] 			= "SELECT name, steamid FROM playerrank where name like '%c%s%c' order by lastseen DESC";
+new String:sql_selectPlayerRankAll2[] 			= "SELECT name, steamid FROM playerrank where name = '%s' order by lastseen DESC";
 new String:sql_selectPlayerName[] 				= "SELECT name FROM playerrank where steamid = '%s'";
 new String:sql_UpdateLastSeenMySQL[]			= "UPDATE playerrank SET lastseen = NOW() where steamid = '%s';"
 new String:sql_UpdateLastSeenSQLite[]			= "UPDATE playerrank SET lastseen = date('now') where steamid = '%s';"
 new String:sql_selectTopPlayers[]				= "SELECT name, points, finishedmapspro, finishedmapstp, steamid FROM playerrank ORDER BY points DESC LIMIT 100";
 new String:sql_selectTopChallengers[]			= "SELECT name, winratio, pointsratio, steamid FROM playerrank ORDER BY pointsratio DESC LIMIT 5";
+new String:sql_selectTopChallengers2[]			= "SELECT name, winratio, pointsratio, steamid FROM playerrank ORDER BY winratio DESC LIMIT 5";
 new String:sql_selectRankedPlayer[]				= "SELECT steamid, name, points, finishedmapstp, finishedmapspro, multiplier, country, lastseen from playerrank where steamid='%s'";
 new String:sql_selectRankedPlayersRank[]		= "SELECT name FROM playerrank WHERE points >= (SELECT points FROM playerrank WHERE steamid = '%s') ORDER BY points";
 new String:sql_selectRankedPlayers[]			= "SELECT steamid, name from playerrank where points > 0 ORDER BY points DESC";
@@ -2436,11 +2437,11 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 		AddMenuItem(menu, "Jumpstats", "Jumpstats (disabled)",ITEMDRAW_DISABLED);
 	AddMenuItem(menu, "Challenge history", "Challenge history");
 	AddMenuItem(menu, "Finished maps", "Finished maps");
+	AddMenuItem(menu, "Unfinished maps", "Unfinished maps");
 	if (IsValidClient(client))
 	{
 		if(StrEqual(szSteamId,g_szSteamID[client]))
-		{
-			AddMenuItem(menu, "Unfinished maps", "Unfinished maps");
+		{			
 			if (g_bPointSystem)
 				AddMenuItem(menu, "Refresh my profile", "Refresh my profile");
 		}
@@ -4952,11 +4953,39 @@ public sql_selectRankedPlayersCallback(Handle:owner, Handle:hndl, const String:e
 		new i = 66;
 		new x;
 		g_pr_TableRowCount = SQL_GetRowCount(hndl);
+		if (g_pr_TableRowCount==0)
+		{
+			for (new c = 1; c <= MaxClients; c++)
+			if (1 <= c <= MaxClients && IsValidEntity(c) && IsValidClient(c))
+			{
+				if (g_bManualRecalc)
+					PrintToChat(c, "%t", "PrUpdateFinished", MOSSGREEN, WHITE, LIMEGREEN);
+				if (g_bTop100Refresh)
+					PrintToChat(c, "%t", "Top100Refreshed", MOSSGREEN, WHITE, LIMEGREEN);
+			}
+			
+			g_bTop100Refresh = false;
+			g_bManualRecalc = false;
+			g_pr_RankingRecalc_InProgress = false;
+			
+			if (IsValidClient(g_pr_Recalc_AdminID))
+			{
+				PrintToConsole(g_pr_Recalc_AdminID, ">> Recalculation finished");
+				CreateTimer(0.1, RefreshAdminMenu, g_pr_Recalc_AdminID,TIMER_FLAG_NO_MAPCHANGE);
+			}			
+		}
 		if (MAX_PR_PLAYERS != maxplayers && g_pr_TableRowCount > maxplayers)
 			x = 66 + maxplayers;
 		else
 			x = 66 + g_pr_TableRowCount;
 
+		if (x > MAX_PR_PLAYERS)
+			x = MAX_PR_PLAYERS-1;
+		if (IsValidClient(g_pr_Recalc_AdminID) && g_bManualRecalc)
+		{
+			new max = MAX_PR_PLAYERS-66;	
+			PrintToConsole(g_pr_Recalc_AdminID, " \n>> Recalculation started! (Only Top %i because of performance reasons)",max); 
+		}
 		while (SQL_FetchRow(hndl))
 		{		
 			if (i <= x)
@@ -4973,7 +5002,7 @@ public sql_selectRankedPlayersCallback(Handle:owner, Handle:hndl, const String:e
 				db_viewPersonalMultiBhopRecord(66,g_pr_szSteamID[66]);
 				db_viewPersonalWeirdRecord(66,g_pr_szSteamID[66]);
 				db_viewPersonalDropBhopRecord(66,g_pr_szSteamID[66]);
-				db_viewPersonalLadderJumpRecord(66,g_pr_szSteamID[66]);
+				db_viewPersonalLadderJumpRecord(66,g_pr_szSteamID[66]);	
 				db_viewPersonalLJBlockRecord(66,g_pr_szSteamID[66]);				
 				db_viewPersonalLJRecord(66,g_pr_szSteamID[66]);
 			}
@@ -5115,7 +5144,8 @@ public sql_selectChallengesCallbackCalc(Handle:owner, Handle:hndl, const String:
 			}
 		}
 	}	
-	g_pr_points[client]+= g_Challenge_PointsRatio[client];
+	if (g_bChallengePoints)
+		g_pr_points[client]+= g_Challenge_PointsRatio[client];
 	Format(szQuery, 512, sql_CountFinishedMapsTP, szSteamId, szSteamId);  
 	SQL_TQuery(g_hDb, sql_CountFinishedMapsTPCallback, szQuery, client, DBPrio_Low);
 }
@@ -5535,12 +5565,18 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 		g_bProfileRecalc[client] = false;
 		if (g_pr_RankingRecalc_InProgress)
 		{
+			new y = MAX_PR_PLAYERS - 66;
 			//console info
 			if (IsValidClient(g_pr_Recalc_AdminID) && g_bManualRecalc)
-				PrintToConsole(g_pr_Recalc_AdminID, "%i/%i",g_pr_Recalc_ClientID,g_pr_TableRowCount); 
+			{			
+				if (g_pr_TableRowCount > MAX_PR_PLAYERS)
+					PrintToConsole(g_pr_Recalc_AdminID, "%i/%i",g_pr_Recalc_ClientID,y); 
+				else
+					PrintToConsole(g_pr_Recalc_AdminID, "%i/%i",g_pr_Recalc_ClientID,g_pr_TableRowCount); 
+			}
 			new x = 66+g_pr_Recalc_ClientID;
-			if(StrContains(g_pr_szSteamID[x],"STEAM",false)!=-1)  
-			{				
+			if(x < MAX_PR_PLAYERS && StrContains(g_pr_szSteamID[x],"STEAM",false)!=-1)  
+			{	
 				db_viewPersonalBhopRecord(x,g_pr_szSteamID[x]);
 				db_viewPersonalMultiBhopRecord(x,g_pr_szSteamID[x]);
 				db_viewPersonalWeirdRecord(x,g_pr_szSteamID[x]);
@@ -5558,12 +5594,16 @@ public sql_updatePlayerRankPointsCallback(Handle:owner, Handle:hndl, const Strin
 					if (g_bTop100Refresh)
 						PrintToChat(i, "%t", "Top100Refreshed", MOSSGREEN, WHITE, LIMEGREEN);
 				}
+				
 				g_bTop100Refresh = false;
 				g_bManualRecalc = false;
 				g_pr_RankingRecalc_InProgress = false;
 				
 				if (IsValidClient(g_pr_Recalc_AdminID))
+				{
+					PrintToConsole(g_pr_Recalc_AdminID, ">> Recalculation finished");
 					CreateTimer(0.1, RefreshAdminMenu, g_pr_Recalc_AdminID,TIMER_FLAG_NO_MAPCHANGE);
+				}
 			}		
 			g_pr_Recalc_ClientID++;		
 		}		
@@ -5699,7 +5739,10 @@ public sql_selectPlayerCountCallback(Handle:owner, Handle:hndl, const String:err
 public db_selectTopChallengers(client)
 {
 	decl String:szQuery[128];       
-	Format(szQuery, 128, sql_selectTopChallengers);   
+	if (g_bChallengePoints)
+		Format(szQuery, 128, sql_selectTopChallengers);   
+	else
+		Format(szQuery, 128, sql_selectTopChallengers2);  
 	SQL_TQuery(g_hDb, sql_selectTopChallengersCallback, szQuery, client,DBPrio_Low);
 }
 

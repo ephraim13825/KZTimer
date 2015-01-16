@@ -210,7 +210,8 @@ public CL_OnEndTimerPress(client)
 	}				
 	
 	//sound
-	PlayButtonSound(client);	
+	if (g_bTimeractivated[client])
+		PlayButtonSound(client);	
 	
 	//decl
 	new String:szName[MAX_NAME_LENGTH];	
