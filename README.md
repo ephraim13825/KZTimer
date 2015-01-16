@@ -27,6 +27,16 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.65 
+- added native methods KZTimer_GetAvgTimeTp, KZTimer_GetAvgTimePro and KZTimer_GetSkillGroup
+- fixed pro replay hud
+- fixed the possibility to do checkpoints mid-air
+- fixed closing of the checkpoint menu after joining the spectator mode
+- fixed jumpstats sounds for replay bots
+- fixed kz_challenge_points glitch
+- fixed timer bug on kz_olympus
+- blocked LAJ stats for slanting ladders
+- minor bug fixes
 
 v1.64
 - fixed load/unload procedure of kztimer
