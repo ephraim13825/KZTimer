@@ -79,6 +79,7 @@ PlayerSpawn(client)
 	g_bFirstButtonTouch[client]=true;
 	SetEntityMoveType(client, MOVETYPE_WALK);
 	SetEntityRenderMode(client, RENDER_NORMAL);
+	SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0);
 	
 	//strip weapons
 	if ((GetClientTeam(client) > 1) && IsValidClient(client))

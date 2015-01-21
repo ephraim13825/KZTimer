@@ -431,8 +431,9 @@ public Prethink (client, bool:ladderjump)
 	decl Float:fVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);		
 	g_js_fPreStrafe[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));	
-	g_js_fJumpOff_Speed[client] = -1.0;
-		
+	
+	
+	g_js_fJumpOff_Speed[client] = -1.0;		
 	CreateTimer(0.015, GetJumpOffSpeedTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 	GetGroundOrigin(client, g_js_fJump_JumpOff_Pos[client]);	
 	if (g_js_fJump_JumpOff_PosLastHeight[client] != -1.012345)
@@ -618,9 +619,20 @@ public Postthink(client)
 		}
 		
 	}
-						
+	
+	decl Float:maxdiff,Float:maxdiff2;
 	//vertical jump/failstats
-	if (fGroundDiff2 > 1.82 || fGroundDiff2 < -1.82 || fGroundDiff != 0.0)
+	if (IsFakeClient(client))
+	{
+		maxdiff = 2.0;
+		maxdiff2 = maxdiff * -1;
+	}
+	else
+	{
+		maxdiff = 1.82;
+		maxdiff2 = maxdiff * -1;
+	}
+	if (fGroundDiff2 > maxdiff || fGroundDiff2 < maxdiff2 || fGroundDiff != 0.0)
 	{		
 		if (g_js_block_lj_valid[client])
 		{
@@ -674,13 +686,13 @@ public Postthink(client)
 	
 	
 	//invalid jump
-	if (g_fAirTime[client] > 0.83)
+	if (g_fAirTime[client] > 0.83 && !IsFakeClient(client))
 	{
 		Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 		PostThinkPost(client, ground_frames);
 		return;		
 	}
-		
+	
 	decl bool: ValidJump;
 	ValidJump=false;
 	
@@ -806,7 +818,7 @@ public Postthink(client)
 	if (!g_bLadderJump[client] && ground_frames > 11 && fGroundDiff == 0.0 && fJump_Height <= 67.0 && g_js_fJump_Distance[client] < 300.0 && g_js_fMax_Speed_Final[client] > 200.0) 
 	{	
 		//strafe hack block (aimware is pretty smart :/) (1/2)
-		if (g_bPreStrafe)
+		if (g_bPreStrafe && !IsFakeClient(client))
 		{
 			if ((g_Server_Tickrate == 64 && strafes < 4 && g_js_fJump_Distance[client] > 265.0) || (g_Server_Tickrate == 102 && strafes < 4 && g_js_fJump_Distance[client] > 270.0) || (g_Server_Tickrate == 128 && strafes < 4 && g_js_fJump_Distance[client] > 275.0)) 
 			{
@@ -824,7 +836,7 @@ public Postthink(client)
 				return;
 			}
 		}
-		if (strafes > 20)
+		if (strafes > 20 && !IsFakeClient(client))
 		{
 			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
@@ -832,7 +844,7 @@ public Postthink(client)
 		}			
 		///
 		//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
-		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_lj * 1.02))
+		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_lj * 1.025))
 		{
 			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
@@ -1041,13 +1053,15 @@ public Postthink(client)
 		}
 	}
 	//Multi Bhop
-	if (!g_bLadderJump[client] && g_js_Last_Ground_Frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 67.0 && !g_js_bDropJump[client])
+	if (!g_bLadderJump[client] && g_js_Last_Ground_Frames[client] < 11 && ground_frames < 11 && fGroundDiff == 0.0  && fJump_Height <= 68.0 && !g_js_bDropJump[client])
 	{		
-	
+		
 		g_js_MultiBhop_Count[client]++;	
-		//strafe hack block (aimware is pretty smart :/)
-		if ((g_js_fPreStrafe[client] > g_fBhopSpeedCap) || ((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 365.0))
+		//strafe hack block 
+		new Float: SpeedCapAdv = g_fBhopSpeedCap + 0.5;
+		if ((g_js_fPreStrafe[client] > SpeedCapAdv) || ((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 365.0))
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
 			return;		
 		}
@@ -1055,6 +1069,7 @@ public Postthink(client)
 		//block invalid bot distances (has something to do with the ground-detection of the replay bot) WORKAROUND
 		if (IsFakeClient(client) && g_js_fJump_Distance[client] > (g_dist_leet_multibhop * 1.025))
 		{
+			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
 			return;
 		}
@@ -1114,6 +1129,7 @@ public Postthink(client)
 				// strafe hack protection					
 				if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 				{
+					Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 					PostThinkPost(client, ground_frames);
 					return;
 				}

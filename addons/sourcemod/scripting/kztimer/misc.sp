@@ -596,6 +596,7 @@ public DeleteButtons(client)
 			}
 		}
 	}
+	g_global_SelfBuiltButtons=false;
 	g_bFirstEndButtonPush=true;
 	g_bFirstStartButtonPush=true;
 	//stop player times (global record fake)
@@ -637,10 +638,22 @@ public CreateButton(client,String:targetname[])
 			ang[1] += 180.0;
 			TeleportEntity(ent, location2, ang, NULL_VECTOR);
 			SDKHook(ent, SDKHook_UsePost, OnUsePost);	
+			new Float:location3[3];
+			location3 = location2;
+			location3[2]+=150.0; 
 			if (StrEqual(targetname, "climb_startbuttonx"))
+			{							
+				g_fStartButtonPos = location3;
 				PrintToChat(client,"%c[%cKZ%c] Start button built!", WHITE,MOSSGREEN,WHITE);
+				g_bFirstStartButtonPush=false;
+			}
 			else
+			{			
+				g_fEndButtonPos = location3;
 				PrintToChat(client,"%c[%cKZ%c] Stop button built!", WHITE,MOSSGREEN,WHITE);
+				g_bFirstEndButtonPush = false;
+			}
+			g_global_SelfBuiltButtons=true;
 			ang[1] -= 180.0;
 		}
 		new sprite = CreateEntityByName("env_sprite");
@@ -1822,7 +1835,7 @@ public bool:WallCheck(client)
 
 public Prestrafe(client, Float: ang, &buttons)
 {				
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || !(g_bOnGround[client]) || IsFakeClient(client))
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || !(g_bOnGround[client]))
 		return;
 
 	decl bool: turning_right;
@@ -2068,7 +2081,7 @@ public LjBlockCheck(client, Float:origin[3])
 
 public AttackProtection(client, &buttons)
 {
-	if (g_bAttackSpamProtection)
+	if (g_bAttackSpamProtection && !IsFakeClient(client))
 	{
 		decl String:classnamex[64];
 		GetClientWeapon(client, classnamex, 64);
@@ -2204,7 +2217,7 @@ public NoClipCheck(client)
 
 public SpeedCap(client)
 {
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || IsFakeClient(client))
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
 		return;
 	static bool:IsOnGround[MAXPLAYERS + 1]; 
 	if (g_bOnGround[client])
@@ -2238,14 +2251,14 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 			decl Float:dist; 
 			dist=70.0;		
 			decl  Float:distance1; 
-			distance1 = GetVectorDistance(origin, g_fStartButtonPos);
+			distance1 = GetVectorDistance(origin, g_fStartButtonPos); ///ccc
 			decl  Float: distance2;
 			distance2 = GetVectorDistance(origin, g_fEndButtonPos);
 			if (distance1 < dist && speed < 251.0 && !g_bFirstStartButtonPush)
 			{
 				new Handle:trace;
 				trace = TR_TraceRayFilterEx(origin, g_fStartButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-				if (!TR_DidHit(trace))
+				if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
 				{
 					CL_OnStartTimerPress(client);
 					g_fLastTimeButtonSound[client] = GetEngineTime();	
@@ -2257,7 +2270,7 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 				{
 					new Handle:trace;
 					trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-					if (!TR_DidHit(trace))
+					if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
 					{
 						CL_OnEndTimerPress(client);	
 						g_fLastTimeButtonSound[client] = GetEngineTime();
@@ -2271,11 +2284,11 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 		if (IsValidClient(client) && IsFakeClient(client) && g_bTimeractivated[client] && g_LastButton[client] != IN_USE && buttons & IN_USE)
 		{
 			new Float: distance = GetVectorDistance(origin, g_fEndButtonPos);	
-			if (distance < 70.5  && !g_bFirstEndButtonPush)
+			if (distance < 75.0  && !g_bFirstEndButtonPush)
 			{
 				new Handle:trace;
 				trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-				if (!TR_DidHit(trace))
+				if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
 				{
 					CL_OnEndTimerPress(client);	
 					g_fLastTimeButtonSound[client] = GetEngineTime();
@@ -2968,13 +2981,13 @@ public FindBhopBlocks()
 
 public Entity_Touch3(bhop,client) 
 {
-	if(IsValidClient(client) && !IsFakeClient(client)) 		
+	if(IsValidClient(client)) 		
 		g_bOnBhopPlattform[client] = false;
 }
 
 public Entity_Touch2(bhop,client) 
 {
-	if(IsValidClient(client) && !IsFakeClient(client)) 
+	if(IsValidClient(client)) 
 	{		
 		g_bOnBhopPlattform[client]=true;	
 		if (g_bSingleTouch)
@@ -3162,7 +3175,7 @@ public Entity_BoostTouch(bhop,client)
 public Entity_Touch(bhop,client) 
 {
 	//bhop = entity
-	if(IsValidClient(client) && !IsFakeClient(client)) 
+	if(IsValidClient(client)) 
 	{		
 		g_bOnBhopPlattform[client]=true;
 

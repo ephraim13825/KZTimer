@@ -179,6 +179,7 @@ public LoadReplays()
 		g_bTpReplay=true;
 		CloseHandle(hFilex2);	
 	}	
+	
 	g_ProBot = -1;
 	g_TpBot = -1;
 	if (g_bProReplay)
@@ -223,7 +224,7 @@ public PlayRecord(client, type)
 	g_BotMimicTick[client] = 0;
 	g_BotMimicRecordTickCount[client] = iFileHeader[_:FH_tickCount];
 	g_CurrentAdditionalTeleportIndex[client] = 0;
-	
+
 	Array_Copy(iFileHeader[_:FH_initialPosition], g_fInitialPosition[client], 3);
 	Array_Copy(iFileHeader[_:FH_initialAngles], g_fInitialAngles[client], 3);
 	SDKHook(client, SDKHook_WeaponCanSwitchTo, Hook_WeaponCanSwitchTo);
@@ -342,6 +343,7 @@ public LoadReplayPro()
 
 	if(g_ProBot > 0 && IsValidClient(g_ProBot))
 	{		
+		g_bNewProBot=true;
 		PlayRecord(g_ProBot,0);
 		SetEntityRenderColor(g_ProBot, g_ReplayBotProColor[0], g_ReplayBotProColor[1], g_ReplayBotProColor[2], 50);
 		if (g_bPlayerSkinChange)
@@ -387,6 +389,7 @@ public LoadReplayTp()
 
 	if(g_TpBot > 0 && IsValidClient(g_TpBot))
 	{			
+		g_bNewTpBot=true;
 		PlayRecord(g_TpBot,1);
 		SetEntityRenderColor(g_TpBot, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
 		if (g_bPlayerSkinChange)
@@ -675,39 +678,53 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 		if(iFrame[newWeapon] != CSWeapon_NONE)
 		{
 			decl String:sAlias[64];
-			decl String:sAliasOrg[64];
-
-			//get weapon alias
 			CS_WeaponIDToAlias(iFrame[newWeapon], sAlias, sizeof(sAlias));
-			Format(sAliasOrg, sizeof(sAliasOrg), "weapon_%s", sAlias);
-			
-			
-			//replace hkp2000 by usp silencer
-			if (StrEqual(sAlias,"hkp2000"))
-				Format(sAlias, sizeof(sAlias), "weapon_usp_silencer", sAlias);
-			else
-				Format(sAlias, sizeof(sAlias), "weapon_%s", sAlias);
-
-			if(Client_HasWeapon(client, sAliasOrg) || Client_HasWeapon(client, sAlias))
-			{			
-				if (g_BotMimicTick[client] > 0)
-				{
-					weapon = Client_GetWeapon(client, sAliasOrg);
-					g_BotActiveWeapon[client] = weapon;
-					Client_SetActiveWeapon(client, weapon);
-				}
+			Format(sAlias, sizeof(sAlias), "weapon_%s", sAlias);
+				
+			if(g_BotMimicTick[client] > 0 && Client_HasWeapon(client, sAlias))
+			{
+				weapon = Client_GetWeapon(client, sAlias);
+				g_BotActiveWeapon[client] = weapon;
+				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+				Client_SetActiveWeapon(client, weapon);
 			}
 			else
 			{
-				weapon = GivePlayerItem(client, sAlias);
-				if(weapon != INVALID_ENT_REFERENCE)
+				if ((client == g_TpBot && g_bNewTpBot) || (client == g_ProBot && g_bNewProBot))
 				{
-					g_BotActiveWeapon[client] = weapon;
-					if(StrContains(sAlias, "grenade") == -1 && StrContains(sAlias, "flashbang") == -1 && StrContains(sAlias, "decoy") == -1 && StrContains(sAlias, "molotov") == -1 &&  StrContains(sAlias, "knife") == -1)
-						EquipPlayerWeapon(client, weapon);
+					if (client == g_TpBot)
+						g_bNewTpBot=false;
+					else
+						if (client == g_ProBot)
+						g_bNewProBot=false;
+					if (StrEqual(sAlias,"weapon_hkp2000"))
+						Format(sAlias, sizeof(sAlias), "weapon_usp_silencer", sAlias);
+					weapon = GivePlayerItem(client, sAlias);
+					if(weapon != INVALID_ENT_REFERENCE)
+					{
+						g_BotActiveWeapon[client] = weapon;
+						// Grenades shouldn't be equipped.
+						if(StrContains(sAlias, "grenade") == -1
+						&& StrContains(sAlias, "flashbang") == -1
+						&& StrContains(sAlias, "decoy") == -1
+						&& StrContains(sAlias, "molotov") == -1)
+						{
+							EquipPlayerWeapon(client, weapon);
+						}
+						SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+						Client_SetActiveWeapon(client, weapon);
+					}
 				}
+				else
+				{
+					weapon = Client_GetWeapon(client, sAlias);
+					g_BotActiveWeapon[client] = weapon;
+					SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+					Client_SetActiveWeapon(client, weapon);
+				}
+				
 			}
-		}		
+		}
 		g_BotMimicTick[client]++;		
 	}
 }

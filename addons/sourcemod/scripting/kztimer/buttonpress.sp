@@ -28,8 +28,7 @@ public ButtonPress(const String:name[], caller, activator, Float:delay)
 public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 {
 	if(!IsValidEntity(entity) || !IsValidClient(activator))
-		return;
-		
+		return;	
 	decl String:targetname[128];
 	GetEdictClassname(activator,targetname, sizeof(targetname));
 	if(!StrEqual(targetname,"player"))
@@ -38,6 +37,7 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 	new Float: speed = GetSpeed(activator);
 	if(StrEqual(targetname,"climb_startbuttonx") && speed < 251.0)
 	{		
+		g_global_SelfBuiltButtons=true;
 		g_bLegitButtons[activator] = false;
 		Call_StartForward(hStartPress);
 		Call_PushCell(activator);
@@ -45,6 +45,7 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 	} 
 	else if(StrEqual(targetname,"climb_endbuttonx")) 
 	{
+		g_global_SelfBuiltButtons=true;
 		g_bLegitButtons[activator] = false;
 		Call_StartForward(hEndPress);
 		Call_PushCell(activator);

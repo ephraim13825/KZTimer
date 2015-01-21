@@ -20,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.65"
-#define PLUGIN_VERSION 165
+#define VERSION "1.66"
+#define PLUGIN_VERSION 166
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -378,6 +378,8 @@ new bool:g_bAntiCheat;
 new bool:g_bHookMod;
 new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
+new bool:g_bNewTpBot;
+new bool:g_bNewProBot; 
 new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1];
 new bool:g_bFirstButtonTouch[MAXPLAYERS+1];
@@ -476,6 +478,7 @@ new bool:g_bBeam[MAXPLAYERS+1];
 new bool:g_bOnGround[MAXPLAYERS+1];
 new bool:g_bLegitButtons[MAXPLAYERS+1];
 new bool:g_bPrestrafeTooHigh[MAXPLAYERS+1];
+new bool:g_global_SelfBuiltButtons;
 new g_Beam[3];
 new g_BhopMultipleList[MAX_BHOPBLOCKS];
 new g_BhopMultipleTeleList[MAX_BHOPBLOCKS];
@@ -764,7 +767,7 @@ public OnPluginStart()
 	g_bPauseServerside    = GetConVarBool(g_hPauseServerside);
 	HookConVarChange(g_hPauseServerside, OnSettingChanged);
 
-	g_hSingleTouch    = CreateConVar("kz_bhop_single_touch", "1", "on/off - Disallows players to touch a single bhop block multiple times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hSingleTouch    = CreateConVar("kz_bhop_single_touch", "0", "on/off - Disallows players to touch a single bhop block multiple times", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_bSingleTouch    = GetConVarBool(g_hSingleTouch);
 	HookConVarChange(g_hSingleTouch, OnSettingChanged);
 	
@@ -1455,6 +1458,7 @@ public OnMapStart()
 	g_bAntiCheat = false;
 	g_bAutoBhop=false;
 	g_bRoundEnd=false;
+	g_global_SelfBuiltButtons=false;
 	CheatFlag("bot_zombie", false, true);
 	
 	//get mapname

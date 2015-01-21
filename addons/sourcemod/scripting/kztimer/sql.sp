@@ -3365,6 +3365,7 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 {       
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{
+		new Float:location3[3];
 		new Float:StartCords[3];
 		new Float:CordsSprite[3];
 		new Float:EndCords[3];
@@ -3396,9 +3397,12 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 				DispatchKeyValue(ent, "spawnflags", "264");
 				DispatchKeyValue(ent, "targetname","climb_startbuttonx");
 				DispatchSpawn(ent);   
-				TeleportEntity(ent, StartCords, Angs, NULL_VECTOR);
-				g_fStartButtonPos = StartCords;
-				SDKHook(ent, SDKHook_UsePost, OnUsePost);		
+				TeleportEntity(ent, StartCords, Angs, NULL_VECTOR);			
+				location3 = StartCords;			
+				g_fStartButtonPos = location3;
+				g_bFirstStartButtonPush = false;
+				SDKHook(ent, SDKHook_UsePost, OnUsePost);	
+				g_global_SelfBuiltButtons=true;
 			}
 			if (angstart != -1.0)
 			{
@@ -3435,8 +3439,11 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 				DispatchKeyValue(ent2, "targetname","climb_endbuttonx");
 				DispatchSpawn(ent2);   
 				TeleportEntity(ent2, EndCords, Angs, NULL_VECTOR);
-				g_fEndButtonPos = EndCords;
-				SDKHook(ent2, SDKHook_UsePost, OnUsePost);		
+				location3 = EndCords;		
+				g_fEndButtonPos = location3;
+				g_bFirstEndButtonPush = false;
+				SDKHook(ent2, SDKHook_UsePost, OnUsePost);
+				g_global_SelfBuiltButtons=true;
 			}
 			if (angend != -1.0)
 			{
@@ -3463,7 +3470,6 @@ public sql_ViewMapButtonsCallback(Handle:owner, Handle:hndl, const String:error[
 		}
 	}
 }
-
 
 public sql_selectPlayerJumpTopLJBlockCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
