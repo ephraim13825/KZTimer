@@ -27,6 +27,11 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.66 Global
+- fixed multibhop bug (a few mbhops were not registered)
+- increased the activation range for self-built climb buttons
+- minor optimizations
+
 v1.65 
 - added native methods KZTimer_GetAvgTimeTp, KZTimer_GetAvgTimePro and KZTimer_GetSkillGroup
 - fixed pro replay hud
