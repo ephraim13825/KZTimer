@@ -2091,7 +2091,8 @@ public AttackProtection(client, &buttons)
 			{
 				decl ent; 
 				ent = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
-				SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
+				if (IsValidEntity(ent))
+					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
 			}
 		}
 	}	
