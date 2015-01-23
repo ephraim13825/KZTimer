@@ -602,7 +602,7 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
 			GetPluginFilename(source, logtag, sizeof(logtag));
 		else
 			Format(logtag, sizeof(logtag), "OTHER");
-		if ((strcmp("playercommands.smx", logtag, false) == 0) ||(strcmp("slap.smx", logtag, false) == 0))
+		if ((strcmp("playercommands.smx", logtag, false) == 0) || (strcmp("funcommands.smx", logtag, false) == 0) ||(strcmp("slap.smx", logtag, false) == 0))
 			Client_Stop(target, 0);
 	}   
     return Plugin_Continue;
