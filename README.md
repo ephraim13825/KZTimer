@@ -27,6 +27,15 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.67
+- fixed func_door teleports
+- fixed the abuse of a few admin fun commands to cheat times (thx 2 gargos from aus kz)
+- improved weapon switch mimics of replay bots
+- improved !maptop command (now it will bring up the entire map top menu)
+- added takeoff speed to speedometer for kz_prestrafe 0
+- added client command !hidechat (hides chat and voice icons) and !hideweapon (hides your weapon viewmodel)
+- added detailed jumpstats (only green and red jumps) of observed players in spec mode
+
 v1.66
 - fixed multibhop bug (a few mbhops were not registered)
 - increased the activation range for self-built climb buttons
