@@ -20,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.66"
-#define PLUGIN_VERSION 166
+#define VERSION "1.67"
+#define PLUGIN_VERSION 167
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -49,6 +49,7 @@
 #define BLOCK_TELEPORT 0.05	
 #define BLOCK_COOLDOWN 0.1
 #define HIDE_RADAR (1 << 12)
+#define HIDE_CHAT ( 1<<7 )
 #define SF_BUTTON_DONTMOVE (1<<0)		
 #define SF_BUTTON_TOUCH_ACTIVATES (1<<8)	
 #define SF_DOOR_PTOUCH (1<<10)		
@@ -320,7 +321,6 @@ new Float:g_js_fJump_JumpOff_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_Landing_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_JumpOff_PosLastHeight[MAXPLAYERS+1];
 new Float:g_js_fJump_DistanceX[MAXPLAYERS+1];
-new Float:g_js_fJumpOff_Speed[MAXPLAYERS+1];
 new Float:g_js_fJump_DistanceZ[MAXPLAYERS+1];
 new Float:g_js_fJump_Distance[MAXPLAYERS+1];
 new Float:g_js_fPreStrafe[MAXPLAYERS+1];
@@ -381,6 +381,7 @@ new bool:g_bUseCPrefs;
 new bool:g_bNewTpBot;
 new bool:g_bNewProBot; 
 new bool:g_bLoaded[MAXPLAYERS+1];
+new bool:g_bSaving[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1];
 new bool:g_bFirstButtonTouch[MAXPLAYERS+1];
 new bool:g_bSideWay[MAXPLAYERS+1];
@@ -392,6 +393,7 @@ new bool:g_js_bFuncMoveLinear[MAXPLAYERS+1];
 new bool:g_bUndoTimer[MAXPLAYERS+1];
 new bool:g_pr_Calculating[MAXPLAYERS+1];
 new bool:g_bChallenge_Checkpoints[MAXPLAYERS+1];
+new bool:g_bMapMenuOpen[MAXPLAYERS+1]; 
 new bool:g_bTopMenuOpen[MAXPLAYERS+1]; 
 new bool:g_bNoClipUsed[MAXPLAYERS+1];
 new bool:g_bMenuOpen[MAXPLAYERS+1];
@@ -454,6 +456,7 @@ new bool:g_bSayHook[MAXPLAYERS+1];
 new bool:g_bShowSpecs[MAXPLAYERS+1]; 
 new bool:g_bFlagged[MAXPLAYERS+1];
 new bool:g_bSurfCheck[MAXPLAYERS+1];
+new bool:g_bSpecInfo[MAXPLAYERS+1];
 new bool:g_bMeasurePosSet[MAXPLAYERS+1][2];
 new bool:g_bCPTextMessage[MAXPLAYERS+1]; 
 new bool:g_bAdvancedClimbersMenu[MAXPLAYERS+1];
@@ -473,7 +476,11 @@ new bool:g_borg_CPTextMessage[MAXPLAYERS+1];
 new bool:g_borg_AdvancedClimbersMenu[MAXPLAYERS+1];
 new bool:g_borg_AutoBhopClient[MAXPLAYERS+1];
 new bool:g_borg_JumpBeam[MAXPLAYERS+1];
+new bool:g_borg_HideChat[MAXPLAYERS+1];
+new bool:g_borg_ViewModel[MAXPLAYERS+1];
+new bool:g_bViewModel[MAXPLAYERS+1];
 new bool:g_bJumpBeam[MAXPLAYERS+1];
+new bool:g_bHideChat[MAXPLAYERS+1];
 new bool:g_bBeam[MAXPLAYERS+1];
 new bool:g_bOnGround[MAXPLAYERS+1];
 new bool:g_bLegitButtons[MAXPLAYERS+1];
@@ -586,6 +593,7 @@ new g_CounterCp[MAXPLAYERS+1];
 new g_OverallCp[MAXPLAYERS+1];
 new g_OverallTp[MAXPLAYERS+1];
 new g_SpecTarget[MAXPLAYERS+1];
+new g_SpecTarget2[MAXPLAYERS+1];//test
 new g_PrestrafeFrameCounter[MAXPLAYERS+1];
 new g_LastButton[MAXPLAYERS + 1];
 new g_CurrentButton[MAXPLAYERS+1];
@@ -1092,6 +1100,8 @@ public OnPluginStart()
 	RegConsoleCmd("sm_help", Client_Help, "[KZTimer] help menu which displays all kztimer commands");
 	RegConsoleCmd("sm_profile", Client_Profile, "[KZTimer] opens a player profile");
 	RegConsoleCmd("sm_rank", Client_Profile, "[KZTimer] opens a player profile");
+	RegConsoleCmd("sm_hidechat", Client_HideChat, "[KZTimer] hides your ingame chat");
+	RegConsoleCmd("sm_hideweapon", Client_HideWeapon, "[KZTimer] hides your weapon model");
 	RegConsoleCmd("sm_options", Client_OptionMenu, "[KZTimer] opens options menu");
 	RegConsoleCmd("sm_top", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
 	RegConsoleCmd("sm_topclimbers", Client_Top, "[KZTimer] displays top rankings (Top 100 Players, Top 50 overall, Top 20 Pro, Top 20 with Teleports, Top 20 LJ, Top 20 Bhop, Top 20 Multi-Bhop, Top 20 WeirdJump, Top 20 Drop Bunnyhop)");
@@ -1109,7 +1119,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_bhopcheck", Command_Stats, "[KZTimer] checks bhop stats for a given player");
 	RegConsoleCmd("+noclip", NoClip, "[KZTimer] Player noclip on");
 	RegConsoleCmd("-noclip", UnNoClip, "[KZTimer] Player noclip off");
-	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer menu panel");
+	RegAdminCmd("sm_kzadmin", Admin_KzPanel, ADMIN_LEVEL, "[KZTimer] Displays the kztimer menu panel (requires flag e)");
 	RegAdminCmd("sm_refreshprofile", Admin_RefreshProfile, ADMIN_LEVEL, "[KZTimer] Recalculates player profile for given steam id");
 	RegAdminCmd("sm_resetchallenges", Admin_DropChallenges, ADMIN_LEVEL2, "[KZTimer] Resets all player challenges (drops table challenges) - requires z flag");
 	RegAdminCmd("sm_resettimes", Admin_DropAllMapRecords, ADMIN_LEVEL2, "[KZTimer] Resets all player times (drops table playertimes) - requires z flag");
@@ -1672,11 +1682,7 @@ public OnClientPutInServer(client)
 	SDKHook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
 	SDKHook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
 	SDKHook(client, SDKHook_StartTouch, Hook_OnTouch);
-	SDKHook(client, SDKHook_PreThink, OnPlayerThink);
-	SDKHook(client, SDKHook_PreThinkPost, OnPlayerThink);
-	SDKHook(client, SDKHook_Think, OnPlayerThink);
-	SDKHook(client, SDKHook_PostThink, OnPlayerThink);
-	SDKHook(client, SDKHook_PostThinkPost, OnPlayerThink);
+	SDKHook(client, SDKHook_PostThink, Hook_PostThink);
 	
 	if (IsFakeClient(client))
 	{
@@ -1793,11 +1799,7 @@ public OnClientDisconnect(client)
 	SDKUnhook(client, SDKHook_PostThinkPost, Hook_PostThinkPost); 
 	SDKUnhook(client, SDKHook_OnTakeDamage, Hook_OnTakeDamage);	
 	SDKUnhook(client, SDKHook_StartTouch, Hook_OnTouch);
-	SDKUnhook(client, SDKHook_PreThink, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PreThinkPost, OnPlayerThink);
-	SDKUnhook(client, SDKHook_Think, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PostThink, OnPlayerThink);
-	SDKUnhook(client, SDKHook_PostThinkPost, OnPlayerThink);
+	SDKUnhook(client, SDKHook_PostThink, Hook_PostThink);
 	
 	if (client == g_ProBot || client == g_TpBot)
 	{

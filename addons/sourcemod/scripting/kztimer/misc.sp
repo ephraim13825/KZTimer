@@ -228,7 +228,7 @@ Init_GeoLang()
 	
 	// Create and cache the menu.
 	g_hLangMenu = CreateMenu(LanguageMenu_Handler, MenuAction_DrawItem);
-	SetMenuTitle(g_hLangMenu, "Language:");
+	SetMenuTitle(g_hLangMenu, "KZTimer Language:");
 	SetMenuPagination(g_hLangMenu, MENU_NO_PAGINATION); 
 	
 	maxLangs = GetArraySize(hLangArray);
@@ -358,14 +358,17 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Steam group of KZTimer: http://steamcommunity.com/groups/KZTIMER");
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
-	PrintToConsole(client, "Menu formatting is optimized for 1920x1080!");
+	PrintToConsole(client, "Menu formatting is optimized for 1920x1080..");	
+	PrintToConsole(client, "It's not possible to hide the spec minimap for replay bots through coding.");	
+	PrintToConsole(client, "But you can disable it by typing hideradar into your console!");	
+	PrintToConsole(client, " ");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
 	PrintToConsole(client, "!help, !help2, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !avg,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp, !wr, !beam");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
-	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop)");
+	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop, !hidechat, !hideweapon)");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Live scoreboard:");
 	PrintToConsole(client, "Kills: Time in seconds");
@@ -516,6 +519,17 @@ stock StripAllWeapons(client)
 
 public MovementCheck(client)
 {
+	if (StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"bhop"))
+	{		
+		SetEntPropFloat(client, Prop_Data, "m_flGravity", 1.0); 
+		new Float:LaggedMovementValue = GetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue");
+		if (LaggedMovementValue != 1.0)
+		{
+			g_bTimeractivated[client] = false;
+			if (g_js_bPlayerJumped[client])	
+				ResetJump(client);
+		}
+	}
 	decl MoveType:mt;
 	mt = GetEntityMoveType(client); 
 	if (mt == MOVETYPE_FLYGRAVITY)
@@ -524,6 +538,8 @@ public MovementCheck(client)
 		if (g_js_bPlayerJumped[client])	
 			ResetJump(client);
 	}
+	if (g_bPause[client] && mt == MOVETYPE_WALK)
+		SetEntityMoveType(client, MOVETYPE_NONE);
 }
 
 public PlayButtonSound(client)
@@ -721,6 +737,7 @@ public SetClientDefaults(client)
 	g_LastGroundEnt[client] = - 1;	
 	g_bFlagged[client] = false;
 	g_bHyperscroll[client] = false;
+	g_bSaving[client]=false;
 	g_fLastOverlay[client] = GetEngineTime() - 5.0;	
 	g_bProfileSelected[client]=false;
 	g_bNewReplay[client] = false;
@@ -740,9 +757,11 @@ public SetClientDefaults(client)
 	g_bRecalcRankInProgess[client] = false;
 	g_bPrestrafeTooHigh[client] = false;
 	g_bPause[client] = false;
+	g_bSpecInfo[client]=true;
 	g_bPositionRestored[client] = false;
 	g_bPauseWasActivated[client]=false;
 	g_bTopMenuOpen[client] = false;
+	g_bMapMenuOpen[client] = false;
 	g_bRestorePosition[client] = false;
 	g_bRestorePositionMsg[client] = false;
 	g_bRespawnPosition[client] = false;
@@ -811,6 +830,7 @@ public SetClientDefaults(client)
 	
 	// Client options
 	g_bInfoPanel[client]=false;
+	g_bHideChat[client]=false;
 	g_bClimbersMenuSounds[client]=true;
 	g_bEnableQuakeSounds[client]=true;
 	g_bShowNames[client]=true; 
@@ -825,6 +845,7 @@ public SetClientDefaults(client)
 	g_bShowSpecs[client]=true;
 	g_bAutoBhopClient[client]=true;
 	g_bJumpBeam[client]=false;
+	g_bViewModel[client]=true;
 }
 
 public SetPlayerBeam(client, Float:origin[3])
@@ -1107,6 +1128,7 @@ public MapFinishedMsgs(client, type)
 {	
 	if (IsValidClient(client))
 	{
+		g_bSaving[client]=false;
 		decl String:szTime[32];
 		decl String:szName[MAX_NAME_LENGTH];
 		GetClientName(client, szName, MAX_NAME_LENGTH);
@@ -1218,6 +1240,8 @@ public MapFinishedMsgs(client, type)
 	//sound Client
 	if (g_Sound_Type[client] == 5)
 		PlayUnstoppableSound(client);
+		
+	
 }
 
 public CheckMapRanks(client, tps)
@@ -1651,7 +1675,7 @@ public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:r
 
 public PlayerPanel(client)
 {	
-	if (!IsValidClient(client) || g_bTopMenuOpen[client] || IsFakeClient(client))
+	if (!IsValidClient(client) || g_bTopMenuOpen[client] || g_bMapMenuOpen[client] || IsFakeClient(client))
 		return;
 	
 	if (GetClientMenu(client) == MenuSource_None)
@@ -1717,7 +1741,7 @@ public GetRGBColor(bot, String:color[256])
 
 public SpecList(client)
 {
-	if (!IsValidClient(client) || g_bTopMenuOpen[client]  || IsFakeClient(client))
+	if (!IsValidClient(client) || g_bMapMenuOpen[client] || g_bTopMenuOpen[client]  || IsFakeClient(client))
 		return;
 		
 	if (GetClientMenu(client) == MenuSource_None)
@@ -2576,6 +2600,11 @@ public SpecListMenuDead(client)
 			{
 				decl String:szName[MAX_NAME_LENGTH];
 				GetClientName(ObservedUser, szName, MAX_NAME_LENGTH);
+				if (g_bSpecInfo[client] && IsFakeClient(ObservedUser))
+				{
+					g_bSpecInfo[client]=false;
+					PrintToChat(client, "%t", "SpecInfo",MOSSGREEN, WHITE,GREEN,WHITE);
+				}
 				if (g_bTimeractivated[ObservedUser])
 				{			
 					decl String:szTime[32];
@@ -3606,7 +3635,7 @@ public CenterHudDead(client)
 									
 			if (g_bJumpStats)
 			{
-				if (g_js_bPlayerJumped[ObservedUser] && g_bPreStrafe)
+				if (g_js_bPlayerJumped[ObservedUser])
 				{
 					if (ObservedUser == g_ProBot || ObservedUser == g_TpBot)
 						PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[ObservedUser],g_fLastSpeed[ObservedUser],sResult);
@@ -3680,7 +3709,7 @@ public CenterHudAlive(client)
 		{
 			if (g_bJumpStats)
 			{		
-				if (g_js_bPlayerJumped[client] && g_bPreStrafe)
+				if (g_js_bPlayerJumped[client])
 					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_js_szLastJumpDistance[client],g_fLastSpeed[client],g_js_fPreStrafe[client],sResult);
 				else
 					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[client],g_fLastSpeed[client],sResult);

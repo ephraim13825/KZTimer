@@ -1,3 +1,51 @@
+public Action:Client_HideChat(client, args)
+{
+	HideChat(client);
+	if (g_bHideChat[client])
+		PrintToChat(client, "%t", "HideChat1",MOSSGREEN, WHITE);
+	else
+		PrintToChat(client, "%t", "HideChat2",MOSSGREEN, WHITE);
+	return Plugin_Handled;
+}
+
+public HideChat(client)
+{
+	if (!g_bHideChat[client])
+	{
+		g_bHideChat[client]=true;
+		SetEntProp(client, Prop_Send, "m_iHideHUD", GetEntProp(client, Prop_Send, "m_iHideHUD")|HIDE_RADAR|HIDE_CHAT);
+	}
+	else
+	{
+		g_bHideChat[client]=false;
+		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);
+	}
+}
+
+public Action:Client_HideWeapon(client, args)
+{
+	HideViewModel(client);
+	if (g_bViewModel[client])
+		PrintToChat(client, "%t", "HideViewModel2",MOSSGREEN, WHITE);
+	else
+		PrintToChat(client, "%t", "HideViewModel1",MOSSGREEN, WHITE);
+	return Plugin_Handled;
+}
+
+public HideViewModel(client)
+{
+	if (!g_bViewModel[client])
+	{
+		g_bViewModel[client]=true;
+		Client_SetDrawViewModel(client,true);
+	}
+	else
+	{
+		g_bViewModel[client]=false;
+		Client_SetDrawViewModel(client,false);
+	}
+}
+
 public Action:Client_PlayerJumpBeam(client, args) 
 {
 	PlayerJumpBeam(client);
@@ -424,7 +472,6 @@ public Action:Client_Usp(client, args)
 	if(Client_HasWeapon(client, "weapon_hkp2000"))
 	{			
 		new weapon = Client_GetWeapon(client, "weapon_hkp2000");
-		FakeClientCommand(client, "use %s", weapon);
 		InstantSwitch(client, weapon);
 	}
 	else
@@ -654,12 +701,12 @@ public Action:Client_MapTop(client, args)
 {	
 	if (args==0)
 	{
-		PrintToChat(client, "%t", "MapTopFail",MOSSGREEN,WHITE);
+		MapTopMenu(client,g_szMapName);
 		return Plugin_Handled;
 	}
 	decl String:szArg[128];   
 	GetCmdArg(1, szArg, 128);
-	db_selectMapTopClimbers(client,szArg);
+	db_selectMapTopClimbers(client,szArg)
 	return Plugin_Handled;
 }
 
@@ -814,9 +861,9 @@ public SpecPlayer(client,args)
 				StringToUpper(szPlayerName);
 				if ((StrContains(szPlayerName, szTargetName) != -1))
 				{
-					ChangeClientTeam(client, 1);
-					SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", i);  
-					SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+					ChangeClientTeam(client, 1);				
+					g_SpecTarget2[client] = i;
+					CreateTimer(0.1, SelectSpecTarget, client, TIMER_FLAG_NO_MAPCHANGE);
 					return;
 				}
 			}
@@ -855,8 +902,8 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			else
 			{
 				ChangeClientTeam(param1, 1);
-				SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", playerid);  
-				SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);						
+				g_SpecTarget2[param1] = playerid;
+				CreateTimer(0.1, SelectSpecTarget, param1, TIMER_FLAG_NO_MAPCHANGE);			
 			}
 		}
 		else
@@ -874,8 +921,8 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 					if(StrEqual(info,szPlayerName))
 					{
 						ChangeClientTeam(param1, 1);
-						SetEntPropEnt(param1, Prop_Send, "m_hObserverTarget", i);  
-						SetEntProp(param1, Prop_Send, "m_iObserverMode", 4);			
+						g_SpecTarget2[param1] = i;
+						CreateTimer(0.1, SelectSpecTarget, param1, TIMER_FLAG_NO_MAPCHANGE);	
 					}
 				}			
 			}
@@ -891,6 +938,7 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		CloseHandle(menu);
 	}
 }
+
 
 public Action:Client_Kzmenu(client, args)
 {
@@ -1289,7 +1337,6 @@ public PauseMethod(client)
 			if (g_fPauseTime[client] > 0.0)
 				g_fStartPauseTime[client] = g_fStartPauseTime[client] - g_fPauseTime[client];	
 		}
-		SetEntityRenderMode(client, RENDER_NONE);
 		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 	}
 	else
@@ -1302,7 +1349,6 @@ public PauseMethod(client)
 		g_bPause[client]=false;
 		if (!g_bRoundEnd)
 			SetEntityMoveType(client, MOVETYPE_WALK);
-		SetEntityRenderMode(client, RENDER_NORMAL);
 		if (g_bNoBlock)
 			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 		else
@@ -2077,7 +2123,7 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				case 1: db_selectTopChallengers(param1);
 				case 2: db_selectTopProRecordHolders(param1);
 				case 3: db_selectTopTpRecordHolders(param1);
-				case 4: MapTopMenu(param1);
+				case 4: MapTopMenu(param1,g_szMapName);
 				case 5: JumpTopMenu(param1);
 			}
 			if (param2==5 && !g_bJumpStats)
@@ -2090,7 +2136,7 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				case 0: db_selectTopChallengers(param1);
 				case 1: db_selectTopProRecordHolders(param1);
 				case 2: db_selectTopTpRecordHolders(param1);
-				case 3: MapTopMenu(param1);
+				case 3: MapTopMenu(param1,g_szMapName);
 				case 4: JumpTopMenu(param1);
 			}
 			if (param2==4 && !g_bJumpStats)
@@ -2109,13 +2155,16 @@ public TopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			}
 }
 
-public MapTopMenu(client)
+public MapTopMenu(client, String:szMap[128])
 {
+	Format(g_szMapTopName[client],128, "%s", szMap);
 	new Handle:topmenu2 = CreateMenu(MapTopMenuHandler);
 	decl String:title[128];
-	Format(title, 128, "Map Top (Tickrate %i)",g_Server_Tickrate);
+	Format(title, 128, "Map Top %s (tickrate %i)\n",szMap, g_Server_Tickrate);
 	SetMenuTitle(topmenu2, title);
-		
+	g_bMapMenuOpen[client]=true;	
+	g_bClimbersMenuOpen[client]=false;
+	
 	if (g_bAllowCheckpoints)
 	{
 		AddMenuItem(topmenu2, "!topclimbers", "Top 50 Overall");
@@ -2138,15 +2187,17 @@ public MapTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	{
 		switch(param2)
 		{
-			case 0: db_selectTopClimbers(param1,g_szMapName);
-			case 1: db_selectProClimbers(param1);
-			case 2: db_selectTPClimbers(param1);
+			case 0: db_selectTopClimbers(param1,g_szMapTopName[param1]);
+			case 1: db_selectProClimbers(param1,g_szMapTopName[param1]);
+			case 2: db_selectTPClimbers(param1,g_szMapTopName[param1]);
 		}
 	}
 	else
 		if(action == MenuAction_Cancel)
 		{
-			TopMenu(param1);
+			if (g_bTopMenuOpen[param1])
+				TopMenu(param1);
+			g_bMapMenuOpen[param1]=false;
 		}
 		else 
 			if (action == MenuAction_End)
@@ -2290,7 +2341,7 @@ public HelpPanel3(client)
 	Format(szTmp, 64, "KZ Timer Help (3/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
 	DrawPanelText(panel, " ");	
-	DrawPanelText(panel, "!maptop <mapname> - displays map top for a given map");
+	DrawPanelText(panel, "!maptop - displays map top (optional: <mapname>)");
 	DrawPanelText(panel, "!bhopcheck <name> - checks bhop stats for a given player");
 	DrawPanelText(panel, "!ljblock - registers a lj block");
 	DrawPanelText(panel, "!flashlight - on/off flashlight");
@@ -2418,7 +2469,7 @@ public OptionMenu(client)
 {
 	g_bMenuOpen[client] = true;
 	new Handle:optionmenu = CreateMenu(OptionMenuHandler);
-	SetMenuTitle(optionmenu, "KZTimer - Options Menu");
+	SetMenuTitle(optionmenu, "KZTimer - Options");
 	if (g_bAdvancedClimbersMenu[client])
 		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Advanced checkpoint menu  -  Enabled");
 	else
@@ -2477,13 +2528,23 @@ public OptionMenu(client)
 	if (g_bJumpBeam[client])
 		AddMenuItem(optionmenu, "Jump beam  -  Enabled", "Jump beam  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam  -  Disabled");			
+		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam   -  Disabled");			
 	//12
+	if (g_bHideChat[client])
+		AddMenuItem(optionmenu, "In-game chat  -  Enabled", "Hide chat  -  Enabled");
+	else
+		AddMenuItem(optionmenu, "In-game chat  -  Disabled", "Hide chat  -  Disabled");
+	//13
+	if (g_bViewModel[client])
+		AddMenuItem(optionmenu, "Goto  -  Enabled", "Weapon viewmodel  -  Enabled");
+	else
+		AddMenuItem(optionmenu, "Goto  -  Disabled", "Weapon viewmodel  -  Disabled");			
+	//14
 	if (g_bGoToClient[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");	
-	//13
+	//15
 	if (g_bAutoBhop)
 	{
 		if (g_bAutoBhopClient[client])
@@ -2492,7 +2553,6 @@ public OptionMenu(client)
 			AddMenuItem(optionmenu, "AutoBhop  -  Disabled", "AutoBhop  -  Disabled");	
 	}	
 		
-
 	SetMenuOptionFlags(optionmenu, MENUFLAG_BUTTON_EXIT);
 	if (g_OptionsMenuLastPage[client] < 6)
 		DisplayMenuAtItem(optionmenu, client, 0, MENU_TIME_FOREVER);
@@ -2502,15 +2562,6 @@ public OptionMenu(client)
 		else
 			if (g_OptionsMenuLastPage[client] < 18)
 				DisplayMenuAtItem(optionmenu, client, 12, MENU_TIME_FOREVER);
-}
-
-
-public SwitchStartWeapon(client)
-{
-	if (g_bStartWithUsp[client])
-		g_bStartWithUsp[client] = false;
-	else
-		g_bStartWithUsp[client] = true;
 }
 
 
@@ -2532,8 +2583,10 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 9: InfoPanel(param1);	
 			case 10: SwitchStartWeapon(param1);
 			case 11: PlayerJumpBeam(param1);
-			case 12: DisableGoTo(param1);
-			case 13: AutoBhop(param1);		
+			case 12: HideChat(param1);
+			case 13: HideViewModel(param1);
+			case 14: DisableGoTo(param1);
+			case 15: AutoBhop(param1);		
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);					
@@ -2549,4 +2602,12 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			{	
 				CloseHandle(menu);
 			}
+}
+
+public SwitchStartWeapon(client)
+{
+	if (g_bStartWithUsp[client])
+		g_bStartWithUsp[client] = false;
+	else
+		g_bStartWithUsp[client] = true;
 }

@@ -451,6 +451,15 @@ public Action:SteamGroupTimer(Handle:timer, any:client)
 		PrintToChat(client, " %c>>%c Join the steam group of KZTimer to be more informed on updates as well as new climb maps, type %c!join%c in chat!", YELLOW,GRAY,LIMEGREEN,GRAY);	
 }
 
+public Action:SelectSpecTarget(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && IsValidClient(g_SpecTarget2[client]))
+	{
+		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);	
+		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_SpecTarget2[client]);  				
+	}
+}
+
 public Action:GetJumpOffSpeedTimer(Handle:timer, any:client)
 {
 	if (IsValidClient(client))
@@ -458,7 +467,7 @@ public Action:GetJumpOffSpeedTimer(Handle:timer, any:client)
 		decl Float:fVelocity[3];
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 		fVelocity[2] = 0.0;
-		g_js_fJumpOff_Speed[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));
+		g_js_fPreStrafe[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));		
 	}
 }
 
@@ -527,7 +536,10 @@ public Action:HideRadar(Handle:timer, any:client)
 	if (IsValidClient(client) && !IsFakeClient(client))
 	{
 		SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0);
-		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);	
+		if (g_bHideChat[client])
+			SetEntProp(client, Prop_Send, "m_iHideHUD", GetEntProp(client, Prop_Send, "m_iHideHUD")|HIDE_RADAR|HIDE_CHAT);
+		else
+			SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);
 	}
 }
 

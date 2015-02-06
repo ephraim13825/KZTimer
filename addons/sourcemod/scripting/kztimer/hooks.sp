@@ -85,12 +85,20 @@ PlayerSpawn(client)
 	if ((GetClientTeam(client) > 1) && IsValidClient(client))
 	{			
 		StripAllWeapons(client);
-		if (!IsFakeClient(client))
-			GivePlayerItem(client, "weapon_usp_silencer");
-		if (!g_bStartWithUsp[client])
+		new weapon = GetPlayerWeaponSlot(client, 2);
+		if (IsFakeClient(client))
 		{
-			new weapon = GetPlayerWeaponSlot(client, 2);
-			if (weapon != -1 && !IsFakeClient(client))
+			
+			if (weapon != -1)
+				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+			weapon = GivePlayerItem(client, "weapon_usp_silencer");
+			EquipPlayerWeapon(client, weapon);	
+		}
+		else
+			GivePlayerItem(client, "weapon_usp_silencer");
+		if (!g_bStartWithUsp[client] && !IsFakeClient(client))
+		{
+			if (weapon != -1)
 				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
 		}
 	}	
@@ -190,6 +198,10 @@ PlayerSpawn(client)
 		ClimbersMenu(client);
 	}
 
+	if (!g_bViewModel[client])
+		Client_SetDrawViewModel(client,false);
+		
+		
 	//get speed & origin
 	g_fLastSpeed[client] = GetSpeed(client);
 	GetClientAbsOrigin(client, g_fLastPosition[client]);	
@@ -481,7 +493,7 @@ public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroad
 	return Plugin_Continue;
 }
 
-public OnPlayerThink(entity)
+public Hook_PostThink(entity)
 {
 	SetEntPropEnt(entity, Prop_Send, "m_bSpotted", 0); 
 }

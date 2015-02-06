@@ -343,7 +343,10 @@ public LoadReplayPro()
 
 	if(g_ProBot > 0 && IsValidClient(g_ProBot))
 	{		
-		g_bNewProBot=true;
+		decl String:clantag[100];
+		CS_GetClientClanTag(g_ProBot, clantag, sizeof(clantag)); 
+		if (StrContains(clantag,"REPLAY") == -1)
+			g_bNewProBot=true;
 		PlayRecord(g_ProBot,0);
 		SetEntityRenderColor(g_ProBot, g_ReplayBotProColor[0], g_ReplayBotProColor[1], g_ReplayBotProColor[2], 50);
 		if (g_bPlayerSkinChange)
@@ -388,8 +391,11 @@ public LoadReplayTp()
 	}
 
 	if(g_TpBot > 0 && IsValidClient(g_TpBot))
-	{			
-		g_bNewTpBot=true;
+	{		
+		decl String:clantag[100];
+		CS_GetClientClanTag(g_TpBot, clantag, sizeof(clantag)); 
+		if (StrContains(clantag,"REPLAY") == -1)
+			g_bNewTpBot=true;	
 		PlayRecord(g_TpBot,1);
 		SetEntityRenderColor(g_TpBot, g_ReplayBotTpColor[0], g_ReplayBotTpColor[1], g_ReplayBotTpColor[2], 50);
 		if (g_bPlayerSkinChange)
@@ -685,42 +691,55 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 			{
 				weapon = Client_GetWeapon(client, sAlias);
 				g_BotActiveWeapon[client] = weapon;
-				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-				Client_SetActiveWeapon(client, weapon);
+				InstantSwitch(client, weapon);
 			}
 			else
 			{
 				if ((client == g_TpBot && g_bNewTpBot) || (client == g_ProBot && g_bNewProBot))
 				{
+					new bool:hasweapon;	
 					if (client == g_TpBot)
 						g_bNewTpBot=false;
 					else
 						if (client == g_ProBot)
 						g_bNewProBot=false;
-					if (StrEqual(sAlias,"weapon_hkp2000"))
-						Format(sAlias, sizeof(sAlias), "weapon_usp_silencer", sAlias);
-					weapon = GivePlayerItem(client, sAlias);
-					if(weapon != INVALID_ENT_REFERENCE)
-					{
-						g_BotActiveWeapon[client] = weapon;
-						// Grenades shouldn't be equipped.
-						if(StrContains(sAlias, "grenade") == -1
-						&& StrContains(sAlias, "flashbang") == -1
-						&& StrContains(sAlias, "decoy") == -1
-						&& StrContains(sAlias, "molotov") == -1)
+														
+					if (StrEqual(sAlias,"weapon_hkp2000") && !hasweapon)
+					{				
+						if (Client_HasWeapon(client, "weapon_hkp2000"))
 						{
-							EquipPlayerWeapon(client, weapon);
+							weapon = Client_GetWeapon(client, sAlias);
+							g_BotActiveWeapon[client] = weapon;
+							hasweapon=true;
+							InstantSwitch(client, weapon);
+							
+						}											
+						Format(sAlias, sizeof(sAlias), "weapon_usp_silencer", sAlias);
+					}
+	
+					if (!hasweapon)
+					{
+						weapon = GivePlayerItem(client, sAlias);
+						if(weapon != INVALID_ENT_REFERENCE)
+						{
+							g_BotActiveWeapon[client] = weapon;
+							// Grenades shouldn't be equipped.
+							if(StrContains(sAlias, "grenade") == -1
+							&& StrContains(sAlias, "flashbang") == -1
+							&& StrContains(sAlias, "decoy") == -1
+							&& StrContains(sAlias, "molotov") == -1)
+							{
+								EquipPlayerWeapon(client, weapon);
+							}
+							InstantSwitch(client, weapon);
 						}
-						SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-						Client_SetActiveWeapon(client, weapon);
 					}
 				}
 				else
-				{
+				{				
 					weapon = Client_GetWeapon(client, sAlias);
 					g_BotActiveWeapon[client] = weapon;
-					SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-					Client_SetActiveWeapon(client, weapon);
+					InstantSwitch(client, weapon);			
 				}
 				
 			}

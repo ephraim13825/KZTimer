@@ -58,28 +58,21 @@ public CL_OnStartTimerPress(client)
 {	
 	if (!IsFakeClient(client))
 	{	
-		if (g_bNewReplay[client])
+		if (g_bNewReplay[client] || g_bSaving[client])
+		{
+			PrintToChat(client, "[%cKZ%c] You have to wait until the internal finishing action of your last run is accomplished!", RED,WHITE);
 			return;
+		}
 		if (!(g_bOnGround[client]) && g_bLegitButtons[client])
-			return;
-	}
+			return;	
 	
-	//timer pos
-	if (g_bFirstStartButtonPush && !IsFakeClient(client))
-	{
-		GetClientAbsOrigin(client,g_fStartButtonPos);
-		g_bFirstStartButtonPush=false;
-	}				
-	
-	//sound
-	PlayButtonSound(client);
-	
-	new Float:time;
-	time = GetEngineTime() - g_fLastTimeNoClipUsed[client];
+		//timer pos
+		if (g_bFirstStartButtonPush)
+		{
+			GetClientAbsOrigin(client,g_fStartButtonPos);
+			g_bFirstStartButtonPush=false;
+		}	
 
-	//start recording
-	if (!IsFakeClient(client) && g_bReplayBot)
-	{
 		if (!IsPlayerAlive(client) || GetClientTeam(client) == 1)
 		{
 			if(g_hRecording[client] != INVALID_HANDLE)
@@ -90,9 +83,14 @@ public CL_OnStartTimerPress(client)
 			if(g_hRecording[client] != INVALID_HANDLE)
 				StopRecording(client);
 			StartRecording(client);
-		}
-	}			
-	if (!g_bSpectate[client] && !g_bNoClip[client] && time > 2.0) 
+		}		
+	}
+	
+	//noclip check
+	new Float:time;
+	time = GetEngineTime() - g_fLastTimeNoClipUsed[client];
+			
+	if ((!g_bSpectate[client] && !g_bNoClip[client] && time > 2.0) || IsFakeClient(client))
 	{	
 	
 		g_fPlayerCordsUndoTp[client][0] = 0.0;
@@ -108,7 +106,7 @@ public CL_OnStartTimerPress(client)
 		g_bPause[client] = false;
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityRenderMode(client, RENDER_NORMAL);
-		g_fStartTime[client] = GetEngineTime();
+		g_fStartTime[client] = GetEngineTime();	
 		g_bMenuOpen[client] = false;		
 		g_bTopMenuOpen[client] = false;	
 		g_bPositionRestored[client] = false;
@@ -117,7 +115,7 @@ public CL_OnStartTimerPress(client)
 		new bool: act = g_bTimeractivated[client];
 		g_bTimeractivated[client] = true;		
 		decl String:szTime[32];
-			
+		
 		//valid players
 		if (!IsFakeClient(client))
 		{	
@@ -157,9 +155,12 @@ public CL_OnStartTimerPress(client)
 			{
 				g_bFirstButtonTouch[client]=false;
 				Client_Avg(client, 0);
-			}				
+			}
 		}	
 	}
+	
+	//sound
+	PlayButtonSound(client);	
 }
 
 // - Climb Button OnEndPress -
@@ -220,6 +221,7 @@ public CL_OnEndTimerPress(client)
 	new String:szTime[32];
 	new bool:hasRecord=false;
 	new Float: difference;
+	//g_bSaving[client]=true;
 	g_FinishingType[client] = -1;
 	g_Sound_Type[client] = -1;
 	g_bMapRankToChat[client] = true;
@@ -385,6 +387,7 @@ public CL_OnEndTimerPress(client)
 	//set mvp star
 	g_MVPStars[client] += 1;
 	CS_SetMVPCount(client,g_MVPStars[client]);		
+	
 	
 	//local db update
 	if ((g_fFinalTime[client] < g_fPersonalRecord[client] && g_Tp_Final[client] > 0 || g_fPersonalRecord[client] <= 0.0 && g_Tp_Final[client] > 0) || (g_fFinalTime[client] < g_fPersonalRecordPro[client] && g_Tp_Final[client] == 0 || g_fPersonalRecordPro[client] <= 0.0 && g_Tp_Final[client] == 0))

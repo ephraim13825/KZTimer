@@ -13,9 +13,9 @@ new String:sql_selectLatestRecords[] 			= "SELECT name, runtime, teleports, map,
 
 //TABLE PLAYEROPTIONS
 new String:sql_createPlayerOptions[] 			= "CREATE TABLE IF NOT EXISTS playeroptions2 (steamid VARCHAR(32), colorchat INT(12) DEFAULT '1', speedmeter INT(12) DEFAULT '0', climbersmenu_sounds INT(12) DEFAULT '1', quake_sounds INT(12) DEFAULT '1', autobhop INT(12) DEFAULT '0', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', strafesync INT(12) DEFAULT '0', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', cpmessage INT(12) DEFAULT '0', adv_menu INT(12) DEFAULT '0', knife VARCHAR(32) DEFAULT 'weapon_knife', jumppenalty INT(12) DEFAULT '0', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
-new String:sql_insertPlayerOptions[] 			= "INSERT INTO playeroptions2 (steamid, colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i');";
-new String:sql_selectPlayerOptions[] 			= "SELECT colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3 FROM playeroptions2 where steamid = '%s'";
-new String:sql_updatePlayerOptions[]			= "UPDATE playeroptions2 SET colorchat ='%i', speedmeter ='%i', climbersmenu_sounds ='%i', quake_sounds ='%i', autobhop ='%i', shownames ='%i', goto ='%i', strafesync ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', cpmessage ='%i', adv_menu ='%i', knife ='%s', jumppenalty ='%i', new1 = '%i', new2 = '%i', new3 = '%i' where steamid = '%s'";
+new String:sql_insertPlayerOptions[] 			= "INSERT INTO playeroptions2 (steamid, colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%i');";
+new String:sql_selectPlayerOptions[] 			= "SELECT colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel FROM playeroptions2 where steamid = '%s'";
+new String:sql_updatePlayerOptions[]				= "UPDATE playeroptions2 SET colorchat ='%i', speedmeter ='%i', climbersmenu_sounds ='%i', quake_sounds ='%i', autobhop ='%i', shownames ='%i', goto ='%i', strafesync ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', cpmessage ='%i', adv_menu ='%i', knife ='%s', jumppenalty ='%i', new1 = '%i', new2 = '%i', new3 = '%i', ViewModel = '%i' where steamid = '%s'";
 
 //TABLE PLAYERRANK
 new String:sql_createPlayerRank[]				= "CREATE TABLE IF NOT EXISTS playerrank (steamid VARCHAR(32), name VARCHAR(32), country VARCHAR(32), points INT(12)  DEFAULT '0', winratio INT(12)  DEFAULT '0', pointsratio INT(12)  DEFAULT '0',finishedmaps INT(12) DEFAULT '0', multiplier INT(12) DEFAULT '0', finishedmapstp INT(12) DEFAULT '0', finishedmapspro INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
@@ -367,6 +367,7 @@ public db_createTables()
 	SQL_FastQuery(g_hDb, sql_createLatestRecords);
 	SQL_FastQuery(g_hDb, "ALTER TABLE playerrank ADD lastseen DATE"); //added in 1.54
 	SQL_FastQuery(g_hDb, "ALTER TABLE playertmp ADD EncTickrate INT");	//added in 1.55
+	SQL_FastQuery(g_hDb, "ALTER TABLE playeroptions2 ADD ViewModel INT DEFAULT '1'"); //added in 1.67 
 	SQL_UnlockDatabase(g_hDb);
 }
 
@@ -452,7 +453,13 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 		
 		//Set new start time	
 		new Float: fl_time = SQL_FetchFloat(hndl, 8);
-		new tickrate = RoundFloat(float(SQL_FetchInt(hndl, 9)) / 5.0 / 11.0);		
+		new Float:absTime = FloatAbs(fl_time);
+		new tickrate = SQL_FetchInt(hndl, 9);
+		if (absTime < 1.0 || tickrate < 1)
+			return;
+		tickrate = tickrate / 5 / RoundToFloor(absTime);
+		
+		
 		if (tickrate == g_Server_Tickrate)
 		{
 			if (fl_time > 0.0)
@@ -476,7 +483,7 @@ public SQL_LastRunCallback(Handle:owner, Handle:hndl, const String:error[], any:
 			{
 				if (g_bLateLoaded && IsPlayerAlive(client))
 				{
-					g_bPositionRestored[client] = true;
+					g_bPositionRestored[client] = true;		
 					TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
 					g_bRestorePosition[client]  = false;
 				}
@@ -2855,8 +2862,8 @@ public ProfileMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				case 5: db_selectTopBhop(param1);
 				case 6: db_selectTopDropBhop(param1);	
 				case 7: db_selectTopMultiBhop(param1);	
-				case 8: db_selectTPClimbers(param1);	
-				case 9: db_selectProClimbers(param1);	
+				case 8: db_selectTPClimbers(param1,g_szMapTopName[param1]);	
+				case 9: db_selectProClimbers(param1,g_szMapTopName[param1]);	
 				case 10: db_selectTopTpRecordHolders(param1);
 				case 11: db_selectTopProRecordHolders(param1);	
 				case 12: db_selectTopLjBlock(param1);
@@ -3271,11 +3278,14 @@ public SQL_UpdateRecordProCallback(Handle:owner, Handle:hndl, const String:error
 	db_viewMapRankPro(client);
 }
 
-public db_selectTPClimbers(client)
+public db_selectTPClimbers(client, String:mapname[128])
 {
 	decl String:szQuery[1024];       
-	Format(szQuery, 1024, sql_selectTPClimbers, g_szMapName);   
-	SQL_TQuery(g_hDb, sql_selectTPClimbersCallback, szQuery, client,DBPrio_Low);
+	Format(szQuery, 1024, sql_selectTPClimbers, mapname);   
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, client);
+	WritePackString(pack, mapname);
+	SQL_TQuery(g_hDb, sql_selectTPClimbersCallback, szQuery, pack,DBPrio_Low);
 }
 
 public db_selectTopClimbers(client, String:mapname[128])
@@ -3288,6 +3298,16 @@ public db_selectTopClimbers(client, String:mapname[128])
 	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack,DBPrio_Low);
 }
 
+public db_selectProClimbers(client, String:mapname[128])
+{    
+	decl String:szQuery[1024]; 
+	Format(szQuery, 1024, sql_selectProClimbers, mapname);   	
+	new Handle:pack = CreateDataPack();
+	WritePackCell(pack, client);
+	WritePackString(pack, mapname);	
+	SQL_TQuery(g_hDb, sql_selectProClimbersCallback, szQuery, pack,DBPrio_Low);
+}
+
 public db_selectMapTopClimbers(client, String:mapname[128])
 {
 	decl String:szQuery[1024];       
@@ -3295,15 +3315,10 @@ public db_selectMapTopClimbers(client, String:mapname[128])
 	new Handle:pack = CreateDataPack();
 	WritePackCell(pack, client);
 	WritePackString(pack, mapname);
-	SQL_TQuery(g_hDb, sql_selectTopClimbersCallback, szQuery, pack,DBPrio_Low);
+	SQL_TQuery(g_hDb, sql_selectMapTopClimbersCallback, szQuery, pack,DBPrio_Low);
 }
 
-public db_selectProClimbers(client)
-{
-	decl String:szQuery[1024];       
-	Format(szQuery, 1024, sql_selectProClimbers, g_szMapName);   		
-	SQL_TQuery(g_hDb, sql_selectProClimbersCallback, szQuery, client,DBPrio_Low);
-}
+
 public db_selectTopLj(client)
 {
 	decl String:szQuery[1024];       
@@ -3751,10 +3766,7 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	new String:lineBuf[256];
 	new Handle:stringArray = CreateArray(100);
 	new Handle:menu;
-	if (StrEqual(szMap,g_szMapName))
-		menu = CreateMenu(MapMenuHandler1);
-	else
-		menu = CreateMenu(MapTopMenuHandler2);		
+	menu = CreateMenu(MapMenuHandler1);
 	SetMenuPagination(menu, 5);
 	new bool:bduplicat = false;
 	decl String:title[256];
@@ -3813,8 +3825,6 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	}
 	else
 		PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
-	Format(g_szMapTopName[client], 128, "%s",szFirstMap);	
-	StopClimbersMenu(client);
 	Format(title, 256, "Top 50 Times on %s (local)\n    Rank    Time           TP's     Player", szFirstMap);
 	SetMenuTitle(menu, title);     
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
@@ -3822,9 +3832,36 @@ public sql_selectTopClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	CloseHandle(stringArray);
 }
 
+public sql_selectMapTopClimbersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
+{       
+	new Handle:pack = data;
+	ResetPack(pack);
+	new client = ReadPackCell(pack);
+	decl String:szMap[128];
+	ReadPackString(pack, szMap, 128);	
+	CloseHandle(pack);
+	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
+	{
+		
+		new i = SQL_GetRowCount(hndl);
+		SQL_FetchString(hndl, 5, szMap, 128);
+		if(i == 0)
+			PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
+		else
+			MapTopMenu(client,szMap);
+	}
+	else
+		PrintToChat(client, "%t", "NoTopRecords", MOSSGREEN,WHITE, szMap);
+}
+
 public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {       
-	new client = data;
+	new Handle:pack = data;
+	ResetPack(pack);
+	new client = ReadPackCell(pack);
+	decl String:mapname[128];
+	ReadPackString(pack, mapname, 128);	
+	CloseHandle(pack);
 	decl String:szValue[128];
 	decl String:szName[64];
 	new Float:time;
@@ -3834,7 +3871,9 @@ public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:erro
 	decl String:szTime[32];
 	new Handle:menu = CreateMenu(MapMenuHandler2);
 	SetMenuPagination(menu, 5);
-	SetMenuTitle(menu, "Top 20 TP Times (local)\n    Rank    Time           TP's       Player");     
+	decl String:title[255];
+	Format(title, 256, "Top 20 TP Times on %s (local)\n    Rank    Time           TP's       Player", mapname);
+	SetMenuTitle(menu, title);     
 	if(SQL_HasResultSet(hndl))
 	{
 		new i = 1;
@@ -3864,7 +3903,7 @@ public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:erro
 		}
 		if(i == 1)
 		{
-			PrintToChat(client, "%t", "NoTpRecords", MOSSGREEN,WHITE, g_szMapName);
+			PrintToChat(client, "%t", "NoTpRecords", MOSSGREEN,WHITE, mapname);
 		}
 	}
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
@@ -3872,7 +3911,12 @@ public sql_selectTPClimbersCallback(Handle:owner, Handle:hndl, const String:erro
 }
 public sql_selectProClimbersCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {      
-	new client = data;
+	new Handle:pack = data;
+	ResetPack(pack);
+	new client = ReadPackCell(pack);
+	decl String:mapname[128];
+	ReadPackString(pack, mapname, 128);	
+	CloseHandle(pack);
 	decl String:szValue[128];
 	decl String:szSteamID[32];
 	decl String:szName[64];
@@ -3880,7 +3924,9 @@ public sql_selectProClimbersCallback(Handle:owner, Handle:hndl, const String:err
 	new Float:time;
 	new Handle:menu = CreateMenu(MapMenuHandler3);
 	SetMenuPagination(menu, 5);
-	SetMenuTitle(menu, "Top 20 PRO Times (local)\n    Rank   Time              Player");     
+	decl String:title[255];
+	Format(title, 256, "Top 20 PRO Times on %s (local)\n    Rank   Time              Player", mapname);
+	SetMenuTitle(menu, title);
 	if(SQL_HasResultSet(hndl))
 		
 	{
@@ -3902,12 +3948,13 @@ public sql_selectProClimbersCallback(Handle:owner, Handle:hndl, const String:err
 		}
 		if(i == 1)
 		{
-			PrintToChat(client, "%t", "NoProRecords",MOSSGREEN,WHITE, g_szMapName);
+			PrintToChat(client, "%t", "NoProRecords",MOSSGREEN,WHITE, mapname);
 		}
 	}     
 	SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
 }
+
 public TopChallengeHandler1(Handle:menu, MenuAction:action, param1, param2)
 {
 
@@ -4131,7 +4178,7 @@ public MapMenuHandler1(Handle:menu, MenuAction:action, param1, param2)
 	}
 	if (action ==  MenuAction_Cancel)
 	{
-		MapTopMenu(param1);
+		MapTopMenu(param1,g_szMapTopName[param1]);
 	}
 	else if (action == MenuAction_End)
 	{
@@ -4161,7 +4208,7 @@ public MapMenuHandler2(Handle:menu, MenuAction:action, param1, param2)
 	}
 	if (action ==  MenuAction_Cancel)
 	{
-		MapTopMenu(param1);
+		MapTopMenu(param1,g_szMapTopName[param1]);
 	}
 	else if (action == MenuAction_End)
 	{
@@ -4181,7 +4228,7 @@ public MapMenuHandler3(Handle:menu, MenuAction:action, param1, param2)
 	}
 	if (action ==  MenuAction_Cancel)
 	{
-		MapTopMenu(param1);
+		MapTopMenu(param1,g_szMapTopName[param1]);
 	}
 	else if (action == MenuAction_End)
 	{
@@ -4779,6 +4826,8 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bAdvancedClimbersMenu[client]=IntoBool(SQL_FetchInt(hndl, 12));	
 		g_bStartWithUsp[client]=IntoBool(SQL_FetchInt(hndl, 15));
 		g_bJumpBeam[client]=IntoBool(SQL_FetchInt(hndl, 16));
+		g_bHideChat[client]=IntoBool(SQL_FetchInt(hndl, 17));
+		g_bViewModel[client]=IntoBool(SQL_FetchInt(hndl, 18));
 		
 		//org
 		g_borg_AutoBhopClient[client] = g_bAutoBhopClient[client];
@@ -4796,13 +4845,15 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_CPTextMessage[client] = g_bCPTextMessage[client];
 		g_borg_AdvancedClimbersMenu[client] = g_bAdvancedClimbersMenu[client];
 		g_borg_JumpBeam[client] = g_bJumpBeam[client];
+		g_borg_HideChat[client] = g_bHideChat[client];
+		g_borg_ViewModel[client] = g_bViewModel[client];
 	}
 	else
 	{
 		decl String:szQuery[512];      
 		if (!IsValidClient(client))
 			return;
-		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0)
+		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0,1)
 		SQL_TQuery(g_hDb, SQL_InsertCheckCallback, szQuery,DBPrio_Low);			
 		g_borg_ColorChat[client] = true;
 		g_borg_InfoPanel[client] = false;
@@ -4819,15 +4870,17 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_AdvancedClimbersMenu[client] = true;
 		g_borg_AutoBhopClient[client] = true;
 		g_borg_JumpBeam[client] = false;
+		g_borg_HideChat[client] = false;
+		g_borg_ViewModel[client] = true;
 	}
 }
 
 public db_updatePlayerOptions(client)
 {
-	if (g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
+	if (g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
 	{
 		decl String:szQuery[1024];
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),0,g_szSteamID[client]);
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),BooltoInt(g_bHideChat[client]),BooltoInt(g_bViewModel[client]),g_szSteamID[client]);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
 	}
 }
