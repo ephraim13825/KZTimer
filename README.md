@@ -27,7 +27,7 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
-v1.66 Global
+v1.66
 - fixed multibhop bug (a few mbhops were not registered)
 - increased the activation range for self-built climb buttons
 - minor optimizations
