@@ -36,4 +36,5 @@
 !measure
 !avg
 !wr
-!beam
+!hidechat
+!hideweapon

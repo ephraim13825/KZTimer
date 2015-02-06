@@ -1,5 +1,25 @@
 ﻿"Phrases"
 {
+	"HideChat1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Hide chat enabled."
+	}
+	"HideChat2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Hide chat disabled."
+	}
+	"HideViewModel1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Weapon viewmodel disabled."
+	}
+	"HideViewModel2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Weapon viewmodel enabled."
+	}
 	 "PlayerJumpBeam1"
 	{
 		"#format"   "{1:c},{2:c}"

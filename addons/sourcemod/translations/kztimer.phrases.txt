@@ -1,5 +1,25 @@
 ﻿"Phrases"
 {
+	"HideChat1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"en"        "[{1}KZ{2}] Hide chat enabled."
+	}
+	"HideChat2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"en"        "[{1}KZ{2}] Hide chat disabled."
+	}
+	"HideViewModel1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"en"        "[{1}KZ{2}] Weapon viewmodel disabled."
+	}
+	"HideViewModel2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"en"        "[{1}KZ{2}] Weapon viewmodel enabled."
+	}
 	"PlayerJumpBeam1"
 	{
 		"#format"   "{1:c},{2:c}"
@@ -523,7 +543,7 @@
 	"SpecInfo"
 	{
 		"#format"   "{1:c},{2:c},{3:c},{4:c}"
-		"en"        "[{1}KZ{2}] Type {3}hideradar{4} in console to hide the spectator minimap!"
+		"en"        "[{1}KZ{2}] Type {3}hideradar{4} into your console to hide the minimap"
 	}
 	"Unspec"
 	{
