@@ -18,6 +18,7 @@ stock CS_SetClientName(client, String:name[])
 		PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 		hSetName = EndPrepSDKCall();
 	}
+	
 	return SDKCall(hSetName, GetBaseClient(client - 1), name);
 }
 
