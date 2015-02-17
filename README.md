@@ -27,7 +27,7 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
-v.68
+v1.68
 - replaced gamedata/setname.games.txt (this will fix the issue with the replay bots)
 - minor bug fixes 
 
