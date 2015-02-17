@@ -1,5 +1,5 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
-KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update news)                                                                      
+KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
 
 Do you have trouble with huge red error boxes on your server?  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it for the known cases:
 https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
