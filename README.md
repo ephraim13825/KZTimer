@@ -1,7 +1,7 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 Steam group: http://steamcommunity.com/groups/KZTIMER                                                                        
 
-Do you have trouble with huge red error boxes on your server?  That's because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it:
+Do you have trouble with huge red error boxes on your server?  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it:
 https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 
 **Please read the following information carefully (!!):**
