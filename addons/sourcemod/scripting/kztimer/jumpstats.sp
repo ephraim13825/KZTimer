@@ -567,7 +567,7 @@ public Postthink(client)
 	decl String:szGained[16];
 	decl String:szLost[16];
 	//Format StrafeStats Console
-	if(strafes > 1)
+	if(strafes > 1 && strafes < 50)
 	{
 		Format(szStrafeStats,1024, " #. Sync        Gained      Lost        MaxSpeed\n");
 		for( new i = 0; i < strafes; i++ )
@@ -1114,7 +1114,7 @@ public Postthink(client)
 		g_js_MultiBhop_Count[client]++;	
 		//strafe hack block 
 		new Float: SpeedCapAdv = g_fBhopSpeedCap + 0.5;
-		if ((g_js_fPreStrafe[client] > SpeedCapAdv) || ((g_js_MultiBhop_Count[client] == 1 && g_js_fPreStrafe[client] > 350.0) || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 365.0))
+		if ((g_js_fPreStrafe[client] > SpeedCapAdv) || ((g_js_MultiBhop_Count[client] <= 1 && g_js_fPreStrafe[client] > 350.0) || g_bTouchedBooster[client] || strafes > 20) || (g_fBhopSpeedCap == 380.0 && g_js_fJump_Distance[client] > 365.0))
 		{
 			Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 			PostThinkPost(client, ground_frames);
@@ -1717,6 +1717,7 @@ public Postthink(client)
 
 public PostThinkPost(client, ground_frames)
 {
+	g_bTouchedBooster[client] = false;
 	g_js_bPlayerJumped[client] = false;
 	g_js_Last_Ground_Frames[client] = ground_frames;		
 }

@@ -5417,6 +5417,9 @@ public sql_selectPlayerRankCallback2(Handle:owner, Handle:hndl, const String:err
 	ReadPackString(pack, szMap, 64);	
 	CloseHandle(pack);
 	decl String:szMapName2[128];
+	
+	if (hndl == INVALID_HANDLE)
+		return;
 	//if there is a player record
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{

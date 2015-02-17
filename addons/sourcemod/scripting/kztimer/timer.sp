@@ -543,6 +543,7 @@ public Action:HideRadar(Handle:timer, any:client)
 	}
 }
 
+
 public Action:LoadPlayerSettings(Handle:timer)
 {
 	for(new c=1;c<=MaxClients;c++)

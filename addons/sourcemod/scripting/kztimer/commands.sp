@@ -22,6 +22,7 @@ public HideChat(client)
 	}
 }
 
+
 public Action:Client_HideWeapon(client, args)
 {
 	HideViewModel(client);
@@ -481,17 +482,18 @@ public Action:Client_Usp(client, args)
 
 InstantSwitch(client, weapon, timer = 0) 
 {
-    new Float:GameTime = GetGameTime();
+	if (weapon==-1)
+		return;
 
-    if (!timer) 
+	new Float:GameTime = GetGameTime();
+	if (!timer) 
 	{
-        SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
-        SetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack", GameTime);
-    }
-
-    SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GameTime);
-    new ViewModel = GetEntPropEnt(client, Prop_Send, "m_hViewModel");
-    SetEntProp(ViewModel, Prop_Send, "m_nSequence", 0);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+		SetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack", GameTime);
+	}
+	SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GameTime);
+	new ViewModel = GetEntPropEnt(client, Prop_Send, "m_hViewModel");
+	SetEntProp(ViewModel, Prop_Send, "m_nSequence", 0);
 }
 
 public Action:Client_Surrender (client, args)

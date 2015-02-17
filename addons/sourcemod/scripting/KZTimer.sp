@@ -20,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.67"
-#define PLUGIN_VERSION 167
+#define VERSION "1.68"
+#define PLUGIN_VERSION 168
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -418,6 +418,7 @@ new bool:g_bOnBhopPlattform[MAXPLAYERS+1];
 new bool:g_bMapFinished[MAXPLAYERS+1]; 
 new bool:g_bRespawnPosition[MAXPLAYERS+1]; 
 new bool:g_bKickStatus[MAXPLAYERS+1]; 
+new bool:g_bTouchedBooster[MAXPLAYERS+1]; 
 new bool:g_bUndo[MAXPLAYERS+1]; 
 new bool:g_bHyperscroll[MAXPLAYERS+1]; 
 new bool:g_bProfileRecalc[MAX_PR_PLAYERS];

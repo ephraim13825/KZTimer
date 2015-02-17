@@ -2485,14 +2485,17 @@ public BhopHackAntiCheat(client,&buttons)
 	bLastOnGround[client] = g_bOnGround[client];  
 }
 
-
 public BoosterCheck(client)
 {
 	decl Float:flbaseVelocity[3];
 	GetEntPropVector(client, Prop_Data, "m_vecBaseVelocity", flbaseVelocity);
 	if (flbaseVelocity[0] != 0.0 || flbaseVelocity[1] != 0.0 || flbaseVelocity[2] != 0.0 && g_js_bPlayerJumped[client])
+	{
+		g_bTouchedBooster[client]=true;
 		ResetJump(client);
+	}
 }
+
 
 public WaterCheck(client)
 {

@@ -604,7 +604,8 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 			if (g_hLoadedRecordsAdditionalTeleport != INVALID_HANDLE)
 			{
 				GetTrieValue(g_hLoadedRecordsAdditionalTeleport, sPath, hAdditionalTeleport);
-				GetArrayArray(hAdditionalTeleport, g_CurrentAdditionalTeleportIndex[client], iAT, AT_SIZE);
+				if (hAdditionalTeleport != INVALID_HANDLE)
+					GetArrayArray(hAdditionalTeleport, g_CurrentAdditionalTeleportIndex[client], iAT, AT_SIZE);
 				new Float:fOrigin[3], Float:fAngles[3], Float:fVelocity[3];
 				Array_Copy(iAT[_:atOrigin], fOrigin, 3);
 				Array_Copy(iAT[_:atAngles], fAngles, 3);
