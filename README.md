@@ -5,7 +5,7 @@ Do you have trouble with huge red error boxes on your server?  That's because ma
 https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 
 **Please read the following information carefully (!!):**
-- Download includes DHooks2 extension, Cleaner extension and latest GeoIP database
+- Download includes DHooks2 extension (https://forums.alliedmods.net/showthread.php?t=180114), Cleaner extension (https://forums.alliedmods.net/showthread.php?t=195008&page=6)  and latest GeoIP database (http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/)
 - Ranking system is based on your mapcycle.txt file (keep it always up to date)
 - A very large sqlite database might cause server lags (i prefer a mysql database)
 - The climbers menu of KZTimer blocks menus of other plugins. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
