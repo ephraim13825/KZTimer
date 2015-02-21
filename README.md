@@ -4,7 +4,7 @@ KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update a
 Do you have trouble with huge red error boxes on your server?  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it for the known cases:
 https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 
-**Please read the following information carefully (!!):**
+**Please read the following information carefully before you start asking stupid questions:**
 - Download includes DHooks2 extension (https://forums.alliedmods.net/showthread.php?t=180114), Cleaner extension (https://forums.alliedmods.net/showthread.php?t=195008)  and latest GeoIP database (http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/)
 - Ranking system is based on your mapcycle.txt file (keep it always up to date)
 - A very large sqlite database might cause server lags (i prefer a mysql database)
