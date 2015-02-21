@@ -1,8 +1,6 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
 
-Do you have trouble with huge red error boxes on your server?  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it for the known cases:
-https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 
 **Please read the following information carefully before you start asking stupid questions:**
 - Download includes DHooks2 extension (https://forums.alliedmods.net/showthread.php?t=180114), Cleaner extension (https://forums.alliedmods.net/showthread.php?t=195008)  and latest GeoIP database (http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/)
@@ -10,11 +8,12 @@ https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 - A very large sqlite database might cause server lags (i prefer a mysql database)
 - The climbers menu of KZTimer blocks menus of other plugins. But you are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
 - Datatable warnings are harmless as long as server logging is disabled! (Cleaner extension removes these warnings)
-- kz_bhop_single_touch issue: This function does not work on a few maps because the mapmaker has grouped bhop blocks (trigger_teleport) to 1 entity (e.g. bhop_areaportal_v1). KZTimer can't detect a difference between those blocks and teleports you back to the start of the affected block section as soon as you hit the second bhop plattform of this "bhop block group". You have to contact the mapmaker or just disable kz_bhop_single_touch on these maps
+- Do you have trouble with huge red error boxes your server? (KZ Maps)  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it for the known cases:
+https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 - Supported jumpstats types: Longjump, Block Longjump (inc. fail stats), Ladderjump, Weirdjump, Bunnyhop, Drop Bunnyhop, Multi Bunnyhop
 - Do you want start and stop zones instead of buttons? Here's a quick tutorial by jonitaikaponi: https://forums.alliedmods.net/showpost.php?p=2255636&postcount=456
-
-Those server cvars are hard coded (execuded on map start. they will be reseted if you unload kztimer):
+- kz_bhop_single_touch issue: This function does not work on a few maps because the mapmaker has grouped bhop blocks (trigger_teleport) to 1 entity (e.g. bhop_areaportal_v1). KZTimer can't detect a difference between those blocks and teleports you back to the start of the affected block section as soon as you hit the second bhop plattform of this "bhop block group". You have to contact the mapmaker or just disable kz_bhop_single_touch on these maps
+- those server cvars are hard coded (execuded on map start. they will be reseted if you unload kztimer):
 sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1;mp_ignore_round_win_conditions 0, 
 if kz_autorespawn is enabled: mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0
 else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0 
