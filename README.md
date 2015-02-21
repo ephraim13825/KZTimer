@@ -15,7 +15,7 @@ https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
 - Do you want start and stop zones instead of buttons? Here's a quick tutorial by jonitaikaponi: https://forums.alliedmods.net/showpost.php?p=2255636&postcount=456
 
 Those server cvars are hard coded (execuded on map start. they will be reseted if you unload kztimer):
-sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1;mp_ignore_round_win_conditions 0
+sv_infinite_ammo 2;mp_endmatch_votenextmap 0;mp_do_warmup_period 0;mp_warmuptime 0;mp_match_can_clinch 0;mp_match_end_changelevel 1;mp_match_restart_delay 10;mp_endmatch_votenextleveltime 10;mp_endmatch_votenextmap 0;mp_halftime 0;bot_zombie 1;mp_do_warmup_period 0;mp_maxrounds 1;mp_ignore_round_win_conditions 0, 
 if kz_autorespawn is enabled: mp_respawn_on_death_ct 1;mp_respawn_on_death_t 1;mp_respawnwavetime_ct 3.0;mp_respawnwavetime_t 3.0
 else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0 
 
