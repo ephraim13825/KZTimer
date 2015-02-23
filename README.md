@@ -7,7 +7,7 @@ KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update a
 - Ranking system is based on your mapcycle.txt file (keep it always up to date)
 - A very large sqlite database might cause server lags (i prefer a mysql database)
 - KZTimer interferes with menus of other plugins. You are able to add exceptions in addons\sourcemod\configs\kztimer\exceptions_list.txt for sourcemod commands which create menus (e.g. sm_knife)
-(Fix for sm vote commands: https://forums.alliedmods.net/showpost.php?p=2265536&postcount=487)
+(Fix for sm vote commands (create your own fixes if have problems with other plugins which need an internal fix): https://forums.alliedmods.net/showpost.php?p=2265536&postcount=487)
 - Datatable warnings are harmless as long as server logging is disabled! (Cleaner extension removes these warnings)
 - Do you have trouble with huge red error boxes your server? (KZ Maps)  That's probably because mapmakers forgot to add one or more model files to their map package/archive. The following plugin will fix it for the known cases:
 https://www.dropbox.com/s/vtlbefh38dppseq/KZErrorBoxFixer.zip
