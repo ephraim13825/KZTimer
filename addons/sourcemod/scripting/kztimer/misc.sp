@@ -28,7 +28,7 @@ public LadderCheck(client,Float:speed)
 
 public CheckSpawnPoints() 
 {
-	if(StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"surf")  || StrEqual(g_szMapPrefix[0],"bhop"))
+	if(StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"surf")  || StrEqual(g_szMapPrefix[0],"bhop"))
 	{
 		if (!g_bNoBlock)
 			return;
@@ -358,8 +358,9 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "Steam group of KZTimer: http://steamcommunity.com/groups/KZTIMER");
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
-	PrintToConsole(client, "Menu formatting is optimized for 1920x1080..");	
-	PrintToConsole(client, "It's not possible to hide the spec minimap for replay bots through coding.");	
+	PrintToConsole(client, "- Menu formatting is optimized for 1920x1080..");	
+	PrintToConsole(client, "- Max recording time for replays: 120min");	
+	PrintToConsole(client, "- It's not possible to hide the spec minimap for replay bots through coding.");	
 	PrintToConsole(client, "But you can disable it by typing hideradar into your console!");	
 	PrintToConsole(client, " ");
 	PrintToConsole(client, " ");
@@ -368,7 +369,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !avg,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp, !wr, !beam");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
-	PrintToConsole(client, "!hide, !hidespecs, !showtime, !disablegoto, !sync, !bhop, !hidechat, !hideweapon)");
+	PrintToConsole(client, "!hide, !showtime, !disablegoto, !sync, !bhop, !hidechat, !hideweapon)");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Live scoreboard:");
 	PrintToConsole(client, "Kills: Time in seconds");
@@ -519,7 +520,7 @@ stock StripAllWeapons(client)
 
 public MovementCheck(client)
 {
-	if (StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"bhop"))
+	if (StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"bhop"))
 	{		
 		SetEntPropFloat(client, Prop_Data, "m_flGravity", 1.0); 
 		new Float:LaggedMovementValue = GetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue");
@@ -802,7 +803,7 @@ public SetClientDefaults(client)
 	g_js_fJump_JumpOff_PosLastHeight[client] = -1.012345;
 	g_js_Good_Sync_Frames[client] = 0.0;
 	g_js_Sync_Frames[client] = 0.0;
-	g_js_LeetJump_Count[client] = 0;
+	g_js_GODLIKE_Count[client] = 0;
 	g_fStartPauseTime[client] = 0.0;
 	g_fPauseTime[client] = 0.0;
 	g_MapRankTp[client] = 99999;
@@ -842,7 +843,7 @@ public SetClientDefaults(client)
 	g_bStartWithUsp[client] = false;
 	g_bAdvancedClimbersMenu[client]=true;
 	g_bColorChat[client]=true; 
-	g_bShowSpecs[client]=true;
+	g_ShowSpecs[client]=0;
 	g_bAutoBhopClient[client]=true;
 	g_bJumpBeam[client]=false;
 	g_bViewModel[client]=true;
@@ -917,21 +918,21 @@ public PlayLeetJumpSound(client)
 	decl String:buffer[255];	
 
 	//all sound
-	if (g_js_LeetJump_Count[client] == 3 || g_js_LeetJump_Count[client] == 5)
+	if (g_js_GODLIKE_Count[client] == 3 || g_js_GODLIKE_Count[client] == 5)
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{ 
 			if(IsValidClient(i) && !IsFakeClient(i) && i != client && g_bColorChat[i] && g_bEnableQuakeSounds[i])
 			{	
-					if (g_js_LeetJump_Count[client]==3)
+					if (g_js_GODLIKE_Count[client]==3)
 					{
-						Format(buffer, sizeof(buffer), "play %s", LEETJUMP_RAMPAGE_RELATIVE_SOUND_PATH); 	
+						Format(buffer, sizeof(buffer), "play %s", GODLIKE_RAMPAGE_RELATIVE_SOUND_PATH); 	
 						ClientCommand(i, buffer); 
 					}
 					else
-						if (g_js_LeetJump_Count[client]==5)
+						if (g_js_GODLIKE_Count[client]==5)
 						{
-							Format(buffer, sizeof(buffer), "play %s", LEETJUMP_DOMINATING_RELATIVE_SOUND_PATH); 		
+							Format(buffer, sizeof(buffer), "play %s", GODLIKE_DOMINATING_RELATIVE_SOUND_PATH); 		
 							ClientCommand(i, buffer); 
 						}
 			}
@@ -941,21 +942,21 @@ public PlayLeetJumpSound(client)
 	//client sound
 	if 	(IsValidClient(client) && !IsFakeClient(client) && g_bEnableQuakeSounds[client])
 	{
-		if (g_js_LeetJump_Count[client] != 3 && g_js_LeetJump_Count[client] != 5)
+		if (g_js_GODLIKE_Count[client] != 3 && g_js_GODLIKE_Count[client] != 5)
 		{
-			Format(buffer, sizeof(buffer), "play %s", LEETJUMP_RELATIVE_SOUND_PATH); 
+			Format(buffer, sizeof(buffer), "play %s", GODLIKE_RELATIVE_SOUND_PATH); 
 			ClientCommand(client, buffer); 
 		}
 			else
-			if (g_js_LeetJump_Count[client]==3)
+			if (g_js_GODLIKE_Count[client]==3)
 			{
-				Format(buffer, sizeof(buffer), "play %s", LEETJUMP_RAMPAGE_RELATIVE_SOUND_PATH); 	
+				Format(buffer, sizeof(buffer), "play %s", GODLIKE_RAMPAGE_RELATIVE_SOUND_PATH); 	
 				ClientCommand(client, buffer); 
 			}
 			else
-			if (g_js_LeetJump_Count[client]==5)
+			if (g_js_GODLIKE_Count[client]==5)
 			{
-				Format(buffer, sizeof(buffer), "play %s", LEETJUMP_DOMINATING_RELATIVE_SOUND_PATH); 		
+				Format(buffer, sizeof(buffer), "play %s", GODLIKE_DOMINATING_RELATIVE_SOUND_PATH); 		
 				ClientCommand(client, buffer); 
 			}					
 	}
@@ -1028,14 +1029,16 @@ public InitPrecache()
 	FakePrecacheSound( CP_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable( PRO_FULL_SOUND_PATH );
 	FakePrecacheSound( PRO_RELATIVE_SOUND_PATH );	
-	AddFileToDownloadsTable( LEETJUMP_FULL_SOUND_PATH );
-	FakePrecacheSound( LEETJUMP_RELATIVE_SOUND_PATH );
-	AddFileToDownloadsTable( LEETJUMP_DOMINATING_FULL_SOUND_PATH );
-	FakePrecacheSound( LEETJUMP_DOMINATING_RELATIVE_SOUND_PATH );
-	AddFileToDownloadsTable( LEETJUMP_RAMPAGE_FULL_SOUND_PATH );
-	FakePrecacheSound( LEETJUMP_RAMPAGE_RELATIVE_SOUND_PATH );
-	AddFileToDownloadsTable( PROJUMP_FULL_SOUND_PATH );
-	FakePrecacheSound( PROJUMP_RELATIVE_SOUND_PATH );	
+	AddFileToDownloadsTable( GODLIKE_FULL_SOUND_PATH );
+	FakePrecacheSound( GODLIKE_RELATIVE_SOUND_PATH );
+	AddFileToDownloadsTable( GODLIKE_DOMINATING_FULL_SOUND_PATH );
+	FakePrecacheSound( GODLIKE_DOMINATING_RELATIVE_SOUND_PATH );
+	AddFileToDownloadsTable( GODLIKE_RAMPAGE_FULL_SOUND_PATH );
+	FakePrecacheSound( GODLIKE_RAMPAGE_RELATIVE_SOUND_PATH );
+	AddFileToDownloadsTable( PERFECT_FULL_SOUND_PATH );
+	FakePrecacheSound( PERFECT_RELATIVE_SOUND_PATH );	
+	AddFileToDownloadsTable( IMPRESSIVE_FULL_SOUND_PATH );
+	FakePrecacheSound( IMPRESSIVE_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable("models/props/switch001.mdl");
 	AddFileToDownloadsTable("models/props/switch001.vvd");
 	AddFileToDownloadsTable("models/props/switch001.phy");
@@ -1226,7 +1229,6 @@ public MapFinishedMsgs(client, type)
 			PrintToChat(client, "%t", "NoClipUnlocked",MOSSGREEN,WHITE,YELLOW);
 		g_bMapFinished[client] = true;
 		CreateTimer(0.0, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
-		g_fStartTime[client] = -1.0;	
 		
 		if (g_Time_Type[client] == 0 || g_Time_Type[client] == 1 || g_Time_Type[client] == 2 || g_Time_Type[client] == 3)
 			CheckMapRanks(client, g_Tp_Final[client]);			
@@ -2190,7 +2192,7 @@ public WjJumpPreCheck(client, &buttons)
 
 public TeleportCheck(client, Float: origin[3])
 {
-	if((StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"bkz")) || g_bAutoBhop == false)
+	if((StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc") || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz")) || g_bAutoBhop == false)
 	{
 		if (!IsFakeClient(client))
 		{
@@ -2321,6 +2323,20 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 				CloseHandle(trace);		
 			}			
 		}
+	}
+}
+
+public CalcStrafeAirTime(client)
+{
+	if (g_js_bPlayerJumped[client] && g_bNewStrafe[client] && g_js_StrafeCount[client] >= 2)
+	{	
+		g_bNewStrafe[client] = false;
+		new count = g_js_StrafeCount[client]-2;
+		if (count < 100 && count >= 0)
+		{
+			g_js_Strafe_AirTime[client][count] = GetEngineTime() - g_js_Strafe_AirTimeDiff[client];
+			g_js_Strafe_AirTimeDiff[client] = GetEngineTime();
+		}				
 	}
 }
 
@@ -2602,7 +2618,7 @@ public SpecListMenuDead(client)
 			if(!StrEqual(sSpecs,""))
 			{
 				decl String:szName[MAX_NAME_LENGTH];
-				GetClientName(ObservedUser, szName, MAX_NAME_LENGTH);
+				GetClientName(ObservedUser, szName, MAX_NAME_LENGTH);			
 				if (g_bSpecInfo[client] && IsFakeClient(ObservedUser))
 				{
 					g_bSpecInfo[client]=false;
@@ -2618,28 +2634,68 @@ public SpecListMenuDead(client)
 					{
 						if (!IsFakeClient(ObservedUser))
 						{
-							Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \n%s\nTeleports: %i\n \n%s\nPro: %s\nTP: %s", count, sSpecs, szTime,g_OverallTp[ObservedUser],szPlayerRank,szProBest,szTPBest);
-							if (!g_bShowSpecs[client])
-								Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n \n%s\nTeleports: %i\n \n%s\nPro: %s\nTP: %s", count,szTime,g_OverallTp[ObservedUser],szPlayerRank,szProBest,szTPBest);
+							switch(g_ShowSpecs[client])
+							{	
+								case 0: Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \n%s\nTeleports: %i\n \n%s\nPro: %s\nTP: %s", count, sSpecs, szTime,g_OverallTp[ObservedUser],szPlayerRank,szProBest,szTPBest);
+								case 1: Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n \n%s\nTeleports: %i\n \n%s\nPro: %s\nTP: %s", count,szTime,g_OverallTp[ObservedUser],szPlayerRank,szProBest,szTPBest);
+								case 2: Format(g_szPlayerPanelText[client], 512, "%s\nTeleports: %i\n \n%s\nPro: %s\nTP: %s", szTime,g_OverallTp[ObservedUser],szPlayerRank,szProBest,szTPBest);
+							}
 						}
 						else
 						{	
 							if (ObservedUser == g_ProBot)
-								Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
+							{
+								switch(g_ShowSpecs[client])
+								{	
+									case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\nSpecs (%i):\n%s",szTime,szTick,count, sSpecs);
+									case 1: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
+									case 2: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s",szTime,szTick);		
+								}																
+							}
 							else
-								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
+							{
+								switch(g_ShowSpecs[client])
+								{	
+									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\nSpecs (%i):\n%s", szTime,g_ReplayRecordTps,szTick,count,sSpecs);	
+									case 1: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
+									case 2: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s", szTime,g_ReplayRecordTps,szTick);	
+								}																							
+							}
 						}					
 					}
 					else
 					{
 						if (ObservedUser == g_ProBot)
-							Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);
+						{
+							switch(g_ShowSpecs[client])
+							{	
+								case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs (%i):\n%s",szTick,count,sSpecs);	
+								case 1: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);	
+								case 2: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s",szTick);	
+							}							
+						}
 						else
 						{
+						
 							if (ObservedUser == g_TpBot)
-								Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);	
+							{
+								switch(g_ShowSpecs[client])
+								{	
+									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs (%i):\n%s", g_ReplayRecordTps,szTick,count,sSpecs);
+									case 1: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);
+									case 2: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s", g_ReplayRecordTps,szTick);
+								}
+							}
 							else
-								Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \nPAUSED", count, sSpecs);
+							{
+								switch(g_ShowSpecs[client])
+								{	
+									case 0: Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s\n  \nPAUSED", count, sSpecs);
+									case 1: Format(g_szPlayerPanelText[client], 512, "Specs : %i\n  \nPAUSED", count);
+									case 2: Format(g_szPlayerPanelText[client], 512, "PAUSED");
+								}
+								
+							}
 						}
 					}
 				}
@@ -2647,13 +2703,16 @@ public SpecListMenuDead(client)
 				{
 					if (ObservedUser != g_ProBot && ObservedUser != g_TpBot) 
 					{
-						Format(g_szPlayerPanelText[client], 512, "%Specs (%i):\n%s\n \n%s\nPro: %s\nTP: %s", count, sSpecs,szPlayerRank, szProBest,szTPBest);
-						if (!g_bShowSpecs[client])
-							Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n \n%s\nPro: %s\nTP: %s", count,szPlayerRank,szProBest,szTPBest);						
+						switch(g_ShowSpecs[client])
+						{	
+							case 0: Format(g_szPlayerPanelText[client], 512, "%Specs (%i):\n%s\n \n%s\nPro: %s\nTP: %s", count, sSpecs,szPlayerRank, szProBest,szTPBest);
+							case 1: Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n \n%s\nPro: %s\nTP: %s", count,szPlayerRank,szProBest,szTPBest);	
+							case 2: Format(g_szPlayerPanelText[client], 512, "%s\nPro: %s\nTP: %s", szPlayerRank,szProBest,szTPBest);
+						}					
 					}
 				}
 			
-				if (!g_bShowTime[client] && g_bShowSpecs[client])
+				if (!g_bShowTime[client] && g_ShowSpecs[client] == 0)
 				{
 					if (ObservedUser != g_ProBot && ObservedUser != g_TpBot) 
 						Format(g_szPlayerPanelText[client], 512,  "%Specs (%i):\n%s\n \n%s\nPro: %s\nTP: %s", count, sSpecs,szPlayerRank, szProBest,szTPBest);
@@ -2666,7 +2725,7 @@ public SpecListMenuDead(client)
 						
 					}	
 				}
-				if (!g_bShowTime[client] && !g_bShowSpecs[client])
+				if (!g_bShowTime[client] && (g_ShowSpecs[client] == 2 || g_ShowSpecs[client] == 1))
 				{
 					if (ObservedUser != g_ProBot && ObservedUser != g_TpBot) 
 						Format(g_szPlayerPanelText[client], 512, "%s\nPro: %s\nTP: %s", szPlayerRank,szProBest,szTPBest);	
@@ -2689,12 +2748,17 @@ public SpecListMenuDead(client)
 		g_SpecTarget[client] = -1;
 }
 
-
 public SpecListMenuAlive(client)
 {
 
 	if (IsFakeClient(client))
 		return;
+	
+	if (g_ShowSpecs[client] == 2)
+	{
+		Format(g_szPlayerPanelText[client], 512, "");
+		return;
+	}
 	
 	//Spec list for players
 	Format(g_szPlayerPanelText[client], 512, "");
@@ -2726,16 +2790,16 @@ public SpecListMenuAlive(client)
 	}	
 	if (count > 0)
 	{
-		if (g_bShowSpecs[client])
+		if (g_ShowSpecs[client] == 0)
 			Format(g_szPlayerPanelText[client], 512, "Specs (%i):\n%s ", count, sSpecs);
 		else
-			Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n ", count);
+			if (g_ShowSpecs[client] == 1)
+				Format(g_szPlayerPanelText[client], 512, "Specs (%i)\n ", count);			
 		SpecList(client);
 	}
 	else
 		Format(g_szPlayerPanelText[client], 512, "");	
-}
-	
+}	
 //MACRODOX BHOP PROTECTION
 //https://forums.alliedmods.net/showthread.php?p=1678026
 public PerformStats(client, target)

@@ -1777,11 +1777,15 @@ public db_viewUnfinishedMapsCallback(Handle:owner, Handle:hndl, const String:err
 	new Float:tptime;
 	new Float:protime;
 	CloseHandle(pack);
+	new String:prefix[2][32];
+	ExplodeString(szMap, "_", prefix, 2, 32);		
+		
+	
 	if(SQL_HasResultSet(hndl) && SQL_FetchRow(hndl))
 	{	
 		tptime = SQL_FetchFloat(hndl, 1);
 		protime = SQL_FetchFloat(hndl, 2);
-		if (tptime <= 0.0)
+		if (tptime <= 0.0 && !StrEqual("kzpro",prefix[0]))
 			PrintToConsole(client, "%s (TP)",szMap);
 		if (protime <= 0.0)
 			PrintToConsole(client, "%s (PRO)",szMap);
@@ -1789,7 +1793,12 @@ public db_viewUnfinishedMapsCallback(Handle:owner, Handle:hndl, const String:err
 	else
 	{
 		if (IsValidClient(client))
-			PrintToConsole(client, "%s (PRO)\n%s (TP)",szMap,szMap);
+		{
+			if (!StrEqual("kzpro",prefix[0]))
+				PrintToConsole(client, "%s (PRO)\n%s (TP)",szMap,szMap);
+			else	
+				PrintToConsole(client, "%s (PRO)",szMap);
+		}
 	}
 }
 
@@ -2331,10 +2340,11 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	
 	
 	//profile not refreshed after removing maps?
-	if (finishedmapstp > g_pr_MapCount)
-		finishedmapstp=g_pr_MapCount;
+	if (finishedmapstp > g_pr_MapCountTp)
+		finishedmapstp=g_pr_MapCountTp;
 	if (finishedmapspro > g_pr_MapCount)	
 		finishedmapspro=g_pr_MapCount;
+		
 		
 	if (points < g_pr_rank_Percentage[1])
 	{
@@ -2411,9 +2421,9 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 	if (master==false)
 	{	
 		if (g_bPointSystem)
-			Format(szRanking, 255,"Rank: %s/%i (%i)\nPoints: %ip (%s)\nNext skill group in: %ip%s\n", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank);
+			Format(szRanking, 255,"Rank: %s/%i (Overall: %i)\nPoints: %ip (%s)\nNext skill group in: %ip%s\n", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank);
 		if (g_bAllowCheckpoints)
-			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ",szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
+			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ",szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCountTp,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
 		else
 			Format(g_pr_szrank[client], 512, "Rank: %s/%i (%i)\nPoints: %ip (%s)\nNext skill group in: %ip%s\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘W/L Ratio: %s\n╘W/L Points ratio: %s\n ", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,RankDifference,szNextRank,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    	
 	}
@@ -2422,7 +2432,7 @@ public SQL_ViewRankedPlayerCallback5(Handle:owner, Handle:hndl, const String:err
 		if (g_bPointSystem)
 			Format(szRanking, 255,"Rank: %s/%i (%i)\nPoints: %ip (%s)\n", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup);
 		if (g_bAllowCheckpoints)
-			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCount,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
+			Format(g_pr_szrank[client], 512, "%sPro times: %i/%i (records: %i)\nTP times: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRanking,finishedmapspro,g_pr_MapCount,prorecords,finishedmapstp,g_pr_MapCountTp,tprecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
 		else
 			Format(g_pr_szrank[client], 512, "Rank: %s/%i (%i)\nPoints: %ip (%s)\nMaps completed: %i/%i (records: %i)\nPlayed challenges: %i\n╘ W/L Ratio: %s\n╘ W/L points ratio: %s\n ", szRank,g_pr_RankedPlayers, g_pr_AllPlayers,points,szSkillGroup,finishedmapspro,g_pr_MapCount,prorecords,challenges,szChallengesWinRatio,szChallengesPoints);                    
 		
@@ -2914,7 +2924,7 @@ public sql_selectRecordCallback(Handle:owner, Handle:hndl, const String:error[],
 	{
 		decl String:szName[MAX_NAME_LENGTH];
 		GetClientName(client, szName, MAX_NAME_LENGTH);
-		if	(g_OverallTp[client]>0)
+		if	(g_Tp_Final[client]>0)
 		{						
 			Format(szQuery, 512, sql_insertPlayerTp, g_szSteamID[client], g_szMapName, szName, g_fFinalTime[client], g_Tp_Final[client]);
 			g_fPersonalRecord[client] = g_fFinalTime[client];	
@@ -4821,7 +4831,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bGoToClient[client]=IntoBool(SQL_FetchInt(hndl, 6));
 		g_bShowTime[client]=IntoBool(SQL_FetchInt(hndl, 8));
 		g_bHide[client]=IntoBool(SQL_FetchInt(hndl, 9));
-		g_bShowSpecs[client]=IntoBool(SQL_FetchInt(hndl, 10));		
+		g_ShowSpecs[client]= SQL_FetchInt(hndl, 10);		
 		g_bCPTextMessage[client]=IntoBool(SQL_FetchInt(hndl, 11));
 		g_bAdvancedClimbersMenu[client]=IntoBool(SQL_FetchInt(hndl, 12));	
 		g_bStartWithUsp[client]=IntoBool(SQL_FetchInt(hndl, 15));
@@ -4841,7 +4851,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_ShowTime[client] = g_bShowTime[client]; 
 		g_borg_Hide[client] = g_bHide[client];
 		g_borg_StartWithUsp[client] = g_bStartWithUsp[client];
-		g_borg_ShowSpecs[client] = g_bShowSpecs[client]; 
+		g_org_ShowSpecs[client] = g_ShowSpecs[client]; 
 		g_borg_CPTextMessage[client] = g_bCPTextMessage[client];
 		g_borg_AdvancedClimbersMenu[client] = g_bAdvancedClimbersMenu[client];
 		g_borg_JumpBeam[client] = g_bJumpBeam[client];
@@ -4864,7 +4874,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_GoToClient[client] = true;
 		g_borg_ShowTime[client] = true; 
 		g_borg_Hide[client] = false;
-		g_borg_ShowSpecs[client] = true; 
+		g_org_ShowSpecs[client] = 0; 
 		g_borg_StartWithUsp[client] = false;
 		g_borg_CPTextMessage[client] = false;
 		g_borg_AdvancedClimbersMenu[client] = true;
@@ -4877,10 +4887,10 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 
 public db_updatePlayerOptions(client)
 {
-	if (g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_borg_ShowSpecs[client] != g_bShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
+	if (g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_org_ShowSpecs[client] != g_ShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
 	{
 		decl String:szQuery[1024];
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),BooltoInt(g_bShowSpecs[client]),BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),BooltoInt(g_bHideChat[client]),BooltoInt(g_bViewModel[client]),g_szSteamID[client]);
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),g_ShowSpecs[client],BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),BooltoInt(g_bHideChat[client]),BooltoInt(g_bViewModel[client]),g_szSteamID[client]);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
 	}
 }
@@ -4912,7 +4922,8 @@ public db_viewPlayerPointsCallback(Handle:owner, Handle:hndl, const String:error
 		g_pr_multiplier[client] = SQL_FetchInt(hndl, 5);
 		if (g_pr_multiplier[client] < 0)
 			g_pr_multiplier[client] = -1 * g_pr_multiplier[client];
-		g_pr_finishedmaps_tp_perc[client]= (float(g_pr_finishedmaps_tp[client]) / float(g_pr_MapCount)) * 100.0;
+			
+		g_pr_finishedmaps_tp_perc[client]= (float(g_pr_finishedmaps_tp[client]) / float(g_pr_MapCountTp)) * 100.0;
 		g_pr_finishedmaps_pro_perc[client]= (float(g_pr_finishedmaps_pro[client]) / float(g_pr_MapCount)) * 100.0;	
 		if (IsValidClient(client))
 			db_GetPlayerRank(client);
@@ -5248,7 +5259,7 @@ public sql_CountFinishedMapsTPCallback(Handle:owner, Handle:hndl, const String:e
 			}			
 		}	
 		g_pr_finishedmaps_tp[client]=finished_TP;	
-		g_pr_finishedmaps_tp_perc[client]= (float(finished_TP) / float(g_pr_MapCount)) * 100.0;
+		g_pr_finishedmaps_tp_perc[client]= (float(finished_TP) / float(g_pr_MapCountTp)) * 100.0;
 		g_pr_points[client]+= (finished_TP * g_ExtraPoints2);
 
 		//CountFinishedMapsPro
@@ -6073,7 +6084,7 @@ public db_selectTop100PlayersCallback(Handle:owner, Handle:hndl, const String:er
 			SQL_FetchString(hndl, 4, szSteamID, 32);				
 			new Float:fperc;
 			if (g_bAllowCheckpoints)
-				fperc =  (float(pro+tp) / (float(g_pr_MapCount*2))) * 100.0;
+				fperc =  (float(pro+tp) / (float(g_pr_MapCount+g_pr_MapCountTp))) * 100.0;
 			else
 				fperc =  (float(pro) / (float(g_pr_MapCount))) * 100.0;
 				

@@ -630,7 +630,7 @@ public Action:Client_Undo(client, args)
 		g_bUndoTimer[client] = true;
 		g_fLastUndo[client] = GetEngineTime();	
 		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
-		g_js_LeetJump_Count[client] = 0;
+		g_js_GODLIKE_Count[client] = 0;
 	}
 	return Plugin_Handled;
 }
@@ -1307,6 +1307,7 @@ public Action:Client_Start(client, args)
 public Action:Client_Pause(client, args) 
 {
 	if (GetClientTeam(client) == 1) return Plugin_Handled;
+	
 	PauseMethod(client);	
 	if (g_bPause[client]==false)
 		PrintToChat(client, "%t", "Pause2",MOSSGREEN, WHITE, RED, WHITE);
@@ -1317,7 +1318,8 @@ public Action:Client_Pause(client, args)
 
 public PauseMethod(client)
 {
-	if (GetClientTeam(client) == 1) return;
+	new Float: fDiff = GetEngineTime() - g_fLastUndo[client];
+	if (GetClientTeam(client) == 1 || fDiff < 1.0) return;
 	if (g_bPause[client]==false && IsValidEntity(client))
 	{
 		if (g_bPauseServerside==false && client != g_ProBot && client != g_TpBot) 
@@ -1326,7 +1328,7 @@ public PauseMethod(client)
 			return;
 		}
 		g_bPause[client]=true;		
-		new Float:fVel[3];
+		decl Float:fVel[3];
 		fVel[0] = 0.000000;
 		fVel[1] = 0.000000;
 		fVel[2] = 0.000000;
@@ -1351,10 +1353,7 @@ public PauseMethod(client)
 		g_bPause[client]=false;
 		if (!g_bRoundEnd)
 			SetEntityMoveType(client, MOVETYPE_WALK);
-		if (g_bNoBlock)
-			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
-		else
-			SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 5, true);
+		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 		TeleportEntity(client, NULL_VECTOR,NULL_VECTOR, Float:{0.0,0.0,-100.0});
 	}
 }
@@ -1379,22 +1378,14 @@ public CPMessage(client)
 }
 
 
-public Action:Client_HideSpecs(client, args) 
-{
-	HideSpecs(client);
-	if (g_bShowSpecs[client] == true)
-		PrintToChat(client, "%t", "HideSpecs1",MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "HideSpecs2",MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
 public HideSpecs(client)
 {
-	if (g_bShowSpecs[client] == true)
-		g_bShowSpecs[client] = false;
-	else
-		g_bShowSpecs[client] = true;
+	switch(g_ShowSpecs[client])
+	{
+		case 0: g_ShowSpecs[client] = 1;
+		case 1: g_ShowSpecs[client] = 2;
+		case 2: g_ShowSpecs[client] = 0;
+	}
 }
 
 public Action:Client_AdvClimbersMenu(client, args) 
@@ -1730,7 +1721,7 @@ public Action:Client_bhop(client, args)
 
 public DoCheckpoint(client)
 {
-	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client]) 
+	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client] || (StrEqual("kzpro", g_szMapPrefix[0]))) 
 		return;
 			
 		
@@ -1850,7 +1841,7 @@ public DoTeleport(client,pos)
 			GetClientAbsOrigin(client, g_fPlayerCordsUndoTp[client]);
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
-				g_js_LeetJump_Count[client] = 0;
+				g_js_GODLIKE_Count[client] = 0;
 			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});		
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
@@ -2392,21 +2383,30 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_connect_msg %b", g_bConnectMsg);
 	PrintToConsole(client, "kz_country_tag %b", g_bCountry);
 	PrintToConsole(client, "kz_custom_models %b", g_bPlayerSkinChange);	
-	PrintToConsole(client, "kz_dist_min_lj %.1f (gray msg)", g_dist_good_lj);
-	PrintToConsole(client, "kz_dist_pro_lj %.1f (green msg)", g_dist_pro_lj);
-	PrintToConsole(client, "kz_dist_leet_lj %.1f (red msg)", g_dist_leet_lj);
-	PrintToConsole(client, "kz_dist_min_bhop %.1f (...)", g_dist_good_bhop);
-	PrintToConsole(client, "kz_dist_pro_bhop %.1f (...)", g_dist_pro_bhop);
-	PrintToConsole(client, "kz_dist_leet_bhop %.1f (...)", g_dist_leet_bhop);
-	PrintToConsole(client, "kz_dist_min_multibhop %.1f (...)", g_dist_good_multibhop);
-	PrintToConsole(client, "kz_dist_pro_multibhop %.1f (...)", g_dist_pro_multibhop);
-	PrintToConsole(client, "kz_dist_leet_multibhop %.1f (...)", g_dist_leet_multibhop);
-	PrintToConsole(client, "kz_dist_min_dropbhop %.1f (...)", g_dist_good_dropbhop);
-	PrintToConsole(client, "kz_dist_pro_dropbhop %.1f (...)", g_dist_pro_dropbhop);
-	PrintToConsole(client, "kz_dist_leet_dropbhop %.1f (...)", g_dist_leet_dropbhop);
-	PrintToConsole(client, "kz_dist_min_wj %.1f (...)", g_dist_good_weird);
-	PrintToConsole(client, "kz_dist_pro_wj %.1f (...)", g_dist_pro_weird);
-	PrintToConsole(client, "kz_dist_leet_wj %.1f (...)", g_dist_leet_weird);
+	PrintToConsole(client, "kz_dist_min_lj %.1f", g_dist_min_lj);	
+	PrintToConsole(client, "kz_dist_perfect_lj %.1f", g_dist_perfect_lj);
+	PrintToConsole(client, "kz_dist_impressive_lj %.1f", g_dist_impressive_lj);
+	PrintToConsole(client, "kz_dist_god_lj %.1f", g_dist_god_lj);
+	PrintToConsole(client, "kz_dist_min_bhop %.1f", g_dist_min_bhop);
+	PrintToConsole(client, "kz_dist_perfect_bhop %.1f", g_dist_perfect_bhop);
+	PrintToConsole(client, "kz_dist_impressive_bhop %.1f", g_dist_impressive_bhop);
+	PrintToConsole(client, "kz_dist_god_bhop %.1f", g_dist_god_bhop);
+	PrintToConsole(client, "kz_dist_min_multibhop %.1f", g_dist_min_multibhop);
+	PrintToConsole(client, "kz_dist_perfect_multibhop %.1f", g_dist_perfect_multibhop);
+	PrintToConsole(client, "kz_dist_impressive_multibhop %.1f", g_dist_impressive_multibhop);
+	PrintToConsole(client, "kz_dist_god_multibhop %.1f", g_dist_god_multibhop);
+	PrintToConsole(client, "kz_dist_min_dropbhop %.1f", g_dist_min_dropbhop);
+	PrintToConsole(client, "kz_dist_perfect_dropbhop %.1f", g_dist_perfect_dropbhop);
+	PrintToConsole(client, "kz_dist_impressive_dropbhop %.1f", g_dist_impressive_dropbhop);
+	PrintToConsole(client, "kz_dist_god_dropbhop %.1f", g_dist_god_dropbhop);
+	PrintToConsole(client, "kz_dist_min_wj %.1f", g_dist_min_weird);
+	PrintToConsole(client, "kz_dist_perfect_wj %.1f", g_dist_perfect_weird);
+	PrintToConsole(client, "kz_dist_impressive_wj %.1f", g_dist_impressive_weird);
+	PrintToConsole(client, "kz_dist_god_wj %.1f", g_dist_god_weird);
+	PrintToConsole(client, "kz_dist_min_ladder %.1f", g_dist_min_ladder);
+	PrintToConsole(client, "kz_dist_perfect_ladder %.1f", g_dist_perfect_ladder);
+	PrintToConsole(client, "kz_dist_impressive_ladder %.1f", g_dist_impressive_ladder);
+	PrintToConsole(client, "kz_dist_god_ladder %.1f", g_dist_god_ladder);
 	PrintToConsole(client, "kz_dynamic_timelimit %b (requires kz_map_end 1)", g_bDynamicTimelimit);
 	PrintToConsole(client, "kz_godmode %b", g_bgodmode);
 	PrintToConsole(client, "kz_goto %b", g_bGoToServer);
@@ -2416,7 +2416,6 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_prespeed_cap %.1f (speed-limiter)", g_fBhopSpeedCap);
 	PrintToConsole(client, "kz_map_end %b", g_bMapEnd);
 	PrintToConsole(client, "kz_max_prespeed_bhop_dropbhop %.1f", g_fMaxBhopPreSpeed);
-	PrintToConsole(client, "kz_noblock %b", g_bNoBlock);
 	PrintToConsole(client, "kz_pause %b", g_bPauseServerside);
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
@@ -2512,10 +2511,15 @@ public OptionMenu(client)
 	else
 		AddMenuItem(optionmenu, "Show Timer  -  Disabled", "Show timer text  -  Disabled");			
 	//8
-	if (g_bShowSpecs[client])
-		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Enabled");
+	
+	
+	if (g_ShowSpecs[client] == 0)
+		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Player counter + names");
 	else
-		AddMenuItem(optionmenu, "Spectator list  -  Disabled", "Spectator list  -  Disabled");	
+		if (g_ShowSpecs[client] == 1)
+			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Player counter");
+		else
+			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Disabled");
 	//9
 	if (g_bInfoPanel[client])
 		AddMenuItem(optionmenu, "Speed/Keys panel  -  Enabled", "Speed/Keys panel  -  Enabled");
@@ -2533,9 +2537,9 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam   -  Disabled");			
 	//12
 	if (g_bHideChat[client])
-		AddMenuItem(optionmenu, "In-game chat  -  Enabled", "Hide chat  -  Enabled");
+		AddMenuItem(optionmenu, "In-game chat  -  Enabled", "Hide chat/voice icons  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "In-game chat  -  Disabled", "Hide chat  -  Disabled");
+		AddMenuItem(optionmenu, "In-game chat  -  Disabled", "Hide chat/voice icons  -  Disabled");
 	//13
 	if (g_bViewModel[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Weapon viewmodel  -  Enabled");
@@ -2605,6 +2609,7 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				CloseHandle(menu);
 			}
 }
+
 
 public SwitchStartWeapon(client)
 {

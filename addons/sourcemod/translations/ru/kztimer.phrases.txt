@@ -1,24 +1,34 @@
 ﻿"Phrases"
 {
+	"StrafeSync1"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Синхронизация стрейфов в чате включена."
+	}
+	"StrafeSync2"
+	{
+		"#format"   "{1:c},{2:c}"
+		"ru"        "[{1}KZ{2}] Синхронизация стрейфов в чате выключена."
+	}
 	"HideChat1"
 	{
 		"#format"   "{1:c},{2:c}"
-		"ru"        "[{1}KZ{2}] Hide chat enabled."
+		"ru"        "[{1}KZ{2}] Чат выключен."
 	}
 	"HideChat2"
 	{
 		"#format"   "{1:c},{2:c}"
-		"ru"        "[{1}KZ{2}] Hide chat disabled."
+		"ru"        "[{1}KZ{2}] Чат включен."
 	}
 	"HideViewModel1"
 	{
 		"#format"   "{1:c},{2:c}"
-		"ru"        "[{1}KZ{2}] Weapon viewmodel disabled."
+		"ru"        "[{1}KZ{2}] Модель оружия отключена."
 	}
 	"HideViewModel2"
 	{
 		"#format"   "{1:c},{2:c}"
-		"ru"        "[{1}KZ{2}] Weapon viewmodel enabled."
+		"ru"        "[{1}KZ{2}] Модель оружия включена."
 	}
 	 "PlayerJumpBeam1"
 	{

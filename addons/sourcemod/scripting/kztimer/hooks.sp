@@ -3,15 +3,17 @@ public Action:NormalSHook_callback(clients[64], &numClients, String:sample[PLATF
 {
     if(entity > MaxClients)
     {
-        new String:clsname[20]; GetEntityClassname(entity, clsname, sizeof(clsname));
-        if(StrEqual(clsname, "func_button", false))
-        {
-            return Plugin_Handled;
-        }
+		if (IsValidEntity(entity))
+		{
+			new String:clsname[20]; GetEntityClassname(entity, clsname, sizeof(clsname));
+			if(StrEqual(clsname, "func_button", false))
+			{
+				return Plugin_Handled;
+			}
+		}
     }
     return Plugin_Continue;
 }  
-
 //trigger_teleport/trigger_multiple hook
 public Teleport_OnStartTouch(const String:output[], bhop_block, client, Float:delay)
 {
@@ -676,6 +678,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		CalcJumpMaxSpeed(client, speed);
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
+		CalcStrafeAirTime(client);
 		CalcLastJumpHeight(client, buttons, origin);		
 		BhopHackAntiCheat(client, buttons);
 		LjBlockCheck(client,origin);

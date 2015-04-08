@@ -57,7 +57,7 @@ public Action:StartTimer(Handle:timer, any:client)
 public Action:BhopCheck(Handle:timer, any:client)
 {
 	if (!g_js_bBhop[client])
-		g_js_LeetJump_Count[client] = 0;
+		g_js_GODLIKE_Count[client] = 0;
 }
 
 public Action:AttackTimer(Handle:timer)
@@ -82,6 +82,10 @@ public Action:KZTimer1(Handle:timer)
 {
 	if (g_bRoundEnd)
 		return Plugin_Continue;
+		
+	if (g_bAllowCheckpoints && (StrEqual("kzpro", g_szMapPrefix[0])))
+		ServerCommand("kz_checkpoints 0");
+		
 	decl client;
 	for (client = 1; client <= MaxClients; client++)
 	{		
@@ -187,6 +191,13 @@ public Action:KZTimer2(Handle:timer)
 		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;	
 
+		//stop replay to prevent server crashes because of a massive recording array (max. 2h)
+		if(g_hRecording[i] != INVALID_HANDLE && g_fCurrentRunTime[i] > 6720.0)
+		{
+			StopRecording(i);
+			g_hRecording[i] = INVALID_HANDLE;
+		}		
+		
 		if (!IsFakeClient(i) && !g_bKickStatus[i])
 			QueryClientConVar(i, "fps_max", ConVarQueryFinished:FPSCheck, i);
 
