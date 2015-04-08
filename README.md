@@ -32,6 +32,21 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.7 
+- fixed a undo exploit (i won't go into detail but thx to aMo)
+- added a few missing chat phrases to the russian translation file
+- reworked spec list options (options: 1. counter+names...  2. counter.. 3. disabled) | default: 1 
+- removed landing edge value from longjump stats... too inaccurate at the moment
+- added airtime(%) to strafe stats (beta)
+- added impressive jumpstats chat message, new order: perfect (blue), impressive(green), godlike (red)
+- added impressive sound file "csgo/sound/quake/impressive_kz.mp3"
+- renamed all jumpstats convars (i'd recommend to delete your old KZTimer.cfg. The plugin creates a new config on server restart)
+- minor bug fixes
+- modified files: sourcemod/plugins/KZTimerGlobal.smx, sourcemod/translations/ru/kztimer.phrases.txt
+
+v1.69
+-
+
 v1.68
 - replaced gamedata/setname.games.txt (this will fix the issue with the replay bots)
 - minor bug fixes 
