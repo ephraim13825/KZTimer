@@ -1,6 +1,10 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
 KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
-
+**Known but unsolved problems and bugs:**
+[SM] Native "PushArrayArray" reported: Failed to grow array
+[SM] Displaying call stack trace for plugin "KZTimerGlobal.smx":
+[SM]   [0]  Line 574, kztimerGlobal/replay.sp::RecordReplay()
+[SM]   [1]  Line 663, kztimerGlobal/hooks.sp::OnPlayerRunCmd()
 
 **Please read the following information carefully before you start asking stupid questions:**
 - Download includes DHooks2 extension (https://forums.alliedmods.net/showthread.php?t=180114), Cleaner extension (https://forums.alliedmods.net/showthread.php?t=195008)  and latest GeoIP database (http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/)
