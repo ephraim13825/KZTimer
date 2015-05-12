@@ -398,7 +398,6 @@ new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bSaving[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1];
 new bool:g_bFirstButtonTouch[MAXPLAYERS+1];
-new bool:g_bSideWay[MAXPLAYERS+1];
 new bool:g_bLJBlock[MAXPLAYERS + 1];
 new bool:g_js_block_lj_jumpoff_pos[MAXPLAYERS + 1];
 new bool:g_bClientOwnReason[MAXPLAYERS + 1];

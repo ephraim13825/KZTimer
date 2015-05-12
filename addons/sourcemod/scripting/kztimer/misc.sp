@@ -2384,30 +2384,26 @@ public CalcJumpSync(client, Float: speed, Float: ang, &buttons)
 			if( ang > g_fLastAngles[client][1])
 				turning_left = true;	
 		
-		//strafestats
+		//strafestats cccc
 		if(turning_left || turning_right)
 		{
 			if( !g_js_Strafing_AW[client] && ((buttons & IN_FORWARD) || (buttons & IN_MOVELEFT)) && !(buttons & IN_MOVERIGHT) && !(buttons & IN_BACK) )
-			{
-				if ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT))
-					g_bSideWay[client] = false;
-				
+			{			
 				g_js_Strafing_AW[client] = true;
 				g_js_Strafing_SD[client] = false;					
-				g_js_StrafeCount[client]++; 
-				
+				g_js_StrafeCount[client]++; 					
 				new count = g_js_StrafeCount[client]-1;
 				if (count < 100)
 				{			
 					g_js_Strafe_Good_Sync[client][g_js_StrafeCount[client]-1] = 0.0;
 					g_js_Strafe_Frames[client][g_js_StrafeCount[client]-1] = 0.0;		
 					g_js_Strafe_Max_Speed[client][g_js_StrafeCount[client] - 1] = speed;	
+					g_js_Strafe_Air_Time[client][g_js_StrafeCount[client] - 1] = GetEngineTime();	
 				}
+				
 			}
 			else if( !g_js_Strafing_SD[client] && ((buttons & IN_BACK) || (buttons & IN_MOVERIGHT)) && !(buttons & IN_MOVELEFT) && !(buttons & IN_FORWARD) )
 			{
-				if ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT))
-					g_bSideWay[client] = false;
 				g_js_Strafing_AW[client] = false;
 				g_js_Strafing_SD[client] = true;
 				g_js_StrafeCount[client]++; 
@@ -2417,9 +2413,10 @@ public CalcJumpSync(client, Float: speed, Float: ang, &buttons)
 					g_js_Strafe_Good_Sync[client][g_js_StrafeCount[client]-1] = 0.0;
 					g_js_Strafe_Frames[client][g_js_StrafeCount[client]-1] = 0.0;		
 					g_js_Strafe_Max_Speed[client][g_js_StrafeCount[client] - 1] = speed;	
+					g_js_Strafe_Air_Time[client][g_js_StrafeCount[client] - 1] = GetEngineTime();						
 				}
 			}				
-		}								
+		}									
 		//sync
 		if( g_fLastSpeed[client] < speed )
 		{
