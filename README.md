@@ -2,9 +2,6 @@ Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274
 KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
 **Known but unsolved problems and bugs:**
 [SM] Native "PushArrayArray" reported: Failed to grow array
-[SM] Displaying call stack trace for plugin "KZTimerGlobal.smx":
-[SM]   [0]  Line 574, kztimerGlobal/replay.sp::RecordReplay()
-[SM]   [1]  Line 663, kztimerGlobal/hooks.sp::OnPlayerRunCmd()
 
 **Please read the following information carefully before you start asking stupid questions:**
 - Download includes DHooks2 extension (https://forums.alliedmods.net/showthread.php?t=180114), Cleaner extension (https://forums.alliedmods.net/showthread.php?t=195008)  and latest GeoIP database (http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/)
@@ -36,6 +33,17 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.71
+- fixed displaying of a wrong pre strafe value after players used +noclip (thx 2 haru)
+- fixed map end glitch where the map does not change
+- optimized strafe air-time calculation
+- optimized jump sync calculation
+- optimized default jump stats values
+- added +left/+right script detection
+- added "godlike jumps and map records only" choice for "quake sounds" player option
+- added "advanced center panel" player option: Displays whether or not players have hit a crouch jump and whether or not players have released their forward key in the right moment on long jumps
+- minor optimizations and bug fixes
+
 v1.7 
 - fixed a undo exploit (i won't go into detail but thx to aMo)
 - added a few missing chat phrases to the russian translation file
