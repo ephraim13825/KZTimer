@@ -28,11 +28,12 @@ public Teleport_OnStartTouch(const String:output[], bhop_block, client, Float:de
 	if (g_js_block_lj_valid[client] && g_bJumpStats && g_js_bPlayerJumped[client] && !g_bKickStatus[client])
 	{
 		GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
-		g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
+		g_fLandingTime[client] = GetEngineTime();
+		g_fAirTime[client] = g_fLandingTime[client] - g_fJumpOffTime[client];
 		Postthink(client);
 		g_fLastPositionOnGround[client] = g_fLastPosition[client];
 		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];	
-	}	
+	}
 }  
 
 //attack spam protection
@@ -464,15 +465,13 @@ public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBr
 					
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 {
-	if (g_bRoundEnd)
-		return Plugin_Continue;
 	new timeleft;
+	g_bAllowRoundEnd = false;
 	GetMapTimeLeft(timeleft);
 	if (timeleft>= -1)
 		return Plugin_Handled;
-	g_bRoundEnd=true;
 	return Plugin_Continue;
-}  
+}
 
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -631,20 +630,50 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 
 	if(IsPlayerAlive(client))	
 	{	
+		//replay bots
+		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
+		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
+		if (IsFakeClient(client) && g_js_fPreStrafe[client] > g_fBhopSpeedCap)
+			g_js_fPreStrafe[client] = g_fBhopSpeedCap;
+			
 		decl Float:speed, Float:origin[3],Float:ang[3];
 		g_CurrentButton[client] = buttons;
 		GetClientAbsOrigin(client, origin);
 		GetClientEyeAngles(client, ang);		
 		new MoveType:movetype = GetEntityMoveType(client);
-		
 		speed = GetSpeed(client);		
 		if (GetEntityFlags(client) & FL_ONGROUND)
 			g_bOnGround[client]=true;
 		else
 			g_bOnGround[client]=false;
-			
+		
+		//perfect jumpoff?
+		if (g_bOnGround[client])
+		{	
+			if (buttons & IN_JUMP &&  !(buttons & IN_DUCK))
+			{
+				if ((g_LastButton[client] & IN_FORWARD) && !(buttons & IN_FORWARD))
+					g_js_bPerfJumpOff2[client]=true;
+				g_fJumpOffTime[client] = GetEngineTime();
+			}
+			if (!(g_LastButton[client] & IN_DUCK) && !(g_LastButton[client] & IN_JUMP) && (g_LastButton[client] & IN_FORWARD))
+			{
+				if ((buttons & IN_JUMP) && (buttons & IN_DUCK))
+					g_js_bPerfJumpOff[client]=true;	
+				if (!(buttons & IN_FORWARD))
+					g_js_bPerfJumpOff2[client]=true;	
+			}
+		}
+		
+		//left right script check
+		if ((buttons & IN_LEFT) || (buttons & IN_RIGHT))
+		{
+			PrintToConsole(client, "KZ AntiCheat: +Left/+Right bind detected");
+			ResetJump(client);
+		}
+		
 		//ground frames counter
-		if (!g_js_bPlayerJumped[client] && g_bOnGround[client] && ((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)) || IsFakeClient(client))
+		if (!g_js_bPlayerJumped[client] && g_bOnGround[client] && (((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)) || IsFakeClient(client)))
 			g_js_GroundFrames[client]++;
 		
 		//menu refreshing
@@ -661,11 +690,10 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 				g_bUndo[client] = false;
 			}
 		}
-			
-		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
-		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
+		
+		//other
 		SpeedCap(client);		
-		AutoBhopFunction(client, buttons);
+		ServerSidedAutoBhop(client, buttons);
 		Prestrafe(client,ang[1], buttons);
 		ButtonPressCheck(client, buttons, origin, speed);
 		TeleportCheck(client, origin);
@@ -678,22 +706,21 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		CalcJumpMaxSpeed(client, speed);
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
-		CalcStrafeAirTime(client);
 		CalcLastJumpHeight(client, buttons, origin);		
-		BhopHackAntiCheat(client, buttons);
+		KZAntiCheat(client, buttons);
 		LjBlockCheck(client,origin);
 		HookCheck(client);
 		SetPlayerBeam(client, origin);
 	
 		if (g_bOnGround[client])
 		{
-			
 			g_bBeam[client] = false;
 			// JumpStats -- Landing
 			if(!g_js_bInvalidGround[client] && !g_bLastInvalidGround[client] && g_js_bPlayerJumped[client] == true && weapon != -1 && IsValidEntity(weapon) && GetEntProp(client, Prop_Data, "m_nWaterLevel") < 1)
-			{					
+			{		
 				GetGroundOrigin(client, g_js_fJump_Landing_Pos[client]);
-				g_fAirTime[client] = GetEngineTime() - g_fAirTime[client];
+				g_fLandingTime[client] = GetEngineTime();
+				g_fAirTime[client] = g_fLandingTime[client] - g_fJumpOffTime[client];
 				if (g_bJumpStats && !g_bKickStatus[client])
 					Postthink(client);
 			}	
@@ -705,6 +732,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			if (!g_js_bPlayerJumped[client])
 				g_js_GroundFrames[client] = 0;			
 		}		
+		
 		g_fLastAngles[client] = ang;
 		g_LastMoveType[client] = movetype;
 		g_fLastSpeed[client] = speed;
@@ -715,24 +743,15 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 }
 
 public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
-{
+{	
 	decl client;
 	client = GetClientOfUserId(GetEventInt(Event, "userid"));	
-	g_bBeam[client]=true;
-	//noclip check
-	decl Float: flEngineTime;
-	flEngineTime = GetEngineTime()
-	decl Float:flDiff;
-	flDiff = flEngineTime - g_fLastTimeNoClipUsed[client];
-	if (flDiff < 4.0)
-		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, Float:{0.0,0.0,-100.0});
-
+	g_bBeam[client]=true;	
 	decl bool:touchwall;
 	touchwall = WallCheck(client);	
 	if (g_bJumpStats && !touchwall)
 		Prethink(client, false);
-}
-		
+}	
 			
 public Hook_PostThinkPost(entity)
 {

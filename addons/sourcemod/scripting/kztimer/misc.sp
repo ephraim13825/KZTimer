@@ -359,7 +359,7 @@ public PrintConsoleInfo(client)
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
 	PrintToConsole(client, "- Menu formatting is optimized for 1920x1080..");	
-	PrintToConsole(client, "- Max recording time for replays: 120min");	
+	PrintToConsole(client, "- Max recording time for replays: 120min");		
 	PrintToConsole(client, "- It's not possible to hide the spec minimap for replay bots through coding.");	
 	PrintToConsole(client, "But you can disable it by typing hideradar into your console!");	
 	PrintToConsole(client, " ");
@@ -368,7 +368,7 @@ public PrintConsoleInfo(client)
 	PrintToConsole(client, "!help, !help2, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
 	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !avg,");
 	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp, !wr, !beam");
-	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !sound, !menusound");
+	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !menusound");
 	PrintToConsole(client, "!hide, !showtime, !disablegoto, !sync, !bhop, !hidechat, !hideweapon)");
 	PrintToConsole(client, " ");
 	PrintToConsole(client, "Live scoreboard:");
@@ -833,7 +833,7 @@ public SetClientDefaults(client)
 	g_bInfoPanel[client]=false;
 	g_bHideChat[client]=false;
 	g_bClimbersMenuSounds[client]=true;
-	g_bEnableQuakeSounds[client]=true;
+	g_EnableQuakeSounds[client]=1;
 	g_bShowNames[client]=true; 
 	g_bStrafeSync[client]=false;
 	g_bGoToClient[client]=true; 
@@ -847,6 +847,7 @@ public SetClientDefaults(client)
 	g_bAutoBhopClient[client]=true;
 	g_bJumpBeam[client]=false;
 	g_bViewModel[client]=true;
+	g_bAdvInfoPanel[client]=false;
 }
 
 public SetPlayerBeam(client, Float:origin[3])
@@ -922,7 +923,7 @@ public PlayLeetJumpSound(client)
 	{
 		for (new i = 1; i <= MaxClients; i++)
 		{ 
-			if(IsValidClient(i) && !IsFakeClient(i) && i != client && g_bColorChat[i] && g_bEnableQuakeSounds[i])
+			if(IsValidClient(i) && !IsFakeClient(i) && i != client && g_bColorChat[i] && g_EnableQuakeSounds[i] == 1)
 			{	
 					if (g_js_GODLIKE_Count[client]==3)
 					{
@@ -940,28 +941,27 @@ public PlayLeetJumpSound(client)
 	}
 	
 	//client sound
-	if 	(IsValidClient(client) && !IsFakeClient(client) && g_bEnableQuakeSounds[client])
+	if 	(IsValidClient(client) && !IsFakeClient(client) && g_EnableQuakeSounds[client] >= 1)
 	{
-		if (g_js_GODLIKE_Count[client] != 3 && g_js_GODLIKE_Count[client] != 5)
+		if (g_js_GODLIKE_Count[client] != 3 && g_js_GODLIKE_Count[client] != 5 && g_EnableQuakeSounds[client])
 		{
 			Format(buffer, sizeof(buffer), "play %s", GODLIKE_RELATIVE_SOUND_PATH); 
 			ClientCommand(client, buffer); 
 		}
 			else
-			if (g_js_GODLIKE_Count[client]==3)
+			if (g_js_GODLIKE_Count[client]==3 && g_EnableQuakeSounds[client])
 			{
 				Format(buffer, sizeof(buffer), "play %s", GODLIKE_RAMPAGE_RELATIVE_SOUND_PATH); 	
 				ClientCommand(client, buffer); 
 			}
 			else
-			if (g_js_GODLIKE_Count[client]==5)
+			if (g_js_GODLIKE_Count[client]==5 && g_EnableQuakeSounds[client])
 			{
 				Format(buffer, sizeof(buffer), "play %s", GODLIKE_DOMINATING_RELATIVE_SOUND_PATH); 		
 				ClientCommand(client, buffer); 
 			}					
 	}
 }
-
 public SetCashState()
 {
 	ServerCommand("mp_startmoney 0; mp_playercashawards 0; mp_teamcashawards 0");
@@ -978,7 +978,7 @@ public PlayRecordSound(iRecordtype)
 	if (iRecordtype==1)
 	    for(new i = 1; i <= GetMaxClients(); i++) 
 		{ 
-			if(IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
+			if(IsValidClient(i) && !IsFakeClient(i) && g_EnableQuakeSounds[i] >= 1) 
 			{ 
 				Format(buffer, sizeof(buffer), "play %s", PRO_RELATIVE_SOUND_PATH); 
 				ClientCommand(i, buffer); 
@@ -988,7 +988,7 @@ public PlayRecordSound(iRecordtype)
 		if (iRecordtype==2 || iRecordtype == 3)
 			for(new i = 1; i <= GetMaxClients(); i++) 
 			{ 
-				if(IsValidClient(i) && !IsFakeClient(i) && g_bEnableQuakeSounds[i] == true) 
+				if(IsValidClient(i) && !IsFakeClient(i) && g_EnableQuakeSounds[i] >= 1) 
 				{ 
 					Format(buffer, sizeof(buffer), "play %s", CP_RELATIVE_SOUND_PATH); 
 					ClientCommand(i, buffer); 
@@ -999,8 +999,8 @@ public PlayRecordSound(iRecordtype)
 public PlayUnstoppableSound(client)
 {
 	decl String:buffer[255];
-	Format(buffer, sizeof(buffer), "play %s", UNSTOPPABLE_RELATIVE_SOUND_PATH); 
-	if (!IsFakeClient(client) && g_bEnableQuakeSounds[client])
+	Format(buffer, sizeof(buffer), "play %s", UNSTOPPABLE_RELATIVE_SOUND_PATH);  
+	if (IsValidClient(client) && !IsFakeClient(client) && g_EnableQuakeSounds[client] == 1)
 		ClientCommand(client, buffer); 	
 	//spec stop sound
 	for(new i = 1; i <= MaxClients; i++) 
@@ -1011,13 +1011,12 @@ public PlayUnstoppableSound(client)
 			if (SpecMode == 4 || SpecMode == 5)
 			{		
 				new Target = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");	
-				if (Target == client && g_bEnableQuakeSounds[i])
+				if (Target == client && g_EnableQuakeSounds[i] == 1)
 					ClientCommand(i,buffer);
 			}					
 		}
 	}	
 }
-
 
 public InitPrecache()
 {
@@ -1792,6 +1791,10 @@ stock BooltoInt(bool:status)
 public PlayQuakeSound_Spec(client, String:buffer[255])
 {
 	new SpecMode;
+	new bool:god;
+	if (StrEqual("play *quake/godlike.mp3", buffer))
+		god = true;
+	
 	for(new x = 1; x <= MaxClients; x++) 
 	{
 		if (IsValidClient(x) && !IsPlayerAlive(x))
@@ -1801,13 +1804,15 @@ public PlayQuakeSound_Spec(client, String:buffer[255])
 			{		
 				new Target = GetEntPropEnt(x, Prop_Send, "m_hObserverTarget");	
 				if (Target == client)
-					if (g_bEnableQuakeSounds[x] && g_bColorChat[x])
+				{
+					if ((god == false && g_EnableQuakeSounds[x] == 1) || (god == true && g_EnableQuakeSounds[x] >= 1)  && g_bColorChat[x])
 						ClientCommand(x, buffer); 
+				}
 			}					
 		}		
 	}
 }
-				
+		
 public PerformBan(client, String:szbantype[16])
 {
 	if (IsValidClient(client))
@@ -2326,20 +2331,6 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 	}
 }
 
-public CalcStrafeAirTime(client)
-{
-	if (g_js_bPlayerJumped[client] && g_bNewStrafe[client] && g_js_StrafeCount[client] >= 2)
-	{	
-		g_bNewStrafe[client] = false;
-		new count = g_js_StrafeCount[client]-2;
-		if (count < 100 && count >= 0)
-		{
-			g_js_Strafe_AirTime[client][count] = GetEngineTime() - g_js_Strafe_AirTimeDiff[client];
-			g_js_Strafe_AirTimeDiff[client] = GetEngineTime();
-		}				
-	}
-}
-
 public CalcJumpMaxSpeed(client, Float: fspeed)
 {
 	if (g_js_bPlayerJumped[client])
@@ -2458,7 +2449,7 @@ public CalcJumpSync(client, Float: speed, Float: ang, &buttons)
 	}
 }
 
-public AutoBhopFunction(client,&buttons)
+public ServerSidedAutoBhop(client,&buttons)
 {
 	if (!IsValidClient(client))
 		return;
@@ -2473,7 +2464,7 @@ public AutoBhopFunction(client,&buttons)
 	}
 }
 	
-public BhopHackAntiCheat(client,&buttons)
+public KZAntiCheat(client,&buttons)
 {
 	if (IsFakeClient(client))
 		return;
@@ -2532,6 +2523,8 @@ public ResetJump(client)
 {
 	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 	g_js_GroundFrames[client] = 0;
+	g_js_bPerfJumpOff[client] = false;
+	g_js_bPerfJumpOff2[client] = false;
 	g_js_bPlayerJumped[client] = false;	
 }
 
@@ -2647,7 +2640,7 @@ public SpecListMenuDead(client)
 							{
 								switch(g_ShowSpecs[client])
 								{	
-									case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\nSpecs (%i):\n%s",szTime,szTick,count, sSpecs);
+									case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\n \nSpecs (%i):\n%s",szTime,szTick,count, sSpecs);
 									case 1: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s\nSpecs: %i",szTime,szTick,count);
 									case 2: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\n%s\nTickrate: %s",szTime,szTick);		
 								}																
@@ -2656,7 +2649,7 @@ public SpecListMenuDead(client)
 							{
 								switch(g_ShowSpecs[client])
 								{	
-									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\nSpecs (%i):\n%s", szTime,g_ReplayRecordTps,szTick,count,sSpecs);	
+									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\n \nSpecs (%i):\n%s", szTime,g_ReplayRecordTps,szTick,count,sSpecs);	
 									case 1: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s\nSpecs: %i", szTime,g_ReplayRecordTps,szTick,count);	
 									case 2: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\n%s\nTeleports: %i\nTickrate: %s", szTime,g_ReplayRecordTps,szTick);	
 								}																							
@@ -2669,7 +2662,7 @@ public SpecListMenuDead(client)
 						{
 							switch(g_ShowSpecs[client])
 							{	
-								case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs (%i):\n%s",szTick,count,sSpecs);	
+								case 0: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\n \nSpecs (%i):\n%s",szTick,count,sSpecs);	
 								case 1: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s\nSpecs: %i",szTick,count);	
 								case 2: Format(g_szPlayerPanelText[client], 512, "[PRO Replay]\nTime: PAUSED\nTickrate: %s",szTick);	
 							}							
@@ -2681,7 +2674,7 @@ public SpecListMenuDead(client)
 							{
 								switch(g_ShowSpecs[client])
 								{	
-									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs (%i):\n%s", g_ReplayRecordTps,szTick,count,sSpecs);
+									case 0: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\n \nSpecs (%i):\n%s", g_ReplayRecordTps,szTick,count,sSpecs);
 									case 1: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s\nSpecs: %i", g_ReplayRecordTps,szTick,count);
 									case 2: Format(g_szPlayerPanelText[client], 512, "[TP Replay]\nTime: PAUSED\nTeleports: %i\nTickrate: %s", g_ReplayRecordTps,szTick);
 								}
@@ -2719,9 +2712,9 @@ public SpecListMenuDead(client)
 					else
 					{
 						if (ObservedUser == g_ProBot)
-							Format(g_szPlayerPanelText[client], 512, "PRO replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s", g_szReplayName,szTick, count, sSpecs);	
+							Format(g_szPlayerPanelText[client], 512, "PRO replay of\n%s\n \nTickrate: %s\n \nSpecs (%i):\n%s", g_szReplayName,szTick, count, sSpecs);	
 						else
-							Format(g_szPlayerPanelText[client], 512, "TP replay of\n%s\n \nTickrate: %s\nSpecs (%i):\n%s", g_szReplayNameTp,szTick, count, sSpecs);	
+							Format(g_szPlayerPanelText[client], 512, "TP replay of\n%s\n \nTickrate: %s\n \nSpecs (%i):\n%s", g_szReplayNameTp,szTick, count, sSpecs);	
 						
 					}	
 				}
@@ -2747,6 +2740,7 @@ public SpecListMenuDead(client)
 	else
 		g_SpecTarget[client] = -1;
 }
+
 
 public SpecListMenuAlive(client)
 {
@@ -3661,17 +3655,17 @@ public CenterHudDead(client)
 {
 	decl String:szTick[32];
 	Format(szTick, 32, "%i", g_Server_Tickrate);			
-	decl ObservedUser; 
-	ObservedUser= -1;
+	decl ObservedUser 
+	ObservedUser = -1;
 	decl SpecMode;			
 	ObservedUser = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");	
 	SpecMode = GetEntProp(client, Prop_Send, "m_iObserverMode");	
 	if (SpecMode == 4 || SpecMode == 5)
 	{
 		g_SpecTarget[client] = ObservedUser;
-		//keys
-		decl String:sResult[256];	
+		decl String:sResult[32];	
 		decl Buttons;
+		
 		if (g_bInfoPanel[client] && IsValidClient(ObservedUser))
 		{
 			Buttons = g_LastButton[ObservedUser];					
@@ -3692,35 +3686,22 @@ public CenterHudDead(client)
 			else
 				Format(sResult, sizeof(sResult), "%s _", sResult);	
 			if (Buttons & IN_DUCK)
-				Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
+				Format(sResult, sizeof(sResult), "%s - C", sResult);
 			else
 				Format(sResult, sizeof(sResult), "%s - _", sResult);			
 			if (Buttons & IN_JUMP)
-				Format(sResult, sizeof(sResult), "%s JUMP", sResult);
+				Format(sResult, sizeof(sResult), "%s J", sResult);
 			else
 				Format(sResult, sizeof(sResult), "%s _", sResult);	
-									
-			if (g_bJumpStats)
-			{
-				if (g_js_bPlayerJumped[ObservedUser])
-				{
-					if (ObservedUser == g_ProBot || ObservedUser == g_TpBot)
-						PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[ObservedUser],g_fLastSpeed[ObservedUser],sResult);
-					else
-						PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_js_szLastJumpDistance[ObservedUser],g_fLastSpeed[ObservedUser],g_js_fPreStrafe[ObservedUser],sResult);
-				}
-				else
-					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[ObservedUser],g_fLastSpeed[ObservedUser],sResult);
-				
-			}
-			else
-				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fLastSpeed[ObservedUser],GetVelocity(ObservedUser),sResult);
-		}			
-	}	
+
+			//infopanel		
+			PrintCenterPanelToClient(client,ObservedUser,sResult);				
+		}		
+	}
 	else
 		g_SpecTarget[client] = -1;
+	
 }
-
 
 public CenterHudAlive(client)
 {
@@ -3742,9 +3723,9 @@ public CenterHudAlive(client)
 				PlayerPanel(client);			
 	}
 		
-	if (g_bInfoPanel[client])
+	if (g_bInfoPanel[client] && !g_bOverlay[client])
 	{
-		decl String:sResult[256];	
+		decl String:sResult[32];	
 		decl Buttons;
 		Buttons = g_LastButton[client];			
 		if (Buttons & IN_MOVELEFT)
@@ -3764,25 +3745,61 @@ public CenterHudAlive(client)
 		else
 			Format(sResult, sizeof(sResult), "%s _", sResult);	
 		if (Buttons & IN_DUCK)
-			Format(sResult, sizeof(sResult), "%s - DUCK", sResult);
+			Format(sResult, sizeof(sResult), "%s - C", sResult);
 		else
 			Format(sResult, sizeof(sResult), "%s - _", sResult);			
 		if (Buttons & IN_JUMP)
-			Format(sResult, sizeof(sResult), "%s JUMP", sResult);
+			Format(sResult, sizeof(sResult), "%s J", sResult);
 		else
 			Format(sResult, sizeof(sResult), "%s _", sResult);	
 
-		if (IsValidEntity(client) && 1 <= client <= MaxClients && !g_bOverlay[client])
-		{
-			if (g_bJumpStats)
-			{		
-				if (g_js_bPlayerJumped[client])
-					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_js_szLastJumpDistance[client],g_fLastSpeed[client],g_js_fPreStrafe[client],sResult);
-				else
-					PrintHintText(client,"<font color='#948d8d'><b>Last Jump</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[client],g_fLastSpeed[client],sResult);
-			}
-			else
-				PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fLastSpeed[client],GetVelocity(client),sResult);			
-		}
+		PrintCenterPanelToClient(client,client,sResult);
 	}	
+}
+
+
+public PrintCenterPanelToClient(client,target, String:sKeys[32])
+{
+	if (!IsValidClient(client))
+		return;
+	
+	decl String:sPreStrafe[128];
+	if (g_bJumpStats)
+	{		
+		if (g_js_bPlayerJumped[target])
+		{
+			if (!g_bAdvInfoPanel[client])
+				PrintHintText(client,"<font color='#948d8d'><b>Last</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s</font>",g_js_szLastJumpDistance[target],g_fLastSpeed[target],g_js_fPreStrafe[target],sKeys);	
+			else
+			{
+				//LJ?
+				if (!g_bLadderJump[target] && g_js_GroundFrames[target] > 11)
+				{
+					if (g_js_bPerfJumpOff[target])
+					{
+						if (g_js_bPerfJumpOff2[target])
+							Format(sPreStrafe, sizeof(sPreStrafe), "%.0f, CJ <font color='#21982a'>✔</font> -W <font color='#21982a'>✔</font>", g_js_fPreStrafe[target]);
+						else	
+							Format(sPreStrafe, sizeof(sPreStrafe), "%.0f, CJ <font color='#21982a'>✔</font> -W <font color='#9a0909'>Х</font>", g_js_fPreStrafe[target]);	
+					}
+					else
+					{
+						if (g_js_bPerfJumpOff2[target])
+							Format(sPreStrafe, sizeof(sPreStrafe), "%.0f, CJ <font color='#9a0909'>Х</font> -W <font color='#21982a'>✔</font>", g_js_fPreStrafe[target]);
+						else
+							Format(sPreStrafe, sizeof(sPreStrafe), "%.0f, CJ <font color='#9a0909'>Х</font> -W <font color='#9a0909'>Х</font>", g_js_fPreStrafe[target]);							
+					}
+					
+					PrintHintText(client,"<b>Last</b>: %s\n<b>Speed</b>: %.0f u/s (%s)\n%s",g_js_szLastJumpDistance[target],g_fLastSpeed[target],sPreStrafe,sKeys);
+				}
+				else
+					PrintHintText(client,"<b>Last</b>: %s\n<b>Speed</b>: %.1f u/s (%.0f)\n%s",g_js_szLastJumpDistance[target],g_fLastSpeed[target],g_js_fPreStrafe[target],sKeys);
+			}
+		}
+		else
+			PrintHintText(client,"<font color='#948d8d'><b>Last</b>: %s\n<b>Speed</b>: %.1f u/s\n%s</font>",g_js_szLastJumpDistance[target],g_fLastSpeed[target],sKeys);
+	}
+	else
+		PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fLastSpeed[target],GetVelocity(target),sKeys);			
+
 }

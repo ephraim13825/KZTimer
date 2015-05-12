@@ -20,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.7"
-#define PLUGIN_VERSION 170
+#define VERSION "1.71"
+#define PLUGIN_VERSION 171
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -61,7 +61,7 @@
 #define FRAME_INFO_SIZE 15
 #define FRAME_INFO_SIZE_V1 14
 #define AT_SIZE 10
-#define ORIGIN_SNAPSHOT_INTERVAL 400
+#define ORIGIN_SNAPSHOT_INTERVAL 150
 #define FILE_HEADER_LENGTH 74
 
 enum FrameInfo 
@@ -336,7 +336,6 @@ new Float:g_js_fJump_DistanceX[MAXPLAYERS+1];
 new Float:g_js_fJump_DistanceZ[MAXPLAYERS+1];
 new Float:g_js_fJump_Distance[MAXPLAYERS+1];
 new Float:g_js_fPreStrafe[MAXPLAYERS+1];
-new Float:g_js_fJumpOff_Time[MAXPLAYERS+1];
 new Float:g_js_fDropped_Units[MAXPLAYERS+1];
 new Float:g_js_fMax_Speed[MAXPLAYERS+1];
 new Float:g_js_fMax_Speed_Final[MAXPLAYERS +1];
@@ -344,10 +343,9 @@ new Float:g_js_fMax_Height[MAXPLAYERS+1];
 new Float:g_js_fLast_Jump_Time[MAXPLAYERS+1];
 new Float:g_js_Good_Sync_Frames[MAXPLAYERS+1];
 new Float:g_js_Sync_Frames[MAXPLAYERS+1];
-new Float:g_js_Strafe_AirTimeDiff[MAXPLAYERS+1];
+new Float:g_js_Strafe_Air_Time[MAXPLAYERS+1][100];
 new Float:g_js_Strafe_Good_Sync[MAXPLAYERS+1][100];
 new Float:g_js_Strafe_Frames[MAXPLAYERS+1][100];
-new Float:g_js_Strafe_AirTime[MAXPLAYERS+1][100];
 new Float:g_js_Strafe_Gained[MAXPLAYERS+1][100];
 new Float:g_js_Strafe_Max_Speed[MAXPLAYERS+1][100];
 new Float:g_js_Strafe_Lost[MAXPLAYERS+1][100];
@@ -361,6 +359,8 @@ new Float:g_js_fPersonal_LjBlockRecord_Dist[MAX_PR_PLAYERS]=-1.0;
 new Float:g_fLastSpeed[MAXPLAYERS+1];
 new Float:g_fFailedLandingPos[MAXPLAYERS+1][3];
 new Float:g_fAirTime[MAXPLAYERS+1];
+new Float:g_fJumpOffTime[MAXPLAYERS+1];
+new Float:g_fLandingTime[MAXPLAYERS+1];
 new Float:g_fLastUndo[MAXPLAYERS +1];
 new Float:g_flastHeight[MAXPLAYERS +1];
 new Float:g_fInitialPosition[MAXPLAYERS+1][3];
@@ -394,7 +394,6 @@ new bool:g_bMapChooser;
 new bool:g_bUseCPrefs;
 new bool:g_bNewTpBot;
 new bool:g_bNewProBot; 
-new bool:g_bNewStrafe[MAXPLAYERS+1];
 new bool:g_bLoaded[MAXPLAYERS+1];
 new bool:g_bSaving[MAXPLAYERS+1];
 new bool:g_bLadderJump[MAXPLAYERS+1];
@@ -418,6 +417,8 @@ new bool:g_bPauseWasActivated[MAXPLAYERS+1];
 new bool:g_bOverlay[MAXPLAYERS+1];
 new bool:g_bLastButtonJump[MAXPLAYERS+1];
 new bool:g_js_bPlayerJumped[MAXPLAYERS+1];
+new bool:g_js_bPerfJumpOff[MAXPLAYERS+1];
+new bool:g_js_bPerfJumpOff2[MAXPLAYERS+1];
 new bool:g_bSpectate[MAXPLAYERS+1];
 new bool:g_bTimeractivated[MAXPLAYERS+1];
 new bool:g_bFirstTeamJoin[MAXPLAYERS+1];
@@ -461,7 +462,7 @@ new bool:g_bNewReplay[MAXPLAYERS+1];
 new bool:g_bPositionRestored[MAXPLAYERS+1];
 new bool:g_bInfoPanel[MAXPLAYERS+1];
 new bool:g_bClimbersMenuSounds[MAXPLAYERS+1];
-new bool:g_bEnableQuakeSounds[MAXPLAYERS+1];
+new g_EnableQuakeSounds[MAXPLAYERS+1];
 new bool:g_bShowNames[MAXPLAYERS+1]; 
 new bool:g_bStrafeSync[MAXPLAYERS+1];
 new bool:g_bStartWithUsp[MAXPLAYERS+1];
@@ -471,6 +472,7 @@ new bool:g_bHide[MAXPLAYERS+1];
 new bool:g_bSayHook[MAXPLAYERS+1]; 
 new g_ShowSpecs[MAXPLAYERS+1]; 
 new bool:g_bFlagged[MAXPLAYERS+1];
+new bool:g_bAllowRoundEnd = false;
 new bool:g_bSurfCheck[MAXPLAYERS+1];
 new bool:g_bSpecInfo[MAXPLAYERS+1];
 new bool:g_bMeasurePosSet[MAXPLAYERS+1][2];
@@ -481,7 +483,7 @@ new bool:g_borg_StartWithUsp[MAXPLAYERS+1];
 new bool:g_borg_ColorChat[MAXPLAYERS+1];
 new bool:g_borg_InfoPanel[MAXPLAYERS+1];
 new bool:g_borg_ClimbersMenuSounds[MAXPLAYERS+1];
-new bool:g_borg_EnableQuakeSounds[MAXPLAYERS+1];
+new g_org_EnableQuakeSounds[MAXPLAYERS+1];
 new bool:g_borg_ShowNames[MAXPLAYERS+1]; 
 new bool:g_borg_StrafeSync[MAXPLAYERS+1];
 new bool:g_borg_GoToClient[MAXPLAYERS+1]; 
@@ -495,6 +497,8 @@ new bool:g_borg_JumpBeam[MAXPLAYERS+1];
 new bool:g_borg_HideChat[MAXPLAYERS+1];
 new bool:g_borg_ViewModel[MAXPLAYERS+1];
 new bool:g_bViewModel[MAXPLAYERS+1];
+new bool:g_bAdvInfoPanel[MAXPLAYERS+1];
+new bool:g_borg_AdvInfoPanel[MAXPLAYERS+1];
 new bool:g_bJumpBeam[MAXPLAYERS+1];
 new bool:g_bHideChat[MAXPLAYERS+1];
 new bool:g_bBeam[MAXPLAYERS+1];
@@ -898,7 +902,7 @@ public OnPluginStart()
 	GetConVarString(g_hArmModel,g_sArmModel,256);
 	HookConVarChange(g_hArmModel, OnSettingChanged);
 	
-	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", " {yellow}>>{default} {grey}Welcome! This server is using {lime}KZ Timer","Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	g_hWelcomeMsg   = CreateConVar("kz_welcome_msg", " {yellow}>>{default} {grey}Welcome! This server is using {lime}KZTimer v1.71","Welcome message (supported color tags: {default}, {darkred}, {green}, {lightgreen}, {blue} {olive}, {lime}, {red}, {purple}, {grey}, {yellow}, {lightblue}, {steelblue}, {darkblue}, {pink}, {lightred})", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	GetConVarString(g_hWelcomeMsg,g_sWelcomeMsg,512);
 	HookConVarChange(g_hWelcomeMsg, OnSettingChanged);
 
@@ -980,7 +984,7 @@ public OnPluginStart()
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "240.0", "Minimum distance for long jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_perfect_lj   	= CreateConVar("kz_dist_perfect_lj", "265.0", "Minimum distance for long jumps to be considered perfect [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
 			g_hdist_impressive_lj   	= CreateConVar("kz_dist_impressive_lj", "270.0", "Minimum distance for long jumps to be considered impressive [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_godlike_lj    	= CreateConVar("kz_dist_god_lj", "280.0", "Minimum distance for long jumps to be considered godlike [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_godlike_lj    	= CreateConVar("kz_dist_god_lj", "275.0", "Minimum distance for long jumps to be considered godlike [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "250.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_perfect_weird  = CreateConVar("kz_dist_perfect_wj", "280.0", "Minimum distance for weird jumps to be considered perfect [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_impressive_weird  = CreateConVar("kz_dist_impressive_wj", "290.0", "Minimum distance for weird jumps to be considered impressive [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1008,7 +1012,7 @@ public OnPluginStart()
 			g_hdist_good_lj    	= CreateConVar("kz_dist_min_lj", "240.0", "Minimum distance for long jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_perfect_lj   	= CreateConVar("kz_dist_perfect_lj", "260.0", "Minimum distance for long jumps to be considered perfect [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
 			g_hdist_impressive_lj   	= CreateConVar("kz_dist_impressive_lj", "265.0", "Minimum distance for long jumps to be considered impressive [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 220.0, true, 999.0);
-			g_hdist_godlike_lj    	= CreateConVar("kz_dist_god_lj", "273.0", "Minimum distance for long jumps to be considered godlike [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
+			g_hdist_godlike_lj    	= CreateConVar("kz_dist_god_lj", "270.0", "Minimum distance for long jumps to be considered godlike [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 245.0, true, 999.0);	
 			g_hdist_good_weird  = CreateConVar("kz_dist_min_wj", "250.0", "Minimum distance for weird jumps to be considered good [Client Message]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_perfect_weird  = CreateConVar("kz_dist_perfect_wj", "280.0", "Minimum distance for weird jumps to be considered perfect [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
 			g_hdist_impressive_weird  = CreateConVar("kz_dist_impressive_wj", "285.0", "Minimum distance for weird jumps to be considered impressive [JumpStats Colorchat All]", FCVAR_PLUGIN|FCVAR_NOTIFY, true, 200.0, true, 999.0);
@@ -1123,7 +1127,6 @@ public OnPluginStart()
 	RegConsoleCmd("sm_language", Client_Language, "[KZTimer] select your language");
 	RegConsoleCmd("sm_menusound", Client_ClimbersMenuSounds,"[KZTimer] on/off checkpoint menu sounds");
 	RegConsoleCmd("sm_sync", Client_StrafeSync,"[KZTimer] on/off strafe sync in chat");
-	RegConsoleCmd("sm_sound", Client_QuakeSounds,"[KZTimer] on/off quake sounds");
 	RegConsoleCmd("sm_cpmessage", Client_CPMessage,"[KZTimer] on/off checkpoint message in chat");
 	RegConsoleCmd("sm_surrender", Client_Surrender, "[KZTimer] surrender your current challenge");
 	RegConsoleCmd("sm_next", Client_Next,"[KZTimer] goto next checkpoint");

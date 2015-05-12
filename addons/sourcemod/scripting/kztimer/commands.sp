@@ -1637,24 +1637,18 @@ public ClimbersMenuSounds(client)
 	else
 		g_bClimbersMenuSounds[client] = true;
 }
-		
-public Action:Client_QuakeSounds(client, args) 
-{
-	QuakeSounds(client);
-	if (g_bEnableQuakeSounds[client])
-		PrintToChat(client, "%t", "QuakeSounds1", MOSSGREEN,WHITE);
-	else
-		PrintToChat(client, "%t", "QuakeSounds2", MOSSGREEN,WHITE);
-	return Plugin_Handled;
-}
 
+		
 public QuakeSounds(client)
 {
-	if (g_bEnableQuakeSounds[client])
-		g_bEnableQuakeSounds[client] = false;
-	else
-		g_bEnableQuakeSounds[client] = true;
+	switch(g_EnableQuakeSounds[client])
+	{
+		case 0: g_EnableQuakeSounds[client] = 1;
+		case 1: g_EnableQuakeSounds[client] = 2;
+		case 2: g_EnableQuakeSounds[client] = 0;
+	}
 }
+
 public Action:Client_InfoPanel(client, args) 
 {
 	InfoPanel(client);
@@ -1672,6 +1666,16 @@ public InfoPanel(client)
 	else
 	{
 		g_bInfoPanel[client] = true;	
+	}
+}
+
+public AdvInfoPanel(client)
+{
+	if (g_bAdvInfoPanel[client])
+		g_bAdvInfoPanel[client] = false;
+	else
+	{
+		g_bAdvInfoPanel[client] = true;	
 	}
 }
 
@@ -2472,9 +2476,9 @@ public OptionMenu(client)
 	new Handle:optionmenu = CreateMenu(OptionMenuHandler);
 	SetMenuTitle(optionmenu, "KZTimer - Options");
 	if (g_bAdvancedClimbersMenu[client])
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Advanced checkpoint menu  -  Enabled");
+		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Adv checkpoint menu  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Disabled", "Advanced checkpoint menu  -  Disabled");
+		AddMenuItem(optionmenu, "Advanced climbers menu  -  Disabled", "Adv checkpoint menu  -  Disabled");
 	//1
 	if (g_bHide[client])
 		AddMenuItem(optionmenu, "Hide Players  -  Enabled", "Hide other players  -  Enabled");
@@ -2496,15 +2500,18 @@ public OptionMenu(client)
 	else
 		AddMenuItem(optionmenu, "Climbers menu sound  -  Disabled", "Checkpoint menu sounds -  Disabled");
 	//5
-	if (g_bEnableQuakeSounds[client])
-		AddMenuItem(optionmenu, "Quake sounds - Enabled", "Quake sounds - Enabled");
+	if (g_EnableQuakeSounds[client] == 0 )
+		AddMenuItem(optionmenu, "Quake sounds - Enabled", "Quake sounds - None");
 	else
-		AddMenuItem(optionmenu, "Quake sounds - Disabled", "Quake sounds - Disabled");
+		if (g_EnableQuakeSounds[client] == 1 )
+			AddMenuItem(optionmenu, "Quake sounds - Disabled", "Quake sounds - All");
+		else
+			AddMenuItem(optionmenu, "Quake sounds - Disabled", "Quake sounds - Godlike jumps and records only");
 	//6
 	if (g_bStrafeSync[client])
-		AddMenuItem(optionmenu, "Strafe Sync  -  Enabled", "Strafe sync in chat  -  Enabled");
+		AddMenuItem(optionmenu, "Strafe Sync  -  Enabled", "Print strafe sync to chat  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Strafe Sync  -  Disabled", "Strafe sync in chat  -  Disabled");			
+		AddMenuItem(optionmenu, "Strafe Sync  -  Disabled", "Print strafe sync to chat  -  Disabled");			
 	//7	
 	if (g_bShowTime[client])
 		AddMenuItem(optionmenu, "Show Timer  -  Enabled", "Show timer text  -  Enabled");
@@ -2514,43 +2521,48 @@ public OptionMenu(client)
 	
 	
 	if (g_ShowSpecs[client] == 0)
-		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Player counter + names");
+		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Player counter + names");
 	else
 		if (g_ShowSpecs[client] == 1)
-			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Player counter");
+			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Player counter");
 		else
-			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spec list  -  Disabled");
+			AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Disabled");
 	//9
 	if (g_bInfoPanel[client])
-		AddMenuItem(optionmenu, "Speed/Keys panel  -  Enabled", "Speed/Keys panel  -  Enabled");
+		AddMenuItem(optionmenu, "Center panel (keys,speed)  -  Enabled", "Center panel (jump distance, speed, keys)  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Speed/Keys panel  -  Disabled", "Speed/Keys panel  -  Disabled");					
+		AddMenuItem(optionmenu, "Center panel (keys,speed)  -  Disabled", "Center panel (jump distance, speed, keys)  -  Disabled");		
 	//10
+	if (g_bAdvInfoPanel[client])
+		AddMenuItem(optionmenu, "Adv center panel (LJ Takeoff)  -  Enabled", "Adv center panel (lj takeoff info)  -  Enabled");
+	else
+		AddMenuItem(optionmenu, "Adv center panel (LJ Takeoff)  -  Disabled", "Adv center panel (lj takeoff info)  -  Disabled");			
+	//11
 	if (g_bStartWithUsp[client])
 		AddMenuItem(optionmenu, "Active start weapon  -  Usp", "Starting weapon  -  USP");
 	else
 		AddMenuItem(optionmenu, "Active start weapon  -  Knife", "Starting weapon  -  Knife");
-	//11
+	//12
 	if (g_bJumpBeam[client])
 		AddMenuItem(optionmenu, "Jump beam  -  Enabled", "Jump beam  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Jump beam  -  Disabled", "Jump beam   -  Disabled");			
-	//12
-	if (g_bHideChat[client])
-		AddMenuItem(optionmenu, "In-game chat  -  Enabled", "Hide chat/voice icons  -  Enabled");
-	else
-		AddMenuItem(optionmenu, "In-game chat  -  Disabled", "Hide chat/voice icons  -  Disabled");
 	//13
-	if (g_bViewModel[client])
-		AddMenuItem(optionmenu, "Goto  -  Enabled", "Weapon viewmodel  -  Enabled");
+	if (g_bHideChat[client])
+		AddMenuItem(optionmenu, "In-game chat  -  Enabled", "Chat and voice icons  -  Hidden");
 	else
-		AddMenuItem(optionmenu, "Goto  -  Disabled", "Weapon viewmodel  -  Disabled");			
+		AddMenuItem(optionmenu, "In-game chat  -  Disabled", "Chat and voice icons  -  Visible");
 	//14
+	if (g_bViewModel[client])
+		AddMenuItem(optionmenu, "Goto  -  Enabled", "Weapon model  -  Visible");
+	else
+		AddMenuItem(optionmenu, "Goto  -  Disabled", "Weapon model  -  Hidden");			
+	//15
 	if (g_bGoToClient[client])
 		AddMenuItem(optionmenu, "Goto  -  Enabled", "Goto me  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Goto  -  Disabled", "Goto me  -  Disabled");	
-	//15
+	//16
 	if (g_bAutoBhop)
 	{
 		if (g_bAutoBhopClient[client])
@@ -2587,12 +2599,13 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 			case 7: ShowTime(param1);
 			case 8: HideSpecs(param1);
 			case 9: InfoPanel(param1);	
-			case 10: SwitchStartWeapon(param1);
-			case 11: PlayerJumpBeam(param1);
-			case 12: HideChat(param1);
-			case 13: HideViewModel(param1);
-			case 14: DisableGoTo(param1);
-			case 15: AutoBhop(param1);		
+			case 10: AdvInfoPanel(param1);
+			case 11: SwitchStartWeapon(param1);
+			case 12: PlayerJumpBeam(param1);
+			case 13: HideChat(param1);
+			case 14: HideViewModel(param1);
+			case 15: DisableGoTo(param1);
+			case 16: AutoBhop(param1);		
 		}
 		g_OptionsMenuLastPage[param1] = param2;
 		OptionMenu(param1);					
@@ -2609,8 +2622,6 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				CloseHandle(menu);
 			}
 }
-
-
 public SwitchStartWeapon(client)
 {
 	if (g_bStartWithUsp[client])

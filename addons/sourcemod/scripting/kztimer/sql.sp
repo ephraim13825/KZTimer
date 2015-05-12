@@ -13,9 +13,9 @@ new String:sql_selectLatestRecords[] 			= "SELECT name, runtime, teleports, map,
 
 //TABLE PLAYEROPTIONS
 new String:sql_createPlayerOptions[] 			= "CREATE TABLE IF NOT EXISTS playeroptions2 (steamid VARCHAR(32), colorchat INT(12) DEFAULT '1', speedmeter INT(12) DEFAULT '0', climbersmenu_sounds INT(12) DEFAULT '1', quake_sounds INT(12) DEFAULT '1', autobhop INT(12) DEFAULT '0', shownames INT(12) DEFAULT '1', goto INT(12) DEFAULT '1', strafesync INT(12) DEFAULT '0', showtime INT(12) DEFAULT '1', hideplayers INT(12) DEFAULT '0', showspecs INT(12) DEFAULT '1', cpmessage INT(12) DEFAULT '0', adv_menu INT(12) DEFAULT '0', knife VARCHAR(32) DEFAULT 'weapon_knife', jumppenalty INT(12) DEFAULT '0', new1 INT(12) DEFAULT '0', new2 INT(12) DEFAULT '0', new3 INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
-new String:sql_insertPlayerOptions[] 			= "INSERT INTO playeroptions2 (steamid, colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%i');";
-new String:sql_selectPlayerOptions[] 			= "SELECT colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel FROM playeroptions2 where steamid = '%s'";
-new String:sql_updatePlayerOptions[]				= "UPDATE playeroptions2 SET colorchat ='%i', speedmeter ='%i', climbersmenu_sounds ='%i', quake_sounds ='%i', autobhop ='%i', shownames ='%i', goto ='%i', strafesync ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', cpmessage ='%i', adv_menu ='%i', knife ='%s', jumppenalty ='%i', new1 = '%i', new2 = '%i', new3 = '%i', ViewModel = '%i' where steamid = '%s'";
+new String:sql_insertPlayerOptions[] 			= "INSERT INTO playeroptions2 (steamid, colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel, AdvInfoPanel) VALUES('%s', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%i', '%i');";
+new String:sql_selectPlayerOptions[] 			= "SELECT colorchat, speedmeter, climbersmenu_sounds, quake_sounds, autobhop, shownames, goto, strafesync, showtime, hideplayers, showspecs, cpmessage, adv_menu, knife, jumppenalty, new1, new2, new3, ViewModel,  AdvInfoPanel FROM playeroptions2 where steamid = '%s'";
+new String:sql_updatePlayerOptions[]				= "UPDATE playeroptions2 SET colorchat ='%i', speedmeter ='%i', climbersmenu_sounds ='%i', quake_sounds ='%i', autobhop ='%i', shownames ='%i', goto ='%i', strafesync ='%i', showtime ='%i', hideplayers ='%i', showspecs ='%i', cpmessage ='%i', adv_menu ='%i', knife ='%s', jumppenalty ='%i', new1 = '%i', new2 = '%i', new3 = '%i', ViewModel = '%i', AdvInfoPanel ='%i' where steamid = '%s'";
 
 //TABLE PLAYERRANK
 new String:sql_createPlayerRank[]				= "CREATE TABLE IF NOT EXISTS playerrank (steamid VARCHAR(32), name VARCHAR(32), country VARCHAR(32), points INT(12)  DEFAULT '0', winratio INT(12)  DEFAULT '0', pointsratio INT(12)  DEFAULT '0',finishedmaps INT(12) DEFAULT '0', multiplier INT(12) DEFAULT '0', finishedmapstp INT(12) DEFAULT '0', finishedmapspro INT(12) DEFAULT '0', PRIMARY KEY(steamid));";
@@ -367,7 +367,8 @@ public db_createTables()
 	SQL_FastQuery(g_hDb, sql_createLatestRecords);
 	SQL_FastQuery(g_hDb, "ALTER TABLE playerrank ADD lastseen DATE"); //added in 1.54
 	SQL_FastQuery(g_hDb, "ALTER TABLE playertmp ADD EncTickrate INT");	//added in 1.55
-	SQL_FastQuery(g_hDb, "ALTER TABLE playeroptions2 ADD ViewModel INT DEFAULT '1'"); //added in 1.67 
+	SQL_FastQuery(g_hDb, "ALTER TABLE playeroptions2 ADD ViewModel INT DEFAULT '1'"); //added in 1.67
+	SQL_FastQuery(g_hDb, "ALTER TABLE playeroptions2 ADD AdvInfoPanel INT DEFAULT '0'"); //added in 1.71	
 	SQL_UnlockDatabase(g_hDb);
 }
 
@@ -4808,7 +4809,6 @@ public RecordPanelHandler2(Handle:menu, MenuAction:action, param1, param2)
 	}
 }
 
-
 public db_viewPlayerOptions(client, String:szSteamId[32])
 {
 	decl String:szQuery[512];      
@@ -4824,7 +4824,7 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bColorChat[client]=IntoBool(SQL_FetchInt(hndl, 0));
 		g_bInfoPanel[client]=IntoBool(SQL_FetchInt(hndl, 1));
 		g_bClimbersMenuSounds[client]=IntoBool(SQL_FetchInt(hndl,2));
-		g_bEnableQuakeSounds[client]=IntoBool(SQL_FetchInt(hndl, 3)); 
+		g_EnableQuakeSounds[client]=SQL_FetchInt(hndl, 3); 
 		g_bAutoBhopClient[client]=IntoBool(SQL_FetchInt(hndl, 4)); //FieldName ShowKeys
 		g_bShowNames[client]=IntoBool(SQL_FetchInt(hndl, 5));
 		g_bStrafeSync[client]=IntoBool(SQL_FetchInt(hndl, 7));
@@ -4838,13 +4838,14 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_bJumpBeam[client]=IntoBool(SQL_FetchInt(hndl, 16));
 		g_bHideChat[client]=IntoBool(SQL_FetchInt(hndl, 17));
 		g_bViewModel[client]=IntoBool(SQL_FetchInt(hndl, 18));
+		g_bAdvInfoPanel[client]=IntoBool(SQL_FetchInt(hndl, 19));
 		
 		//org
 		g_borg_AutoBhopClient[client] = g_bAutoBhopClient[client];
 		g_borg_ColorChat[client] = g_bColorChat[client];
 		g_borg_InfoPanel[client] = g_bInfoPanel[client];
 		g_borg_ClimbersMenuSounds[client] = g_bClimbersMenuSounds[client];
-		g_borg_EnableQuakeSounds[client] = g_bEnableQuakeSounds[client];
+		g_org_EnableQuakeSounds[client] = g_EnableQuakeSounds[client];
 		g_borg_ShowNames[client] = g_bShowNames[client];
 		g_borg_StrafeSync[client] = g_bStrafeSync[client];
 		g_borg_GoToClient[client] = g_bGoToClient[client];
@@ -4857,18 +4858,19 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_JumpBeam[client] = g_bJumpBeam[client];
 		g_borg_HideChat[client] = g_bHideChat[client];
 		g_borg_ViewModel[client] = g_bViewModel[client];
+		g_borg_AdvInfoPanel[client] = g_bAdvInfoPanel[client];
 	}
 	else
 	{
 		decl String:szQuery[512];      
 		if (!IsValidClient(client))
 			return;
-		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0,1)
+		Format(szQuery, 512, sql_insertPlayerOptions, g_szSteamID[client], 1,0,1,1,1,1,1,0,1,0,1,0,1,"weapon_knife",0,0,0,0,1,0)
 		SQL_TQuery(g_hDb, SQL_InsertCheckCallback, szQuery,DBPrio_Low);			
 		g_borg_ColorChat[client] = true;
 		g_borg_InfoPanel[client] = false;
 		g_borg_ClimbersMenuSounds[client] = true;
-		g_borg_EnableQuakeSounds[client] = true;
+		g_org_EnableQuakeSounds[client] = 1;
 		g_borg_ShowNames[client] = true
 		g_borg_StrafeSync[client] = false;
 		g_borg_GoToClient[client] = true;
@@ -4882,18 +4884,20 @@ public db_viewPlayerOptionsCallback(Handle:owner, Handle:hndl, const String:erro
 		g_borg_JumpBeam[client] = false;
 		g_borg_HideChat[client] = false;
 		g_borg_ViewModel[client] = true;
+		g_borg_AdvInfoPanel[client]=false;
 	}
 }
 
 public db_updatePlayerOptions(client)
 {
-	if (g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_borg_EnableQuakeSounds[client] != g_bEnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_org_ShowSpecs[client] != g_ShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
+	if (g_borg_AdvInfoPanel[client] != g_bAdvInfoPanel[client] || g_borg_ViewModel[client] != g_bViewModel[client] || g_borg_HideChat[client] != g_bHideChat[client] || g_borg_JumpBeam[client] != g_bJumpBeam[client] || g_borg_StartWithUsp[client] != g_bStartWithUsp[client] || g_borg_AutoBhopClient[client] != g_bAutoBhopClient[client] || g_borg_ColorChat[client] != g_bColorChat[client] || g_borg_InfoPanel[client] != g_bInfoPanel[client] || g_borg_ClimbersMenuSounds[client] != g_bClimbersMenuSounds[client] ||  g_org_EnableQuakeSounds[client] != g_EnableQuakeSounds[client] || g_borg_ShowNames[client] != g_bShowNames[client] || g_borg_StrafeSync[client] != g_bStrafeSync[client] || g_borg_GoToClient[client] != g_bGoToClient[client] || g_borg_ShowTime[client] != g_bShowTime[client] || g_borg_Hide[client] != g_bHide[client] || g_org_ShowSpecs[client] != g_ShowSpecs[client] || g_borg_CPTextMessage[client] != g_bCPTextMessage[client] || g_borg_AdvancedClimbersMenu[client] != g_bAdvancedClimbersMenu[client])
 	{
 		decl String:szQuery[1024];
-		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	BooltoInt(g_bEnableQuakeSounds[client]), BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),g_ShowSpecs[client],BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),BooltoInt(g_bHideChat[client]),BooltoInt(g_bViewModel[client]),g_szSteamID[client]);
+		Format(szQuery, 1024, sql_updatePlayerOptions, BooltoInt(g_bColorChat[client]),BooltoInt(g_bInfoPanel[client]),BooltoInt(g_bClimbersMenuSounds[client]),	g_EnableQuakeSounds[client], BooltoInt(g_bAutoBhopClient[client]),BooltoInt(g_bShowNames[client]),BooltoInt(g_bGoToClient[client]),BooltoInt(g_bStrafeSync[client]),BooltoInt(g_bShowTime[client]),BooltoInt(g_bHide[client]),g_ShowSpecs[client],BooltoInt(g_bCPTextMessage[client]),BooltoInt(g_bAdvancedClimbersMenu[client]),"weapon_knife",0,BooltoInt(g_bStartWithUsp[client]),BooltoInt(g_bJumpBeam[client]),BooltoInt(g_bHideChat[client]),BooltoInt(g_bViewModel[client]),BooltoInt(g_bAdvInfoPanel[client]),g_szSteamID[client]);
 		SQL_TQuery(g_hDb, SQL_CheckCallback, szQuery, client,DBPrio_Low);
 	}
 }
+
 	
 public db_viewPlayerPoints(client)
 {

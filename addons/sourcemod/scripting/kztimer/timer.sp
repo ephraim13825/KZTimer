@@ -155,7 +155,7 @@ public Action:KZTimer2(Handle:timer)
 		if (iTimeLimit > 0)
 		{
 			decl timeleft;
-			GetMapTimeLeft(timeleft);		
+			GetMapTimeLeft(timeleft);			
 			switch(timeleft)
 			{
 				case 1800: PrintToChatAll("%t", "TimeleftMinutes",LIGHTRED,WHITE,timeleft/60);
@@ -168,19 +168,17 @@ public Action:KZTimer2(Handle:timer)
 				case 15:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 		
 				case -1:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,3); 	
 				case -2:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,2); 	
-				case -3:
-				{
-					if (!g_bRoundEnd)
-					{
-						g_bRoundEnd=true;			
-						ServerCommand("mp_ignore_round_win_conditions 0");
-						PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 	
-						CreateTimer(1.0, TerminateRoundTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
-					}
-				}
+				case -3:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 					
+			}
+			if (timeleft < -3 && !g_bAllowRoundEnd)
+			{
+				g_bRoundEnd=true;		
+				g_bAllowRoundEnd = true;
+				CS_TerminateRound(0.5, CSRoundEnd_TerroristWin, true);
 			}
 		}
 	}
+
 
 	//info bot name
 	SetInfoBotName(g_InfoBot);	

@@ -532,11 +532,9 @@ public RecordReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:
 			GetClientEyeAngles(client, fBuffer);
 			Array_Copy(fBuffer, iAT[atAngles], 3);
 			Entity_GetAbsVelocity(client, fBuffer);
-			Array_Copy(fBuffer, iAT[atVelocity], 3);
-			//iAT[_:atFlags] |= ADDITIONAL_FIELD_TELEPORTED_ORIGIN; 
+			Array_Copy(fBuffer, iAT[atVelocity], 3); 
 			iAT[atFlags] = ADDITIONAL_FIELD_TELEPORTED_ORIGIN|ADDITIONAL_FIELD_TELEPORTED_ANGLES|ADDITIONAL_FIELD_TELEPORTED_VELOCITY;
 			PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT[0], _:AdditionalTeleport);
-			//PushArrayArray(g_hRecordingAdditionalTeleport[client], iAT, AT_SIZE);
 			g_OriginSnapshotInterval[client] = 0;
 		}			
 		g_OriginSnapshotInterval[client]++;		
@@ -634,11 +632,11 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
 						{
-							TeleportEntity(client, fOrigin, NULL_VECTOR, fVelocity);
+							TeleportEntity(client, fOrigin, fAngles, fVelocity);
 						}
 						else
 						{
-							TeleportEntity(client, fOrigin, NULL_VECTOR, NULL_VECTOR);
+							TeleportEntity(client, fOrigin, fAngles, NULL_VECTOR);
 						}
 					}
 				}
@@ -659,7 +657,7 @@ public PlayReplay(client, &buttons, &subtype, &seed, &impulse, &weapon, Float:an
 					{
 						if(iAT[_:atFlags] & ADDITIONAL_FIELD_TELEPORTED_VELOCITY)
 						{
-							TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fVelocity);
+							TeleportEntity(client, NULL_VECTOR, fAngles, fVelocity);
 						}
 					}
 				}
