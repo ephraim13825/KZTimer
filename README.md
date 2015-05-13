@@ -33,6 +33,10 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.71b
+- fixed two minor bugs
+- added forcesuicide on left/right script detection
+
 v1.71
 - fixed displaying of a wrong pre strafe value after players used +noclip (thx 2 haru)
 - fixed map end glitch where the map does not change
