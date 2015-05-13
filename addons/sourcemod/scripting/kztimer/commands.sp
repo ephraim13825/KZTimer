@@ -1866,6 +1866,7 @@ public Action_NoClip(client)
 			{
 				if (g_bTimeractivated[client])
 				{
+					PrintToConsole(client, "[KZ] Timer stopped. Reason: +noclip used.");
 					g_bTimeractivated[client] = false;
 					g_fStartTime[client] = -1.0;
 					g_fCurrentRunTime[client] = -1.0;

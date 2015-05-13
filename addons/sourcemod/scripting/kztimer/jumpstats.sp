@@ -384,10 +384,9 @@ stock bool:IsCoordInBlockPoint(const Float:origin[3], const Float:pos[2][3], boo
 
 public Prethink (client, bool:ladderjump)
 {		
+	
 	g_fLastJump[client] =  GetEngineTime()
-	new Float:diff = GetEngineTime() - g_fJumpOffTime[client];
-	if (diff > 1.0)
-		g_fJumpOffTime[client] = GetEngineTime();
+	g_fJumpOffTime[client] = GetEngineTime();
 
 	decl weapon;
 	weapon = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
@@ -571,7 +570,6 @@ public Postthink(client)
 	decl String:szGained[16];
 	decl String:szLost[16];
 	
-	
 	//Format StrafeStats Console 
 	if(strafes > 1 && strafes < 50)
 	{	
@@ -589,7 +587,6 @@ public Postthink(client)
 				else
 					fStrafeAirtime = g_js_Strafe_Air_Time[client][i+1] - g_js_Strafe_Air_Time[client][i];
 			fStrafeAirtimePerc = FloatAbs(fStrafeAirtime / g_fAirTime[client] * 100.0);
-			
 			FSync += g_js_Strafe_Good_Sync[client][i] / g_js_Strafe_Frames[client][i] * 100.0		
 			decl sync2;
 			sync2 = RoundToNearest(g_js_Strafe_Good_Sync[client][i] / g_js_Strafe_Frames[client][i] * 100.0);

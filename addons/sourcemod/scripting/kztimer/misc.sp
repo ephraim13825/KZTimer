@@ -526,6 +526,7 @@ public MovementCheck(client)
 		new Float:LaggedMovementValue = GetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue");
 		if (LaggedMovementValue != 1.0)
 		{
+			PrintToConsole(client,"[KZ] Timer stopped. Reason: LaggedMovementValue modified.")
 			g_bTimeractivated[client] = false;
 			if (g_js_bPlayerJumped[client])	
 				ResetJump(client);
@@ -535,6 +536,7 @@ public MovementCheck(client)
 	mt = GetEntityMoveType(client); 
 	if (mt == MOVETYPE_FLYGRAVITY)
 	{
+		PrintToConsole(client,"[KZ] Timer stopped. Reason: MOVETYPE 'FLYGRAVITY' detected.")
 		g_bTimeractivated[client] = false;
 		if (g_js_bPlayerJumped[client])	
 			ResetJump(client);
@@ -2062,6 +2064,7 @@ public HookCheck(client)
 	{
 		if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
 		{
+			PrintToConsole(client, "[KZ] Timer stopped. Reason: Hook command used.")
 			g_js_bPlayerJumped[client] = false;
 			g_bTimeractivated[client] = false;
 		}
@@ -2243,6 +2246,7 @@ public NoClipCheck(client)
 	{
 		if (g_js_bPlayerJumped[client])
 			ResetJump(client);
+		PrintToConsole(client, "[KZ] Timer stopped. Reason: MOVETYPE 'NOCLIP' detected");
 		g_bTimeractivated[client] = false;
 	}
 }

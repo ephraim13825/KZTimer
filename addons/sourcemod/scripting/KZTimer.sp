@@ -20,8 +20,8 @@
 #include <hgr>
 #include <mapchooser>
 
-#define VERSION "1.71"
-#define PLUGIN_VERSION 171
+#define VERSION "1.71b"
+#define PLUGIN_VERSION 172
 #define ADMIN_LEVEL ADMFLAG_UNBAN
 #define ADMIN_LEVEL2 ADMFLAG_ROOT
 #define MYSQL 0
@@ -328,6 +328,7 @@ new Float:g_favg_protime;
 new Float:g_favg_tptime;
 new Float:g_fSpawnpointOrigin[3];
 new Float:g_fSpawnpointAngle[3];
+new Float:g_fSpawnTime[MAXPLAYERS+1];
 new Float:g_js_AvgLadderSpeed[MAXPLAYERS+1];
 new Float:g_js_fJump_JumpOff_Pos[MAXPLAYERS+1][3];
 new Float:g_js_fJump_Landing_Pos[MAXPLAYERS+1][3];

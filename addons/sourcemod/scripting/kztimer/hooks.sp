@@ -206,6 +206,7 @@ PlayerSpawn(client)
 		
 		
 	//get speed & origin
+	g_fSpawnTime[client] = GetEngineTime();
 	g_fLastSpeed[client] = GetSpeed(client);
 	GetClientAbsOrigin(client, g_fLastPosition[client]);	
 }
@@ -654,7 +655,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			{
 				if ((g_LastButton[client] & IN_FORWARD) && !(buttons & IN_FORWARD))
 					g_js_bPerfJumpOff2[client]=true;
-				g_fJumpOffTime[client] = GetEngineTime();
 			}
 			if (!(g_LastButton[client] & IN_DUCK) && !(g_LastButton[client] & IN_JUMP) && (g_LastButton[client] & IN_FORWARD))
 			{
@@ -665,11 +665,15 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			}
 		}
 		
-		//left right script check
+		//left right script check 
 		if ((buttons & IN_LEFT) || (buttons & IN_RIGHT))
 		{
-			PrintToConsole(client, "KZ AntiCheat: +Left/+Right bind detected");
-			ResetJump(client);
+			if ((GetEngineTime()-g_fSpawnTime[client]) > 3.0)
+			{
+				PrintToChat(client, "[%cKZ AntiCheat%c]%c +Left/+Right detected.",DARKRED,WHITE,RED);
+				ForcePlayerSuicide(client);
+				ResetJump(client);
+			}
 		}
 		
 		//ground frames counter
