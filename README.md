@@ -1,5 +1,5 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
-KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
+KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides KZTimer Global Version download and update/kreedz news)                                                                      
 **Known but unsolved problems and bugs:**
 [SM] Native "PushArrayArray" reported: Failed to grow array
 
