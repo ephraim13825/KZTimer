@@ -33,6 +33,30 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.72 Global
+Changelog:
+- fixed the abuse of slap commands to achieve better jumpstats (thx 2 pLekz)
+- fixed spectator voice communication
+- improved kztimer anti-cheat system 
+. added server convar "kz_min_skill_group": Minimum skill group to play on this server excluding vips and admins. Everyone below the chosen skill group gets kicked.
+- added server convar "kz_slay_on_endbutton_press" (default 0): on/off - Slays other players when someone finishs the map. 
+- added server convar "kz_allow_round_end" (default 0): on/off - Allows to end the current round 
+- added support for Right-to-Left Languages (credits: https://forums.alliedmods.net/showthread.php?t=178279)
+- updated "cfg\sourcemod\kztimer\main.cfg" and all map type configs
+- optimized prestrafe values on tickrate 64 servers
+- lowered default skill group limits (sourcemod\configs\kztimer\skillgroups.cfg)
+- added latest versions of cleaner (+windows support), dhooks, smlib and geoip.dat to the kztimer package
+- minor optimizations and bug fixes
+---------------------
+Installation notes v1.72 if you want to upgrade kztimer from an older version: 
+1) Backup your sourcemod folder and csgo/cfg/sourcemod/KZTimer.cfg
+2) Make sure that your server is running sourcemod 1.7.0 or a newer version.
+3) Shutdown your cs:go server
+4) You have to remove all files from "csgo\addons\sourcemod\extensions" which CONTAIN "dhooks.ext.2" in their name. (Reason: KZTimer archive includes a newer dhooks version with a different file name)
+5) Delete csgo/cfg/sourcemod/KZTimer.cfg
+6) Extract all files from the archive to the root folder of csgo. I'd recommend to replace all files.
+7) Restart your server. Done!
+-----------------------------------------
 v1.71b
 - fixed two minor bugs
 - added forcesuicide on left/right script detection
