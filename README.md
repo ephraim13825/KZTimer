@@ -47,7 +47,7 @@ Changelog:
 - lowered default skill group limits (sourcemod\configs\kztimer\skillgroups.cfg)
 - added latest versions of cleaner (+windows support), dhooks, smlib and geoip.dat to the kztimer package
 - minor optimizations and bug fixes
----------------------
+
 Installation notes v1.72 if you want to upgrade kztimer from an older version: 
 1) Backup your sourcemod folder and csgo/cfg/sourcemod/KZTimer.cfg
 2) Make sure that your server is running sourcemod 1.7.0 or a newer version.
@@ -56,7 +56,7 @@ Installation notes v1.72 if you want to upgrade kztimer from an older version:
 5) Delete csgo/cfg/sourcemod/KZTimer.cfg
 6) Extract all files from the archive to the root folder of csgo. I'd recommend to replace all files.
 7) Restart your server. Done!
------------------------------------------
+
 v1.71b
 - fixed two minor bugs
 - added forcesuicide on left/right script detection
