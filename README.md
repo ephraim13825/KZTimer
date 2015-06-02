@@ -1,5 +1,5 @@
 Alliedmodders: https://forums.alliedmods.net/showthread.php?t=223274    
-KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides update and kreedz news)                                                                      
+KZTimer steam group: http://steamcommunity.com/groups/KZTIMER (provides KZTimer Global Version download-link, update/kreedz news, videos and more)                                                                      
 **Known but unsolved problems and bugs:**
 [SM] Native "PushArrayArray" reported: Failed to grow array
 
@@ -33,6 +33,10 @@ else: mp_respawn_on_death_ct 0;mp_respawn_on_death_t 0
 Changelog
 =======
 <SPOILER>
+v1.71b
+- fixed two minor bugs
+- added forcesuicide on left/right script detection
+
 v1.71
 - fixed displaying of a wrong pre strafe value after players used +noclip (thx 2 haru)
 - fixed map end glitch where the map does not change
