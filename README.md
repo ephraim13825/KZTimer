@@ -38,8 +38,8 @@ Changelog:
 - fixed the abuse of slap commands to achieve better jumpstats (thx 2 pLekz)
 - fixed spectator voice communication
 - improved kztimer anti-cheat system 
-. added server convar "kz_min_skill_group": Minimum skill group to play on this server excluding vips and admins. Everyone below the chosen skill group gets kicked.
-- added server convar "kz_slay_on_endbutton_press" (default 0): on/off - Slays other players when someone finishs the map. 
+- added server convar "kz_min_skill_group": Minimum skill group to play on this server excluding vips and admins. Everyone below the chosen skill group gets kicked.
+- added server convar "kz_slay_on_endbutton_press" (default 0): Slays other players when someone finishs the map. 
 - added server convar "kz_allow_round_end" (default 0): on/off - Allows to end the current round 
 - added support for Right-to-Left Languages (credits: https://forums.alliedmods.net/showthread.php?t=178279)
 - updated "cfg\sourcemod\kztimer\main.cfg" and all map type configs
