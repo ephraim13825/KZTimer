@@ -12,7 +12,7 @@ native KZTimer_EmulateStopButtonPress(client); // stop button alternative
 native Float:KZTimer_GetCurrentTime(client); //returns (float) current run time
 native Float:KZTimer_GetAvgTimeTp(); //avg tp time - returns (float) 0.0 if less than 5 map times (kztimer calculates the avg time on mapstart and if someone set a new time) 
 native Float:KZTimer_GetAvgTimePro(); //avg pro time - returns (float) 0.0 if less than 5 map times (kztimer calculates the avg time on mapstart and if someone set a new time)
-native KZTimer_GetSkillGroup(client); // skill group - returns (int) 1=NEW,2=SCRUB,..,9=PRO and 0 if the ranking system is disabled (player must be spawned to get his skill group)
+native KZTimer_GetSkillGroup(client); // skill group - returns (int) 0=NORANK, 1=NEWB,2=SCRUB,..,9=PRO 
 //KZTimer_GetSkillGroup can be helpful to set up a high ranked only server. This server has to share the database with your 'main' kztimer server
 public SharedPlugin:__pl_KZTimer =
 {

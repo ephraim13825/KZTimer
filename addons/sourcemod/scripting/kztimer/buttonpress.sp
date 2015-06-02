@@ -37,7 +37,6 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 	new Float: speed = GetSpeed(activator);
 	if(StrEqual(targetname,"climb_startbuttonx") && speed < 251.0)
 	{		
-		g_global_SelfBuiltButtons=true;
 		g_bLegitButtons[activator] = false;
 		Call_StartForward(hStartPress);
 		Call_PushCell(activator);
@@ -45,7 +44,6 @@ public OnUsePost(entity, activator, caller, UseType:type, Float:value)
 	} 
 	else if(StrEqual(targetname,"climb_endbuttonx")) 
 	{
-		g_global_SelfBuiltButtons=true;
 		g_bLegitButtons[activator] = false;
 		Call_StartForward(hEndPress);
 		Call_PushCell(activator);
@@ -59,10 +57,7 @@ public CL_OnStartTimerPress(client)
 	if (!IsFakeClient(client))
 	{	
 		if (g_bNewReplay[client] || g_bSaving[client])
-		{
-			PrintToChat(client, "[%cKZ%c] You have to wait until the internal finishing action of your last run is accomplished!", RED,WHITE);
 			return;
-		}
 		if (!(g_bOnGround[client]) && g_bLegitButtons[client])
 			return;	
 	
@@ -101,6 +96,8 @@ public CL_OnStartTimerPress(client)
 		g_OverallCp[client] = 0;
 		g_OverallTp[client] = 0;
 		g_fPauseTime[client] = 0.0;
+		g_JumpCheck2[client] = 0;
+		g_JumpCheck1[client] = 0;
 		g_fStartPauseTime[client] = 0.0;
 		g_bRespawnAtTimer[client] = true;
 		g_bPause[client] = false;
@@ -193,16 +190,12 @@ public CL_OnEndTimerPress(client)
 		return;
 	}
 	if (!g_bTimeractivated[client]) 
-	{
-		decl Float:diff; 
-		diff = GetEngineTime() - g_fLastTimeButtonSound[client];
-		if (diff > 0.1)
-			PlayButtonSound(client);
-		g_fLastTimeButtonSound[client] = GetEngineTime();
 		return;	
-	}
+			
+	//Final time
+	g_fFinalTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];			
 	g_Tp_Final[client] = g_OverallTp[client];	
-	
+	g_bTimeractivated[client] = false;
 
 	//timer pos
 	if (g_bFirstEndButtonPush && !IsFakeClient(client))
@@ -211,9 +204,18 @@ public CL_OnEndTimerPress(client)
 		g_bFirstEndButtonPush=false;
 	}				
 	
-	//sound
-	if (g_bTimeractivated[client])
-		PlayButtonSound(client);	
+	//slay others
+	if (!IsFakeClient(client) && g_bSlayPlayers)
+	{
+		for(new i = 1; i <= MaxClients; i++) 
+		{
+			if (IsValidClient(client) && i != client)
+				ForcePlayerSuicide(i);
+		}	
+	}
+	
+	//button sound
+	PlayButtonSound(client);	
 	
 	//decl
 	new String:szName[MAX_NAME_LENGTH];	
@@ -221,22 +223,19 @@ public CL_OnEndTimerPress(client)
 	new String:szTime[32];
 	new bool:hasRecord=false;
 	new Float: difference;
-	//g_bSaving[client]=true;
+	//g_bSaving[client] = true;
 	g_FinishingType[client] = -1;
 	g_Sound_Type[client] = -1;
 	g_bMapRankToChat[client] = true;
 	if (!IsValidClient(client))
 		return;	
-	GetClientName(client, szName, MAX_NAME_LENGTH);
-	
-	//Final time
-	g_fFinalTime[client] = GetEngineTime() - g_fStartTime[client] - g_fPauseTime[client];			
-	g_bTimeractivated[client] = false;	
+	GetClientName(client, szName, MAX_NAME_LENGTH);	
 	FormatTimeFloat(client, g_fFinalTime[client], 3, szTime, sizeof(szTime));
 	Format(g_szFinalTime[client], 32, "%s", szTime);
 	g_bOverlay[client]=true;
 	g_fLastOverlay[client] = GetEngineTime();
 	PrintHintText(client,"%t", "TimerStopped", g_szFinalTime[client]);
+	
 	//calc difference
 	if (g_Tp_Final[client]==0)
 	{
@@ -310,7 +309,7 @@ public CL_OnEndTimerPress(client)
 				g_Time_Type[client] = 5;
 		}
 	}
-	
+
 	//NEW PRO RECORD
 	if((g_fFinalTime[client] < g_fRecordTimePro) && g_Tp_Final[client] <= 0)
 	{
@@ -347,10 +346,10 @@ public CL_OnEndTimerPress(client)
 		}
 		db_InsertLatestRecords(g_szSteamID[client], szName, g_fFinalTime[client], g_Tp_Final[client]);	
 	}
-	
+		
 	if (newbest && g_Sound_Type[client] == -1)
 		g_Sound_Type[client] = 5;
-			
+		
 	//Challenge
 	if (g_bChallenge[client])
 	{
@@ -387,7 +386,6 @@ public CL_OnEndTimerPress(client)
 	//set mvp star
 	g_MVPStars[client] += 1;
 	CS_SetMVPCount(client,g_MVPStars[client]);		
-	
 	
 	//local db update
 	if ((g_fFinalTime[client] < g_fPersonalRecord[client] && g_Tp_Final[client] > 0 || g_fPersonalRecord[client] <= 0.0 && g_Tp_Final[client] > 0) || (g_fFinalTime[client] < g_fPersonalRecordPro[client] && g_Tp_Final[client] == 0 || g_fPersonalRecordPro[client] <= 0.0 && g_Tp_Final[client] == 0))

@@ -29,8 +29,8 @@ public Action:Admin_KzPanel(client, args)
 		PrintToChat(client, "[%cKZ%c] See console for more commands", LIMEGREEN,WHITE);
 		PrintToConsole(client,"\n[KZ ROOT ADMIN]");
 		PrintToConsole(client," sm_refreshprofile <steamid> (recalculates player profile for given steamid)\n sm_deleteproreplay <mapname> (Deletes pro replay file for a given map)\n sm_deletetpreplay <mapname> (Deletes tp replay file for a given map)\n ");
-		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetranks (Drops playerrank table)\n sm_resetchallenges (Drops challenges table)\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n ");
-		PrintToConsole(client,"[PLAYER TIMES]\n sm_resettimes (Drops playertimes table)\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)\n sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]\n sm_resetjumpstats (Drops jumpstats table - BE CAREFUL!!)");
+		PrintToConsole(client,"[PLAYER RANKING]\n sm_resetplayerchallenges <steamid> (Resets (won) challenges for given steamid)\n sm_resetextrapoints (Resets given extra points for all players)\n ");
+		PrintToConsole(client,"[PLAYER TIMES]\n sm_resetmaptimes <map> (Resets player times for given map)\n sm_resetplayertimes <steamid> [<map>] (Resets tp and pro times + extra points for given steamid with or without given map)\n sm_resetplayertptime <steamid> <map> (Resets tp map time for given steamid and map)\n sm_resetplayerprotime <steamid> <map> (Resets pro map time for given steamid and map)\n \n[PLAYER JUMPSTATS]");
 		PrintToConsole(client," sm_resetallljrecords (Resets all lj records)\n sm_resetallljblockrecords (Resets all lj block records)\n sm_resetallwjrecords (Resets all wj records)\n sm_resetallbhoprecords (Resets all bhop records)\n sm_resetallmultibhoprecords (Resets all multi bhop records)\n sm_resetalldropbhopecords (Resets all drop bhop records)\n sm_resetallladderjumprecords (Resets all ladder jump records)");
 		PrintToConsole(client," sm_resetplayerjumpstats <steamid> (Resets jump stats for given steamid)\n sm_resetljrecord <steamid> (Resets lj record for given steamid)\n sm_resetljblockrecord <steamid> (Resets lj block record for given steamid)\n sm_resetwjrecord <steamid> (Resets wj record for given steamid)\n sm_resetbhoprecord <steamid> (Resets bhop record for given steamid)\n sm_resetmultibhoprecord <steamid> (Resets multi bhop record for given steamid)\n sm_resetdropbhoprecord <steamid> (Resets drop bhop record for given steamid)\n sm_resetladderjumprecord <steamid> (Resets ladder jump record for given steamid)");
 	}
@@ -81,130 +81,130 @@ public KzAdminMenu(client)
 	else
 		Format(szTmp, sizeof(szTmp), "[8.] Checkpoints  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
-	if (g_bNoBlock)
-		Format(szTmp, sizeof(szTmp), "[9.] Noblock  -  Enabled"); 	
-	else
-		Format(szTmp, sizeof(szTmp), "[9.] Noblock  -  Disabled"); 		
-	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoRespawn)
-		Format(szTmp, sizeof(szTmp), "[10.] Autorespawn  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[9.] Autorespawn  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[10.] Autorespawn  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[9.] Autorespawn  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bCleanWeapons)
-		Format(szTmp, sizeof(szTmp), "[11.] Strip weapons  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[10.] Strip weapons  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[11.] Strip weapons  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[10.] Strip weapons  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bRestore)
-		Format(szTmp, sizeof(szTmp), "[12.] Restore function  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[11.] Restore function  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[12.] Restore function  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[11.] Restore function  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bPauseServerside)
-		Format(szTmp, sizeof(szTmp), "[13.] !pause command -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[12.] !pause command -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[13.] !pause command  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[12.] !pause command  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bGoToServer)
-		Format(szTmp, sizeof(szTmp), "[14.] !goto command  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[13.] !goto command  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[14.] !goto command  -  Disabled"); 
+		Format(szTmp, sizeof(szTmp), "[13.] !goto command  -  Disabled"); 
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bRadioCommands)
-		Format(szTmp, sizeof(szTmp), "[15.] Radio commands  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[14.] Radio commands  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[15.] Radio commands  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[14.] Radio commands  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bAutoTimer)
-		Format(szTmp, sizeof(szTmp), "[16.] Timer starts at spawn  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[15.] Timer starts at spawn  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[16.] Timer starts at spawn  -  Disabled"); 						
+		Format(szTmp, sizeof(szTmp), "[15.] Timer starts at spawn  -  Disabled"); 						
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bReplayBot)
-		Format(szTmp, sizeof(szTmp), "[17.] Replay bot  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[16.] Replay bot  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[17.] Replay bot  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[16.] Replay bot  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bPreStrafe)
-		Format(szTmp, sizeof(szTmp), "[18.] Prestrafe  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[17.] Prestrafe  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[18.] Prestrafe  -  Disabled"); 	
+		Format(szTmp, sizeof(szTmp), "[17.] Prestrafe  -  Disabled"); 	
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bPointSystem)
-		Format(szTmp, sizeof(szTmp), "[19.] Player point system  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[18.] Player point system  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[19.] Player point system  -  Disabled"); 	
+		Format(szTmp, sizeof(szTmp), "[18.] Player point system  -  Disabled"); 	
 	AddMenuItem(adminmenu, szTmp, szTmp);			
 	if (g_bCountry)
-		Format(szTmp, sizeof(szTmp), "[20.] Player country tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[19.] Player country tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[20.] Player country tag  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[19.] Player country tag  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bPlayerSkinChange)
-		Format(szTmp, sizeof(szTmp), "[21.] Allow custom models  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[20.] Allow custom models  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[21.] Allow custom models  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[20.] Allow custom models  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bNoClipS)
-		Format(szTmp, sizeof(szTmp), "[22.] +noclip  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[21.] +noclip  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[22.] +noclip (admin/vip excluded)  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[21.] +noclip (admin/vip excluded)  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bJumpStats)
-		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[22.] Jumpstats  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[23.] Jumpstats  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[22.] Jumpstats  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBhopConVar)
-		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop (only surf_/bhop_ maps)  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[23.] Auto bunnyhop (only surf_/bhop_ maps)  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[24.] Auto bunnyhop  -  Disabled"); 				
+		Format(szTmp, sizeof(szTmp), "[23.] Auto bunnyhop  -  Disabled"); 				
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAutoBan)
-		Format(szTmp, sizeof(szTmp), "[25.] AntiCheat auto-ban  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[24.] AntiCheat auto-ban  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[25.] AntiCheat auto-ban  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[24.] AntiCheat auto-ban  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);
 	if (g_bAdminClantag)
-		Format(szTmp, sizeof(szTmp), "[26.] Admin clan tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[25.] Admin clan tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[26.] Admin clan tag  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[25.] Admin clan tag  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bVipClantag)
-		Format(szTmp, sizeof(szTmp), "[27.] VIP clan tag  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[26.] VIP clan tag  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[27.] VIP clan tag  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[26.] VIP clan tag  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);		
 	if (g_bMapEnd)
-		Format(szTmp, sizeof(szTmp), "[28.] Allow map changes  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[27.] Allow map changes  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[28.] Allow map changes  -  Disabled"); 			
+		Format(szTmp, sizeof(szTmp), "[27.] Allow map changes  -  Disabled"); 			
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bConnectMsg)
-		Format(szTmp, sizeof(szTmp), "[29.] Connect message  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[28.] Connect message  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[29.] Connect message  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[28.] Connect message  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bInfoBot)
-		Format(szTmp, sizeof(szTmp), "[30.] Info bot  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[29.] Info bot  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[30.] Info bot  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[29.] Info bot  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);		
 	if (g_bAttackSpamProtection)
-		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[30.] Attack spam protection  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[31.] Attack spam protection  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[30.] Attack spam protection  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bSingleTouch)
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop block single-touch  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[31.] Bhop block single-touch  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[32.] Bhop block single-touch  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[31.] Bhop block single-touch  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	if (g_bChallengePoints)
-		Format(szTmp, sizeof(szTmp), "[33.] Allow challenge points  -  Enabled"); 	
+		Format(szTmp, sizeof(szTmp), "[32.] Allow challenge points  -  Enabled"); 	
 	else
-		Format(szTmp, sizeof(szTmp), "[33.] Allow challenge points  -  Disabled"); 		
+		Format(szTmp, sizeof(szTmp), "[32.] Allow challenge points  -  Disabled"); 		
+	AddMenuItem(adminmenu, szTmp, szTmp);	
+	if (g_bAllowRoundEndCvar)
+		Format(szTmp, sizeof(szTmp), "[33.] Allow to end the current round  -  Enabled"); 	
+	else
+		Format(szTmp, sizeof(szTmp), "[33.] Allow to end the current round  -  Disabled"); 		
 	AddMenuItem(adminmenu, szTmp, szTmp);	
 	SetMenuExitButton(adminmenu, true);
 	SetMenuOptionFlags(adminmenu, MENUFLAG_BUTTON_EXIT);	
@@ -295,178 +295,178 @@ public AdminPanelHandler(Handle:menu, MenuAction:action, param1, param2)
 		}		
 		if(param2 == 8)
 		{
-			if (!g_bNoBlock)
-				ServerCommand("kz_noblock 1");
-			else
-				ServerCommand("kz_noblock 0");
-		}		
-		if(param2 == 9)
-		{
 			if (!g_bAutoRespawn)
 				ServerCommand("kz_autorespawn 1");
 			else
 				ServerCommand("kz_autorespawn 0");
 		}					
-		if(param2 == 10)
+		if(param2 == 9)
 		{
 			if (!g_bCleanWeapons)
 				ServerCommand("kz_clean_weapons 1");
 			else	
 				ServerCommand("kz_clean_weapons 0");
 		}
-		if(param2 == 11)
+		if(param2 == 10)
 		{
 			if (!g_bRestore)
 				ServerCommand("kz_restore 1");
 			else
 				ServerCommand("kz_restore 0");
 		}
-		if(param2 == 12)
+		if(param2 == 11)
 		{
 			if (!g_bPauseServerside)
 				ServerCommand("kz_pause 1");
 			else
 				ServerCommand("kz_pause 0");
 		}
-		if(param2 == 13)
+		if(param2 == 12)
 		{
 			if (!g_bGoToServer)
 				ServerCommand("kz_goto 1");
 			else
 				ServerCommand("kz_goto 0");
 		}		
-		if(param2 == 14)
+		if(param2 == 13)
 		{
 			if (!g_bRadioCommands)
 				ServerCommand("kz_radio 1");
 			else
 				ServerCommand("kz_radio 0");
 		}
-		if(param2 == 15)
+		if(param2 == 14)
 		{
 			if (!g_bAutoTimer)
 				ServerCommand("kz_auto_timer 1");
 			else
 				ServerCommand("kz_auto_timer 0");
 		}
-		if(param2 == 16)
+		if(param2 == 15)
 		{
 			if (!g_bReplayBot)
 				ServerCommand("kz_replay_bot 1");
 			else
 				ServerCommand("kz_replay_bot 0");
 		}	
-		if(param2 == 17)
+		if(param2 == 16)
 		{
 			if (!g_bPreStrafe)
 				ServerCommand("kz_prestrafe 1");
 			else
 				ServerCommand("kz_prestrafe 0");
 		}	
-		if(param2 == 18)
+		if(param2 == 17)
 		{
 			if (!g_bPointSystem)
 				ServerCommand("kz_point_system 1");
 			else
 				ServerCommand("kz_point_system 0");
 		}	
-		if(param2 == 19)
+		if(param2 == 18)
 		{
 			if (!g_bCountry)
 				ServerCommand("kz_country_tag 1");
 			else
 				ServerCommand("kz_country_tag 0");
 		}	
-		if(param2 == 20)
+		if(param2 == 19)
 		{
 			if (!g_bPlayerSkinChange)
 				ServerCommand("kz_custom_models 1");
 			else
 				ServerCommand("kz_custom_models 0");
 		}	
-		if(param2 == 21)
+		if(param2 == 20)
 		{
 			if (!g_bNoClipS)
 				ServerCommand("kz_noclip 1");
 			else
 				ServerCommand("kz_noclip 0");
 		}
-		if(param2 == 22)
+		if(param2 == 21)
 		{
 			if (!g_bJumpStats)
 				ServerCommand("kz_jumpstats 1");
 			else
 				ServerCommand("kz_jumpstats 0");
 		}	
-		if(param2 == 23)
+		if(param2 == 22)
 		{
 			if (!g_bAutoBhopConVar)
 				ServerCommand("kz_auto_bhop 1");
 			else
 				ServerCommand("kz_auto_bhop 0");
 		}			
-		if(param2 == 24)
+		if(param2 == 23)
 		{
 			if (!g_bAutoBan)
 				ServerCommand("kz_anticheat_auto_ban 1");
 			else
 				ServerCommand("kz_anticheat_auto_ban 0");
 		}
-		if(param2 == 25)
+		if(param2 == 24)
 		{
 			if (!g_bAdminClantag)
 				ServerCommand("kz_admin_clantag 1");
 			else
 				ServerCommand("kz_admin_clantag 0");
 		}	
-		if(param2 == 26)
+		if(param2 == 25)
 		{
 			if (!g_bVipClantag)
 				ServerCommand("kz_vip_clantag 1");
 			else
 				ServerCommand("kz_vip_clantag 0");
 		}	
-		if(param2 == 27)
+		if(param2 == 26)
 		{
 			if (!g_bMapEnd)
 				ServerCommand("kz_map_end 1");
 			else
 				ServerCommand("kz_map_end 0");
 		}	
-		if(param2 == 28)
+		if(param2 == 27)
 		{
 			if (!g_bConnectMsg)
 				ServerCommand("kz_connect_msg 1");
 			else
 				ServerCommand("kz_connect_msg 0");
 		}	
-		if(param2 == 29)
+		if(param2 == 28)
 		{
 			if (!g_bInfoBot)
 				ServerCommand("kz_info_bot 1");
 			else
 				ServerCommand("kz_info_bot 0");
 		}	
-		if(param2 == 30)
+		if(param2 == 29)
 		{
 			if (!g_bAttackSpamProtection)
 				ServerCommand("kz_attack_spam_protection 1");
 			else
 				ServerCommand("kz_attack_spam_protection 0");
 		}
-		if(param2 == 31)
+		if(param2 == 30)
 		{
 			if (!g_bSingleTouch)
 				ServerCommand("kz_bhop_single_touch 1");
 			else
 				ServerCommand("kz_bhop_single_touch 0");
 		}
-		if(param2 == 32)
+		if(param2 == 31)
 		{
 			if (!g_bChallengePoints)
 				ServerCommand("kz_challenge_points 1");
 			else
 				ServerCommand("kz_challenge_points 0");
+		}
+		if(param2 == 32)
+		{
+			if (!g_bAllowRoundEndCvar)
+				ServerCommand("kz_round_end 1");
+			else
+				ServerCommand("kz_round_end 0");
 		}
 		g_AdminMenuLastPage[param1] = param2;
 		if (menu != INVALID_HANDLE)
@@ -504,7 +504,7 @@ public Action:Admin_DropChallenges(client, args)
 
 public Action:Admin_DropPlayerRanks(client, args)
 {
-	db_dropPlayerRanks(client)
+	db_dropPlayerRanks(client);
 	return Plugin_Handled;
 }
 

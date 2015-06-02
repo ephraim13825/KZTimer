@@ -1551,6 +1551,7 @@ public Postthink(client)
 								// strafe hack protection					
 								if (strafes == 0 || g_js_fPreStrafe[client] < 270.0)
 								{
+									ValidJump=false;
 									Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>");
 									PostThinkPost(client, ground_frames);
 									return;

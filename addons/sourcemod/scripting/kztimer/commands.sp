@@ -1,76 +1,10 @@
-public Action:Client_HideChat(client, args)
-{
-	HideChat(client);
-	if (g_bHideChat[client])
-		PrintToChat(client, "%t", "HideChat1",MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "HideChat2",MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
-public HideChat(client)
-{
-	if (!g_bHideChat[client])
-	{
-		g_bHideChat[client]=true;
-		SetEntProp(client, Prop_Send, "m_iHideHUD", GetEntProp(client, Prop_Send, "m_iHideHUD")|HIDE_RADAR|HIDE_CHAT);
-	}
-	else
-	{
-		g_bHideChat[client]=false;
-		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);
-	}
-}
-
-
-public Action:Client_HideWeapon(client, args)
-{
-	HideViewModel(client);
-	if (g_bViewModel[client])
-		PrintToChat(client, "%t", "HideViewModel2",MOSSGREEN, WHITE);
-	else
-		PrintToChat(client, "%t", "HideViewModel1",MOSSGREEN, WHITE);
-	return Plugin_Handled;
-}
-
-public HideViewModel(client)
-{
-	if (!g_bViewModel[client])
-	{
-		g_bViewModel[client]=true;
-		Client_SetDrawViewModel(client,true);
-	}
-	else
-	{
-		g_bViewModel[client]=false;
-		Client_SetDrawViewModel(client,false);
-	}
-}
-
-public Action:Client_PlayerJumpBeam(client, args) 
-{
-	PlayerJumpBeam(client);
-	if (g_bJumpBeam[client])
-		PrintToChat(client, "%t", "PlayerJumpBeam1", MOSSGREEN,WHITE);
-	else
-		PrintToChat(client, "%t", "PlayerJumpBeam2", MOSSGREEN,WHITE);
-	return Plugin_Handled;
-}
-
-public PlayerJumpBeam(client)
-{
-	if (g_bJumpBeam[client])
-		g_bJumpBeam[client] = false;
-	else
-		g_bJumpBeam[client] = true;
-}
-
 public Action:Client_Ljblock(client, args)
 {
 	if (IsValidClient(client) && IsPlayerAlive(client))
 		LJBlockMenu(client);
 	return Plugin_Handled;
 }
+
 public Action:Client_Wr(client, args)
 {
 	if (IsValidClient(client))
@@ -80,24 +14,6 @@ public Action:Client_Wr(client, args)
 		else
 			PrintMapRecords(client);
 	}
-	return Plugin_Handled;
-}
-
-public Action:Client_Avg(client, args)
-{
-	if(!IsValidClient(client))
-		return Plugin_Handled;	
-	
-	decl String:szTpTime[32];
-	FormatTimeFloat(client, g_favg_tptime, 3, szTpTime, sizeof(szTpTime));	
-	decl String:szProTime[32];
-	FormatTimeFloat(client, g_favg_protime, 3, szProTime, sizeof(szProTime));
-
-	if (g_MapTimesCountPro==0)
-		Format(szProTime,32,"00:00:00");
-	if (g_MapTimesCountTp==0)
-		Format(szTpTime,32,"00:00:00");
-	PrintToChat(client, "%t", "AvgTime", MOSSGREEN,WHITE,GRAY,DARKBLUE,WHITE,szProTime,g_MapTimesCountPro,YELLOW,WHITE,szTpTime,g_MapTimesCountTp);
 	return Plugin_Handled;
 }
 
@@ -175,26 +91,21 @@ public Action:Client_Challenge(client, args)
 	{
 		if(IsPlayerAlive(client))
 		{
-			if (g_bNoBlock)
+			g_bMenuOpen[client]=true;
+			new Handle:menu = CreateMenu(ChallengeMenuHandler1);
+			if (g_bAllowCheckpoints)
 			{
-				g_bMenuOpen[client]=true;
-				new Handle:menu = CreateMenu(ChallengeMenuHandler1);
-				if (g_bAllowCheckpoints)
-				{
-					SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?");
-					AddMenuItem(menu, "Yes", "Yes");	
-				}
-				else
-					SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?\nCheckpoints disabled");
-				AddMenuItem(menu, "No", "No");	
-				SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
-				DisplayMenu(menu, client, MENU_TIME_FOREVER);			
+				SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?");
+				AddMenuItem(menu, "Yes", "Yes");	
 			}
 			else
-				PrintToChat(client, "%t", "ChallengeFailed1",RED,WHITE);
+				SetMenuTitle(menu, "KZTimer - Challenge: Checkpoints?\nCheckpoints disabled");
+			AddMenuItem(menu, "No", "No");	
+			SetMenuOptionFlags(menu, MENUFLAG_BUTTON_EXIT);
+			DisplayMenu(menu, client, MENU_TIME_FOREVER);			
 		}
 		else
-			PrintToChat(client, "%t", "ChallengeFailed2",RED,WHITE);
+			PrintToChat(client, "%t", "ChallengeFailed1",RED,WHITE);
 	}
 	else
 		PrintToChat(client, "%t", "ChallengeFailed3",RED,WHITE);
@@ -328,7 +239,7 @@ public ChallengeMenuHandler3(Handle:menu, MenuAction:action, param1,param2)
 						{
 							//id of challenger
 							decl String:szSteamId[32];
-							GetClientAuthString(i, szSteamId, 32);	
+							GetClientAuthId(i, AuthId_Steam2, szSteamId, sizeof(szSteamId), true);
 							Format(g_szChallenge_OpponentID[param1], 32, szSteamId);					
 							decl String:cp[16];
 							if (g_bChallenge_Checkpoints[param1])
@@ -397,14 +308,14 @@ public Action:Client_Accept(client, args)
 {
 	decl String:szSteamId[32];
 	decl String:szCP[32];
-	GetClientAuthString(client, szSteamId, 32);		
+	GetClientAuthId(client, AuthId_Steam2, szSteamId, sizeof(szSteamId), true);
 	for (new i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && IsPlayerAlive(i) && i != client && g_bChallenge_Request[i])
 		{
 			if(StrEqual(szSteamId,g_szChallenge_OpponentID[i]))
 			{		
-				GetClientAuthString(i, g_szChallenge_OpponentID[client], 32);
+				GetClientAuthId(i, AuthId_Steam2, g_szChallenge_OpponentID[client], 32, true);
 				g_bChallenge_Request[i]=false;
 				g_bChallenge[i]=true;
 				g_bChallenge[client]=true;
@@ -465,6 +376,49 @@ public Action:Client_Accept(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_Avg(client, args)
+{
+	if(!IsValidClient(client))
+		return Plugin_Handled;	
+	
+	decl String:szTpTime[32];
+	FormatTimeFloat(client, g_favg_tptime, 3, szTpTime, sizeof(szTpTime));	
+	decl String:szProTime[32];
+	FormatTimeFloat(client, g_favg_protime, 3, szProTime, sizeof(szProTime));
+
+	if (g_MapTimesCountPro==0)
+		Format(szProTime,32,"00:00:00");
+	if (g_MapTimesCountTp==0)
+		Format(szTpTime,32,"00:00:00");
+	PrintToChat(client, "%t", "AvgTime", MOSSGREEN,WHITE,GRAY,DARKBLUE,WHITE,szProTime,g_MapTimesCountPro,YELLOW,WHITE,szTpTime,g_MapTimesCountTp);
+	return Plugin_Handled;
+}
+
+
+public Action:Client_HideWeapon(client, args)
+{
+	HideViewModel(client);
+	if (g_bViewModel[client])
+		PrintToChat(client, "%t", "HideViewModel2",MOSSGREEN, WHITE);
+	else
+		PrintToChat(client, "%t", "HideViewModel1",MOSSGREEN, WHITE);
+	return Plugin_Handled;
+}
+
+public HideViewModel(client)
+{
+	if (!g_bViewModel[client])
+	{
+		g_bViewModel[client]=true;
+		Client_SetDrawViewModel(client,true);
+	}
+	else
+	{
+		g_bViewModel[client]=false;
+		Client_SetDrawViewModel(client,false);
+	}
+}
+
 public Action:Client_Usp(client, args)
 {
 	if(!IsValidClient(client) || !IsPlayerAlive(client))
@@ -508,7 +462,7 @@ public Action:Client_Surrender (client, args)
 		{
 			if (IsValidClient(i) && i != client)
 			{	
-				GetClientAuthString(i, szSteamIdOpponent, 32);		
+				GetClientAuthId(i, AuthId_Steam2, szSteamIdOpponent, sizeof(szSteamIdOpponent), true);	
 				if (StrEqual(szSteamIdOpponent,g_szChallenge_OpponentID[client]))
 				{
 					GetClientName(i, szNameOpponent, MAX_NAME_LENGTH);	
@@ -580,7 +534,7 @@ public Action:Command_JoinTeam(client, const String:command[], argc)
 	decl String:arg[4];
 	GetCmdArg(1, arg, sizeof(arg));
 	new toteam = StringToInt(arg);	
-
+	
 	TeamChangeActual(client, toteam);
 	return Plugin_Handled;
 }
@@ -605,7 +559,9 @@ TeamChangeActual(client, toteam)
 
 public Action:Client_OptionMenu(client, args)
 {
-	OptionMenu(client);
+	StopClimbersMenu(client);
+	g_bMenuOpen[client]=true;
+	CreateTimer(0.1, OpenOptionsMenu, client,TIMER_FLAG_NO_MAPCHANGE);
 	return Plugin_Handled;
 }
 
@@ -629,7 +585,7 @@ public Action:Client_Undo(client, args)
 		g_bUndo[client]	= true;
 		g_bUndoTimer[client] = true;
 		g_fLastUndo[client] = GetEngineTime();	
-		TeleportEntity(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], Float:{0.0,0.0,-100.0});
+		DoValidTeleport(client, g_fPlayerCordsUndoTp[client],g_fPlayerAnglesUndoTp[client], false);
 		g_js_GODLIKE_Count[client] = 0;
 	}
 	return Plugin_Handled;
@@ -643,12 +599,12 @@ public Action:NoClip(client, args)
 {
 	if (!IsValidClient(client))					
 		return Plugin_Handled;	
-	if (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER"))
+	if (g_bNoClipS || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC || StrEqual(g_pr_rankname[client],"MAPPER") || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922"))
 	{
 		if (!g_bMapFinished[client])
 		{
 			//BEST RANK || ADMIN || VIP
-			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
+			if ((StrEqual(g_pr_rankname[client],g_szSkillGroups[8])  || StrEqual(g_szSteamID[client],"STEAM_1:1:73507922") || StrEqual(g_pr_rankname[client],"MAPPER") || GetUserFlagBits(client) & ADMFLAG_RESERVATION || GetUserFlagBits(client) & ADMFLAG_ROOT || GetUserFlagBits(client) & ADMFLAG_GENERIC) && !g_bNoClip[client])
 				Action_NoClip(client);
 			else
 				PrintToChat(client, "%t", "NoclipNotAvailable2",MOSSGREEN, WHITE, g_szSkillGroups[8]);
@@ -683,7 +639,7 @@ public Action:Client_Prev(client, args)
 
 public Action:Client_Save(client, args)
 {
-	DoCheckpoint(client)
+	DoCheckpoint(client);
 	return Plugin_Handled;	
 }
 
@@ -695,7 +651,17 @@ public Action:Client_Tele(client, args)
 
 public Action:Client_Top(client, args)
 {	
-	TopMenu(client);
+	g_bTopMenuOpen[client]=true;
+	g_bMenuOpen[client]=true;
+	CreateTimer(0.1, OpenTopMenu, client,TIMER_FLAG_NO_MAPCHANGE);
+	return Plugin_Handled;
+}
+
+public Action:Client_Profile(client, args)
+{
+	g_bMenuOpen[client]=true;
+	if (IsValidClient(client))
+		ProfileMenu(client,args);
 	return Plugin_Handled;
 }
 
@@ -708,14 +674,18 @@ public Action:Client_MapTop(client, args)
 	}
 	decl String:szArg[128];   
 	GetCmdArg(1, szArg, 128);
-	db_selectMapTopClimbers(client,szArg)
+	db_selectMapTopClimbers(client,szArg);
 	return Plugin_Handled;
 }
 
-
 public Action:Client_Spec(client, args)
 {	
-	SpecPlayer(client, args);
+	StopClimbersMenu(client);
+	g_bMenuOpen[client]=true;
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		SpecPlayer(client, args);
+	}
 	return Plugin_Handled;
 }
 
@@ -724,8 +694,9 @@ public Action:Client_Spec(client, args)
 public Action:Command_Menu(client,args) 
 {
 	StopClimbersMenu(client);
-	DisplayMenu(g_hMainMenu,client,MENU_TIME_FOREVER)
-	return Plugin_Handled
+	g_bMenuOpen[client]=true;
+	CreateTimer(0.1, OpenMeasureMenu, client,TIMER_FLAG_NO_MAPCHANGE);
+	return Plugin_Handled;
 }
 
 public Handler_MainMenu(Handle:menu,MenuAction:action,param1,param2) 
@@ -735,24 +706,24 @@ public Handler_MainMenu(Handle:menu,MenuAction:action,param1,param2)
 		switch(param2) 
 		{
 			case 0: {	//Point 1 (Red)
-				GetPos(param1,0)
+				GetPos(param1,0);
 			}
 			case 1: {	//Point 2 (Green)
-				GetPos(param1,1)
+				GetPos(param1,1);
 			}
 			case 2: {	//Find Distance
 				if(g_bMeasurePosSet[param1][0] && g_bMeasurePosSet[param1][1]) 
 				{
-					new Float:vDist = GetVectorDistance(g_fvMeasurePos[param1][0],g_fvMeasurePos[param1][1])
-					new Float:vHightDist = (g_fvMeasurePos[param1][0][2] - g_fvMeasurePos[param1][1][2])
+					new Float:vDist = GetVectorDistance(g_fvMeasurePos[param1][0],g_fvMeasurePos[param1][1]);
+					new Float:vHightDist = (g_fvMeasurePos[param1][0][2] - g_fvMeasurePos[param1][1][2]);
 					PrintToChat(param1, "%t", "Measure1",MOSSGREEN,WHITE,vDist,vHightDist);					
-					Beam(param1,g_fvMeasurePos[param1][0],g_fvMeasurePos[param1][1],4.0,2.0,0,0,255)
+					Beam(param1,g_fvMeasurePos[param1][0],g_fvMeasurePos[param1][1],4.0,2.0,0,0,255);
 				}
 				else 
 					PrintToChat(param1, "%t", "Measure2",MOSSGREEN,WHITE);
 			}
 			case 3: {	//Reset
-				ResetPos(param1)
+				ResetPos(param1);
 			}
 		}
 		DisplayMenu(g_hMainMenu,param1,MENU_TIME_FOREVER);
@@ -763,7 +734,6 @@ public Handler_MainMenu(Handle:menu,MenuAction:action,param1,param2)
 		ResetPos(param1);
 	}
 }
-
 
 public SpecPlayer(client,args)
 {
@@ -941,7 +911,6 @@ public SpecMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	}
 }
 
-
 public Action:Client_Kzmenu(client, args)
 {
 	if (!g_bAllowCheckpoints && IsValidClient(client))
@@ -949,7 +918,8 @@ public Action:Client_Kzmenu(client, args)
 	else
 	{
 		g_bMenuOpen[client]=false;
-		ClimbersMenu(client);    
+		g_bClimbersMenuOpen[client] = true;
+		CreateTimer(0.1, OpenCheckpointMenu, client,TIMER_FLAG_NO_MAPCHANGE);   
 	}
 	return Plugin_Handled;
 }
@@ -1133,7 +1103,7 @@ public ProfileMenu(client,args)
 				if ((StrContains(szName, szName2) != -1))
 				{
 					bPlayerFound=true;
-					GetClientAuthString(i, szSteamId2, 32);
+					GetClientAuthId(i, AuthId_Steam2, szSteamId2, sizeof(szSteamId2), true);
 					continue;
 				}
 			}
@@ -1162,7 +1132,7 @@ public ProfileSelectMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				{
 					Format(g_szProfileName[param1], MAX_NAME_LENGTH, "%s", szPlayerName); 
 					decl String:szSteamId[32];
-					GetClientAuthString(i, szSteamId, 32);	
+					GetClientAuthId(i, AuthId_Steam2, szSteamId, sizeof(szSteamId), true);
 					db_viewPlayerRank(param1, szSteamId);
 				}
 			}
@@ -1207,7 +1177,7 @@ public AutoBhop(client)
 
 public Action:Client_Hide(client, args) 
 { 	
-	HideMethod(client)
+	HideMethod(client);
 	if (!g_bHide[client])
 		PrintToChat(client, "%t", "Hide1",MOSSGREEN,WHITE);
 	else
@@ -1251,28 +1221,15 @@ public Action:Client_Ranks(client, args)
 	return Plugin_Handled;
 }
 
-public Action:Client_Profile(client, args)
-{
-	ProfileMenu(client,args);
-	return Plugin_Handled;
-}
-
 public Action:Client_Compare(client, args)
 {
 	CompareMenu(client,args);
 	return Plugin_Handled;
 }
 
-public Action:Client_RankingSystem(client, args)
-{
-	PrintToChat(client,"[%cKZ%c]%c Loading html page.. (requires cl_disablehtmlmotd 0)", MOSSGREEN,WHITE,LIMEGREEN);
-	ShowMOTDPanel(client, "rankingsystem" ,"http://kuala-lumpur-court-8417.pancakeapps.com/ranking_index.html", 2);
-	return Plugin_Handled;
-}
-
 public Action:Client_Start(client, args)
 {
-	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client])
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client]) 
 		return Plugin_Handled;
 	
 	new Float: e_time = GetEngineTime();
@@ -1282,15 +1239,11 @@ public Action:Client_Start(client, args)
 		
 	//spawn at Timer
 	if (g_bRespawnAtTimer[client]==true)
-	{
-		TeleportEntity(client, g_fPlayerCordsRestart[client],g_fPlayerAnglesRestart[client], Float:{0.0,0.0,-100.0});		
-	}
+		DoValidTeleport(client, g_fPlayerCordsRestart[client],g_fPlayerAnglesRestart[client],false);
 	else //else spawn at spawnpoint
 	{	
 		if (g_fSpawnpointOrigin[0] != -999999.9)
-		{
-			TeleportEntity(client, g_fSpawnpointOrigin,g_fSpawnpointAngle, Float:{0.0,0.0,-100.0});					
-		}
+			DoValidTeleport(client, g_fSpawnpointOrigin,g_fSpawnpointAngle,false);	
 		else
 			CS_RespawnPlayer(client);	
 	}	
@@ -1302,7 +1255,6 @@ public Action:Client_Start(client, args)
 
 	return Plugin_Handled;	
 }
-
 
 public Action:Client_Pause(client, args) 
 {
@@ -1407,11 +1359,33 @@ public AdvClimbersMenu(client)
 		g_bAdvancedClimbersMenu[client] = true;
 }
 
+public Action:Client_HideChat(client, args)
+{
+	HideChat(client);
+	if (g_bHideChat[client])
+		PrintToChat(client, "%t", "HideChat1",MOSSGREEN, WHITE);
+	else
+		PrintToChat(client, "%t", "HideChat2",MOSSGREEN, WHITE);
+	return Plugin_Handled;
+}
 
+public HideChat(client)
+{
+	if (!g_bHideChat[client])
+	{
+		g_bHideChat[client]=true;
+		SetEntProp(client, Prop_Send, "m_iHideHUD", GetEntProp(client, Prop_Send, "m_iHideHUD")|HIDE_RADAR|HIDE_CHAT);
+	}
+	else
+	{
+		g_bHideChat[client]=false;
+		SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);
+	}
+}
 
 public Action:Client_Showtime(client, args) 
 {
-	ShowTime(client)
+	ShowTime(client);
 	if (g_bShowTime[client])
 		PrintToChat(client, "%t", "Showtime1",MOSSGREEN, WHITE);
 	else
@@ -1490,23 +1464,23 @@ public GotoMethod(client, i)
 		return;
 	decl String:szTargetName[MAX_NAME_LENGTH];
 	GetClientName(i, szTargetName, MAX_NAME_LENGTH);	
-	if (GetEntityFlags(i)&FL_ONGROUND)
+	if (GetEntityFlags(i) & FL_ONGROUND)
 	{
 		new ducked = GetEntProp(i, Prop_Send, "m_bDucked");
 		new ducking = GetEntProp(i, Prop_Send, "m_bDucking");
 		if (!(GetClientButtons(client) & IN_DUCK) && ducked == 0 && ducking == 0)
 		{
 			g_js_bPlayerJumped[client] = false;
-			new Float:position[3];
-			new Float:angles[3];
+			decl Float:position[3];
+			decl Float:angles[3];
 			GetClientAbsOrigin(i,position);
 			GetClientEyeAngles(i,angles);
-			new Float:fVelocity[3];
+			decl Float:fVelocity[3];
 			fVelocity[0] = 0.0;
 			fVelocity[1] = 0.0;
 			fVelocity[2] = 0.0;
-			SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
-			TeleportEntity(client, position,angles, Float:{0.0,0.0,-100.0});
+			SetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);			
+			DoValidTeleport(client, position,angles,false);
 			decl String:szClientName[MAX_NAME_LENGTH];
 			GetClientName(client, szClientName, MAX_NAME_LENGTH);	
 			PrintToChat(i, "%t", "Goto5", MOSSGREEN,WHITE, szClientName);
@@ -1530,9 +1504,6 @@ public Action:Client_GoTo(client, args)
 	if (!g_bGoToServer)
 		PrintToChat(client, "%t", "Goto1",MOSSGREEN,WHITE,RED,WHITE);
 	else
-	if (!g_bNoBlock)
-		PrintToChat(client, "%t", "Goto2",MOSSGREEN,WHITE);
-	else
 	if (g_bTimeractivated[client])
 		PrintToChat(client, "%t", "Goto3",MOSSGREEN,WHITE, GREEN,WHITE);
 	else
@@ -1544,7 +1515,7 @@ public Action:Client_GoTo(client, args)
 		if (args==0)
 		{
 			new Handle:menu = CreateMenu(GoToMenuHandler);
-			SetMenuTitle(menu, "KZTimer - Goto menu");
+			SetMenuTitle(menu, "KZTimer - Goto");
 			new playerCount=0;
 			for (new i = 1; i <= MaxClients; i++)
 			{
@@ -1637,7 +1608,6 @@ public ClimbersMenuSounds(client)
 	else
 		g_bClimbersMenuSounds[client] = true;
 }
-
 		
 public QuakeSounds(client)
 {
@@ -1648,7 +1618,6 @@ public QuakeSounds(client)
 		case 2: g_EnableQuakeSounds[client] = 0;
 	}
 }
-
 public Action:Client_InfoPanel(client, args) 
 {
 	InfoPanel(client);
@@ -1689,6 +1658,25 @@ public Action:Client_Colorchat(client, args)
 	return Plugin_Handled;
 }
 
+public Action:Client_PlayerJumpBeam(client, args) 
+{
+	PlayerJumpBeam(client);
+	if (g_bJumpBeam[client])
+		PrintToChat(client, "%t", "PlayerJumpBeam1", MOSSGREEN,WHITE);
+	else
+		PrintToChat(client, "%t", "PlayerJumpBeam2", MOSSGREEN,WHITE);
+	return Plugin_Handled;
+}
+
+public PlayerJumpBeam(client)
+{
+	if (g_bJumpBeam[client])
+		g_bJumpBeam[client] = false;
+	else
+		g_bJumpBeam[client] = true;
+}
+
+
 public ColorChat(client)
 {
 	if (g_bColorChat[client])
@@ -1728,6 +1716,7 @@ public DoCheckpoint(client)
 	if (IsFakeClient(client) || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == 1 || g_bPause[client] || (StrEqual("kzpro", g_szMapPrefix[0]))) 
 		return;
 			
+			
 		
 	if (!g_bChallenge_Checkpoints[client] && g_bChallenge[client])
 	{
@@ -1765,7 +1754,9 @@ public DoCheckpoint(client)
 		if (g_bClimbersMenuSounds[client])
 			EmitSoundToClient(client,"buttons/blip1.wav",client);
 		if (g_bCPTextMessage[client])
+		{
 			PrintToChat(client, "%t", "CheckpointSaved", MOSSGREEN,WHITE,GRAY, LIGHTBLUE, g_OverallCp[client], GRAY);
+		}
 	}
 	else
 	{
@@ -1831,7 +1822,7 @@ public DoTeleport(client,pos)
 		g_js_GroundFrames[client] = 0;
 		g_js_MultiBhop_Count[client] = 1;
 		g_OverallTp[client]++;
-		new Float:fVelocity[3];
+		decl Float:fVelocity[3];
 		fVelocity[0] = 0.0;
 		fVelocity[1] = 0.0;
 		fVelocity[2] = 0.0;
@@ -1846,7 +1837,7 @@ public DoTeleport(client,pos)
 			GetClientEyeAngles(client,g_fPlayerAnglesUndoTp[client]);
 			if (!(GetEntityFlags(client) & FL_ONGROUND))
 				g_js_GODLIKE_Count[client] = 0;
-			TeleportEntity(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], Float:{0.0,0.0,-100.0});		
+			DoValidTeleport(client, g_fPlayerCords[client][actual],g_fPlayerAngles[client][actual], false);
 			g_CurrentCp[client] += pos;
 			if (g_bClimbersMenuSounds[client]==true)
 				EmitSoundToClient(client,"buttons/blip1.wav",client);
@@ -1895,10 +1886,7 @@ public Action_UnNoClip(client)
 			{
 				SetEntityMoveType(client, MOVETYPE_WALK);
 				SetEntityRenderMode(client, RENDER_NORMAL);
-				if(g_bNoBlock)
-					SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
-				else
-					SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
+				SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
 				g_bNoClip[client] = false;
 			}
 		}
@@ -2087,7 +2075,7 @@ public ClimbersMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 }
 
 
-public TopMenu(client)
+public KZTopMenu(client)
 {
 	g_MenuLevel[client]=-1;
 	g_bTopMenuOpen[client]=true;
@@ -2162,7 +2150,6 @@ public MapTopMenu(client, String:szMap[128])
 	SetMenuTitle(topmenu2, title);
 	g_bMapMenuOpen[client]=true;	
 	g_bClimbersMenuOpen[client]=false;
-	
 	if (g_bAllowCheckpoints)
 	{
 		AddMenuItem(topmenu2, "!topclimbers", "Top 50 Overall");
@@ -2175,6 +2162,7 @@ public MapTopMenu(client, String:szMap[128])
 		AddMenuItem(topmenu2, "!proclimbers", "Top 20 Pro",ITEMDRAW_DISABLED);
 		AddMenuItem(topmenu2, "!cpclimbers", "Top 20 TP",ITEMDRAW_DISABLED);
 	}
+	
 	SetMenuOptionFlags(topmenu2, MENUFLAG_BUTTON_EXIT);
 	DisplayMenu(topmenu2, client, MENU_TIME_FOREVER);
 }
@@ -2194,7 +2182,7 @@ public MapTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 		if(action == MenuAction_Cancel)
 		{
 			if (g_bTopMenuOpen[param1])
-				TopMenu(param1);
+				KZTopMenu(param1);
 			g_bMapMenuOpen[param1]=false;
 		}
 		else 
@@ -2242,7 +2230,7 @@ public JumpTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 	else
 	if(action == MenuAction_Cancel)
 	{
-		TopMenu(param1);
+		KZTopMenu(param1);
 	}
 	else if (action == MenuAction_End)
 	{	
@@ -2251,7 +2239,7 @@ public JumpTopMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 }
 
 public HelpPanel(client)
-{
+{	
 	PrintConsoleInfo(client);
 	g_bMenuOpen[client] = true;
 	g_bClimbersMenuOpen[client]=false;
@@ -2261,12 +2249,11 @@ public HelpPanel(client)
 	DrawPanelText(panel, title);
 	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!help - opens this menu");
-	DrawPanelText(panel, "!help2 - explanation of the ranking system");
 	DrawPanelText(panel, "!menu - checkpoint menu");
 	DrawPanelText(panel, "!options - player options menu");	
 	DrawPanelText(panel, "!top - top menu");
 	DrawPanelText(panel, "!latest - prints in console the last map records");
-	DrawPanelText(panel, "!profile/!ranks - opens your profile");
+	DrawPanelText(panel, "!profile/!rank - opens your profile");
 	DrawPanelText(panel, "!checkpoint / !gocheck - checkpoint / gocheck");
 	DrawPanelText(panel, "!prev / !next - previous or next checkpoint");
 	DrawPanelText(panel, "!undo - undoes your last teleport");
@@ -2297,16 +2284,17 @@ public HelpPanel2(client)
 	decl String:szTmp[64];
 	Format(szTmp, 64, "KZ Timer Help (2/3) - v%s\nby 1NuTWunDeR",VERSION);
 	DrawPanelText(panel, szTmp);
-	DrawPanelText(panel, " ")	
+	DrawPanelText(panel, " ");
 	DrawPanelText(panel, "!start/!r - go back to start");
 	DrawPanelText(panel, "!stop - stops the timer");
 	DrawPanelText(panel, "!pause - on/off pause");	
 	DrawPanelText(panel, "!usp - spawns a usp silencer");
 	DrawPanelText(panel, "!challenge - allows you to start a race against others");	
-	DrawPanelText(panel, "!spec [<name>] - select a player you want to watch");	
-	DrawPanelText(panel, "!goto [<name>] - teleports you to a given player");
-	DrawPanelText(panel, "!compare [<name>] - compare your challenge results with a given player");
-	DrawPanelText(panel, "!showsettings - shows kztimer plugin settings");
+	DrawPanelText(panel, "!spec - select a player you want to watch");	
+	DrawPanelText(panel, "!goto - teleports you to a given player");
+	DrawPanelText(panel, "!compare <name> - compare your challenge results with a given player");
+	DrawPanelText(panel, "!showsettings - shows plugin settings");
+	DrawPanelText(panel, "!wr - prints in chat the record of the current map");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
 	DrawPanelItem(panel, "next page");
@@ -2346,7 +2334,6 @@ public HelpPanel3(client)
 	DrawPanelText(panel, "!ranks - prints in chat the available ranks");
 	DrawPanelText(panel, "!measure - allows you to measure the distance between 2 points");
 	DrawPanelText(panel, "!language - opens the language menu");
-	DrawPanelText(panel, "!wr - prints in chat the record of the current map");
 	DrawPanelText(panel, "!avg - prints in chat the average map time");
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "previous page");
@@ -2421,6 +2408,7 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_prespeed_cap %.1f (speed-limiter)", g_fBhopSpeedCap);
 	PrintToConsole(client, "kz_map_end %b", g_bMapEnd);
 	PrintToConsole(client, "kz_max_prespeed_bhop_dropbhop %.1f", g_fMaxBhopPreSpeed);
+	PrintToConsole(client, "kz_min_skill_group %i", g_MinSkillGroup);
 	PrintToConsole(client, "kz_pause %b", g_bPauseServerside);
 	PrintToConsole(client, "kz_point_system %b", g_bPointSystem);
 	PrintToConsole(client, "kz_prestrafe %b", g_bPreStrafe);
@@ -2428,7 +2416,9 @@ public ShowSrvSettings(client)
 	PrintToConsole(client, "kz_ranking_extra_points_improvements %i", g_ExtraPoints);
 	PrintToConsole(client, "kz_replay_bot %b", g_bReplayBot);
 	PrintToConsole(client, "kz_restore %b", g_bRestore);
+	PrintToConsole(client, "kz_round_end %b", g_bAllowRoundEndCvar);
 	PrintToConsole(client, "kz_settings_enforcer %b", g_bEnforcer);
+	PrintToConsole(client, "kz_slay_on_endbutton_press %b", g_bSlayPlayers);
 	PrintToConsole(client, "kz_use_radio %b", g_bRadioCommands);
 	PrintToConsole(client, "kz_vip_clantag %b", g_bVipClantag);
 	PrintToConsole(client, "---------------");
@@ -2477,9 +2467,9 @@ public OptionMenu(client)
 	new Handle:optionmenu = CreateMenu(OptionMenuHandler);
 	SetMenuTitle(optionmenu, "KZTimer - Options");
 	if (g_bAdvancedClimbersMenu[client])
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Enabled", "Adv checkpoint menu  -  Enabled");
+		AddMenuItem(optionmenu, "Adv climbers menu  -  Enabled", "Adv checkpoint menu  -  Enabled");
 	else
-		AddMenuItem(optionmenu, "Advanced climbers menu  -  Disabled", "Adv checkpoint menu  -  Disabled");
+		AddMenuItem(optionmenu, "Adv climbers menu  -  Disabled", "Adv checkpoint menu  -  Disabled");
 	//1
 	if (g_bHide[client])
 		AddMenuItem(optionmenu, "Hide Players  -  Enabled", "Hide other players  -  Enabled");
@@ -2518,9 +2508,7 @@ public OptionMenu(client)
 		AddMenuItem(optionmenu, "Show Timer  -  Enabled", "Show timer text  -  Enabled");
 	else
 		AddMenuItem(optionmenu, "Show Timer  -  Disabled", "Show timer text  -  Disabled");			
-	//8
-	
-	
+	//8	
 	if (g_ShowSpecs[client] == 0)
 		AddMenuItem(optionmenu, "Spectator list  -  Enabled", "Spectator list  -  Player counter + names");
 	else
@@ -2623,6 +2611,7 @@ public OptionMenuHandler(Handle:menu, MenuAction:action, param1,param2)
 				CloseHandle(menu);
 			}
 }
+
 public SwitchStartWeapon(client)
 {
 	if (g_bStartWithUsp[client])

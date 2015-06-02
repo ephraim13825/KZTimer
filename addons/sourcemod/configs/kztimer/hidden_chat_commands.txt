@@ -22,10 +22,8 @@
 !info
 !colorchat
 !cpmessage
-!sound
 !menusound
 !hide
-!hidespecs
 !showtime
 !disablegoto
 !sync

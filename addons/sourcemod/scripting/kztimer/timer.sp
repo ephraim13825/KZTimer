@@ -1,4 +1,46 @@
 // timer.sp
+public Action:RemoveValidation(Handle:timer, any:client)
+{
+	if (!g_bOnBhopPlattform[client] && IsValidClient(client))
+		g_bValidTeleport[client]=false;
+}
+public Action:OpenOptionsMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		OptionMenu(client);
+	}
+}
+
+public Action:OpenCheckpointMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		ClimbersMenu(client); 
+	}
+}
+
+public Action:OpenMeasureMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		DisplayMenu(g_hMainMenu,client,MENU_TIME_FOREVER)
+	}
+}
+public Action:OpenTopMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		KZTopMenu(client);
+	}
+}
+public Action:OpenAdminMenu(Handle:timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		KzAdminMenu(client);
+	}
+}
 
 public Action:RefreshAdminMenu(Handle:timer, any:client)
 {
@@ -15,31 +57,11 @@ public Action:SetPlayerWeapons(Handle:timer, any:client)
 			GivePlayerItem(client, "weapon_usp_silencer");
 		if (!g_bStartWithUsp[client])
 		{
-			decl weapon;
-			weapon = GetPlayerWeaponSlot(client, 2);
+			new weapon = GetPlayerWeaponSlot(client, 2);
 			if (weapon != -1 && !IsFakeClient(client))
 				 SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
 		}
 	}	
-}
-
-public Action:OpenAdminMenu(Handle:timer, any:client)
-{
-	if (IsValidClient(client) && !IsFakeClient(client))
-	{
-		KzAdminMenu(client);
-	}
-}
-
-public Action:PlayerRanksTimer(Handle:timer)
-{
-	for (new i = 1; i <= MaxClients; i++)
-	{	
-		if (!IsValidClient(i) || IsFakeClient(i))
-			continue;			
-		db_GetPlayerRank(i);
-	}
-	return Plugin_Continue;
 }
 
 public Action:UpdatePlayerProfile(Handle:timer, any:client)
@@ -78,6 +100,25 @@ public Action:AttackTimer(Handle:timer)
 	return Plugin_Continue;
 }
 
+public Action:PlayerRanksTimer(Handle:timer)
+{
+	for (new i = 1; i <= MaxClients; i++)
+	{	
+		if (!IsValidClient(i) || IsFakeClient(i))
+			continue;			
+		db_GetPlayerRank(i);
+	}
+	return Plugin_Continue;
+}
+
+public Action:DelayedStuff(Handle:timer)
+{
+	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
+		ServerCommand("exec sourcemod/kztimer/main.cfg");
+	else
+		SetFailState("<KZTIMER> cfg/sourcemod/kztimer/main.cfg not found.");
+}
+
 public Action:KZTimer1(Handle:timer)
 {
 	if (g_bRoundEnd)
@@ -96,14 +137,13 @@ public Action:KZTimer1(Handle:timer)
 				//1st team join + in-game
 				if (g_bFirstTeamJoin[client])		
 				{
-					g_bFirstTeamJoin[client] = false;
 					CreateTimer(0.0, StartMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 					CreateTimer(10.0, WelcomeMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);
 					CreateTimer(70.0, HelpMsgTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
-					CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);				
+					CreateTimer(355.0, SteamGroupTimer, client,TIMER_FLAG_NO_MAPCHANGE);	
+					g_bFirstTeamJoin[client] = false;
 				}
 				CenterHudAlive(client);			
-				
 				
 				//bhop plattform & movement direction
 				if (g_bOnGround[client])
@@ -131,19 +171,21 @@ public Action:KZTimer1(Handle:timer)
 	return Plugin_Continue;		
 }
 
-public Action:DelayedStuff(Handle:timer)
+public Action:LoadPlayerSettings(Handle:timer)
 {
-	if (FileExists("cfg/sourcemod/kztimer/main.cfg"))
-		ServerCommand("exec sourcemod/kztimer/main.cfg");
-	else
-		SetFailState("<KZTIMER> cfg/sourcemod/kztimer/main.cfg not found.");
+	for(new c=1;c<=MaxClients;c++)
+	{
+		if(IsValidClient(c))
+			OnClientPutInServer(c);
+	}
 }
+
 
 public Action:KZTimer2(Handle:timer)
 {
 	if (g_bRoundEnd)
 		return Plugin_Continue;
-		
+	
 	if (g_bMapEnd)
 	{
 		new Handle:hTmp;	
@@ -168,17 +210,19 @@ public Action:KZTimer2(Handle:timer)
 				case 15:   PrintToChatAll("%t", "TimeleftSeconds",LIGHTRED,WHITE,timeleft); 		
 				case -1:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,3); 	
 				case -2:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,2); 	
-				case -3:   PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 					
-			}
-			if (timeleft < -3 && !g_bAllowRoundEnd)
-			{
-				g_bRoundEnd=true;		
-				g_bAllowRoundEnd = true;
-				CS_TerminateRound(0.5, CSRoundEnd_TerroristWin, true);
+				case -3:
+				{
+					if (!g_bRoundEnd)
+					{
+						g_bRoundEnd=true;			
+						ServerCommand("mp_ignore_round_win_conditions 0");
+						PrintToChatAll("%t", "TimeleftCounter",LIGHTRED,WHITE,1); 	
+						CreateTimer(1.0, TerminateRoundTimer, INVALID_HANDLE, TIMER_FLAG_NO_MAPCHANGE);
+					}
+				}
 			}
 		}
 	}
-
 
 	//info bot name
 	SetInfoBotName(g_InfoBot);	
@@ -189,12 +233,27 @@ public Action:KZTimer2(Handle:timer)
 		if (!IsValidClient(i) || i == g_InfoBot)
 			continue;	
 
+		
+		if (!IsFakeClient(i))
+		{
+			//anticheat
+			BhopPatternCheck(i);	
+			
+			//check skill group
+			if (g_Skillgroup[i] != 0 && g_Skillgroup[i] < g_MinSkillGroup && !(GetUserFlagBits(i) & ADMFLAG_RESERVATION) && !(StrEqual(g_pr_rankname[i],"ADMIN")))
+			{
+				CreateTimer(3.0, KickPlayerHighRankOnly, i, TIMER_FLAG_NO_MAPCHANGE);
+				g_bKickStatus[i]=true;
+			}
+			
+		}
+		
 		//stop replay to prevent server crashes because of a massive recording array (max. 2h)
 		if(g_hRecording[i] != INVALID_HANDLE && g_fCurrentRunTime[i] > 6720.0)
 		{
 			StopRecording(i);
 			g_hRecording[i] = INVALID_HANDLE;
-		}		
+		}	
 		
 		if (!IsFakeClient(i) && !g_bKickStatus[i])
 			QueryClientConVar(i, "fps_max", ConVarQueryFinished:FPSCheck, i);
@@ -202,7 +261,7 @@ public Action:KZTimer2(Handle:timer)
 		//overlay check
 		if (g_bOverlay[i] && GetEngineTime()-g_fLastOverlay[i] > 5.0)
 			g_bOverlay[i] = false;
-	
+
 		//Scoreboard			
 		if (!g_bPause[i]) 
 		{
@@ -229,10 +288,11 @@ public Action:KZTimer2(Handle:timer)
 		
 		if (IsPlayerAlive(i)) 
 		{	
+			SetEntData(i, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
+				
 			//spec hud
 			SpecListMenuAlive(i);
 			
-				
 			//challenge check
 			if (g_bChallenge_Request[i])
 			{
@@ -274,7 +334,7 @@ public Action:KZTimer2(Handle:timer)
 	}
 	return Plugin_Continue;
 }
-			
+		
 public Action:CreateMapButtons(Handle:timer)
 {
 	db_selectMapButtons();
@@ -290,6 +350,15 @@ public Action:KickPlayer(Handle:Timer, any:client)
 	}
 }
 
+public Action:KickPlayerHighRankOnly(Handle:Timer, any:client)
+{
+	if (IsValidClient(client) && !IsFakeClient(client))
+	{
+		decl String:szReason[128];
+		Format(szReason, 128, "[KZTimer] You don't fulfill the criteria to play on this server. You must be ranked as 'VIP', 'ADMIN', '%s' or above", g_szSkillGroups[g_MinSkillGroup-1]);		
+		KickClient(client, "%s", szReason);
+	}
+}
 
 //challenge start countdown
 public Action:Timer_Countdown(Handle:timer, any:client)
@@ -413,6 +482,7 @@ public Action:SetClanTag(Handle:timer, any:client)
 	decl String:tag[32];  
 	decl bool:oldrank;
 	oldrank=false;
+	
 	if (!StrEqual(g_pr_rankname[client], "", false))
 	{
 		oldrank=true;
@@ -476,7 +546,7 @@ public Action:GetJumpOffSpeedTimer(Handle:timer, any:client)
 		decl Float:fVelocity[3];
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", fVelocity);
 		fVelocity[2] = 0.0;
-		g_js_fPreStrafe[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));		
+		g_js_fPreStrafe[client] = SquareRoot(Pow(fVelocity[0], 2.0) + Pow(fVelocity[1], 2.0) + Pow(fVelocity[2], 2.0));
 	}
 }
 
@@ -533,10 +603,9 @@ public Action:RemoveRagdoll(Handle:timer, any:victim)
 {
     if (IsValidEntity(victim) && !IsPlayerAlive(victim))
     {
-	decl player_ragdoll;
-	player_ragdoll = GetEntDataEnt2(victim, g_ragdolls);
-	if (player_ragdoll != -1)
-		RemoveEdict(player_ragdoll);
+        new player_ragdoll = GetEntDataEnt2(victim, g_ragdolls);
+        if (player_ragdoll != -1)
+            RemoveEdict(player_ragdoll);
     }
 }
 
@@ -551,15 +620,3 @@ public Action:HideRadar(Handle:timer, any:client)
 			SetEntProp(client, Prop_Send, "m_iHideHUD", HIDE_RADAR);
 	}
 }
-
-
-public Action:LoadPlayerSettings(Handle:timer)
-{
-	for(new c=1;c<=MaxClients;c++)
-	{
-		if(IsValidClient(c))
-			OnClientPutInServer(c);
-	}
-}
-
-

@@ -1,19 +1,3 @@
-//button hook
-public Action:NormalSHook_callback(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
-{
-    if(entity > MaxClients)
-    {
-		if (IsValidEntity(entity))
-		{
-			new String:clsname[20]; GetEntityClassname(entity, clsname, sizeof(clsname));
-			if(StrEqual(clsname, "func_button", false))
-			{
-				return Plugin_Handled;
-			}
-		}
-    }
-    return Plugin_Continue;
-}  
 //trigger_teleport/trigger_multiple hook
 public Teleport_OnStartTouch(const String:output[], bhop_block, client, Float:delay)
 {
@@ -33,7 +17,9 @@ public Teleport_OnStartTouch(const String:output[], bhop_block, client, Float:de
 		Postthink(client);
 		g_fLastPositionOnGround[client] = g_fLastPosition[client];
 		g_bLastInvalidGround[client] = g_js_bInvalidGround[client];	
-	}
+	}	
+	g_bValidTeleport[client]=true;
+	CreateTimer(0.2, RemoveValidation, client,TIMER_FLAG_NO_MAPCHANGE);
 }  
 
 //attack spam protection
@@ -59,7 +45,6 @@ public Action:Event_OnFire(Handle:event, const String:name[], bool:dontBroadcast
 		}
 	}
 }
-
 // - PlayerSpawn -
 public Action:Event_OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -113,11 +98,8 @@ PlayerSpawn(client)
 		SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
 		
 	//NoBlock
-	if(g_bNoBlock || IsFakeClient(client))
-		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
-	else
-		SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 5, 4, true);
-						
+	SetEntData(client, FindSendPropOffs("CBaseEntity", "m_CollisionGroup"), 2, 4, true);
+			
 	//botmimic2		
 	if(g_hBotMimicsRecord[client] != INVALID_HANDLE && IsFakeClient(client))
 	{
@@ -162,13 +144,13 @@ PlayerSpawn(client)
 		if (g_bRestorePosition[client])
 		{		
 			g_bPositionRestored[client] = true;
-			TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+			DoValidTeleport(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],true);
 			g_bRestorePosition[client]  = false;
 		}
 		else
 			if (g_bRespawnPosition[client])
 			{
-				TeleportEntity(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],NULL_VECTOR);
+				DoValidTeleport(client, g_fPlayerCordsRestore[client],g_fPlayerAnglesRestore[client],true);
 				g_bRespawnPosition[client] = false;
 			}		
 			else
@@ -211,6 +193,24 @@ PlayerSpawn(client)
 	GetClientAbsOrigin(client, g_fLastPosition[client]);	
 }
 
+
+public Action:NormalSHook_callback(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
+{
+    if(entity > MaxClients)
+    {
+		if (IsValidEntity(entity))
+		{
+			new String:clsname[20]; GetEntityClassname(entity, clsname, sizeof(clsname));
+			if(StrEqual(clsname, "func_button", false))
+			{
+				return Plugin_Handled;
+			}
+		}
+    }
+    return Plugin_Continue;
+}  
+
+
 public Action:Say_Hook(client, const String:command[], argc)
 {
 	//Call Admin - Own Reason
@@ -248,14 +248,18 @@ public Action:Say_Hook(client, const String:command[], argc)
 		ReplaceString(sText,1024,"{darkblue}","",false);
 		ReplaceString(sText,1024,"{pink}","",false);
 		ReplaceString(sText,1024,"{lightred}","",false);
-
+		
+		//text right to left?
+		decl String:sTextNew[1024];
+		if(RTLify(sTextNew, sText))
+			FormatEx(sText, 1024, sTextNew);
+		
 		//empty message
 		if(StrEqual(sText, " ") || StrEqual(sText, ""))
 		{
 			g_bSayHook[client]=false;
 			return Plugin_Handled;		
 		}
-
 		//lowercase
 		if((sText[0] == '/') || (sText[0] == '!'))
 		{
@@ -268,7 +272,6 @@ public Action:Say_Hook(client, const String:command[], argc)
 				return Plugin_Handled;
 			}
 		}
-		
 		//blocked commands
 		for(new i = 0; i < sizeof(g_BlockedChatText); i++)
 		{
@@ -278,14 +281,12 @@ public Action:Say_Hook(client, const String:command[], argc)
 				return Plugin_Handled;			
 			}
 		}
-		
 		//chat trigger?
 		if((IsChatTrigger() && sText[0] == '/') || (sText[0] == '@' && (GetUserFlagBits(client) & ADMFLAG_ROOT ||  GetUserFlagBits(client) & ADMFLAG_GENERIC)))
 		{
 			g_bSayHook[client]=false;
 			return Plugin_Continue;
 		}
-
 		decl String:szName[32];
 		GetClientName(client,szName,32);		
 		ReplaceString(szName,32,"{darkred}","",false);
@@ -317,9 +318,8 @@ public Action:Say_Hook(client, const String:command[], argc)
 		{
 			decl String:szChatRank[64];
 			Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);			
-			
 			if (g_bCountry && (g_bPointSystem || ((StrEqual(g_pr_rankname[client], "ADMIN", false)) && g_bAdminClantag) || ((StrEqual(g_pr_rankname[client], "VIP", false)) && g_bVipClantag)))
-			{						
+			{	
 				if (StrEqual(sText,""))
 				{
 					g_bSayHook[client]=false;
@@ -401,6 +401,7 @@ public Action:Event_OnPlayerTeam(Handle:event, const String:name[], bool:dontBro
 	return Plugin_Continue;
 }
 
+
 public Action:Event_PlayerDisconnect(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (g_bConnectMsg)
@@ -426,17 +427,20 @@ public Action:Hook_SetTransmit(entity, client)
 { 
     if (client != entity && (0 < entity <= MaxClients) && IsValidClient(client)) 
 	{
-		if (g_bChallenge[client] && !g_bHide[client])
-		{
-			if (!StrEqual(g_szSteamID[entity], g_szChallenge_OpponentID[client], false))
+			if (g_bPause[client] || g_bNoClip[client])
 				return Plugin_Handled;
-		}
-		else
-			if (g_bHide[client] && entity != g_SpecTarget[client])
-				return Plugin_Handled; 
 			else
-				if (entity == g_InfoBot && entity != g_SpecTarget[client])
-					return Plugin_Handled;
+				if (g_bChallenge[client] && !g_bHide[client])
+				{
+					if (!StrEqual(g_szSteamID[entity], g_szChallenge_OpponentID[client], false))
+						return Plugin_Handled;
+				}
+				else
+					if (g_bHide[client] && entity != g_SpecTarget[client])
+						return Plugin_Handled; 
+					else
+						if (entity == g_InfoBot && entity != g_SpecTarget[client])
+							return Plugin_Handled;
 	}	
     return Plugin_Continue; 
 }  
@@ -445,7 +449,7 @@ public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBr
 {
 	new client = GetEventInt(event,"userid");
 	if (IsValidClient(client))
-	{
+	{			
 		if (!IsFakeClient(client))
 		{	
 			if(g_hRecording[client] != INVALID_HANDLE)
@@ -467,12 +471,11 @@ public Action:Event_OnPlayerDeath(Handle:event, const String:name[], bool:dontBr
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
 {
 	new timeleft;
-	g_bAllowRoundEnd = false;
 	GetMapTimeLeft(timeleft);
-	if (timeleft>= -1)
+	if (timeleft>= -1 && !g_bAllowRoundEndCvar)
 		return Plugin_Handled;
 	return Plugin_Continue;
-}
+} 
 
 public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -495,12 +498,6 @@ public Action:Event_OnRoundEnd(Handle:event, const String:name[], bool:dontBroad
 	return Plugin_Continue;
 }
 
-public Hook_PostThink(entity)
-{
-	SetEntPropEnt(entity, Prop_Send, "m_bSpotted", 0); 
-}
-
-
 // OnRoundRestart
 public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -519,20 +516,16 @@ public Action:Event_OnRoundStart(Handle:event, const String:name[], bool:dontBro
 	while((ent = FindEntityByClassname(ent, "trigger_push")) != -1)
 		SDKHook(ent,SDKHook_Touch,Push_Touch);
 
-	new iEnt;
-	for(new i = 0; i < sizeof(EntityList); i++)
-	{
-		while((iEnt = FindEntityByClassname(iEnt, EntityList[i])) != -1)
-		{
-			AcceptEntityInput(iEnt, "Disable");
-			AcceptEntityInput(iEnt, "Kill");
-		}
-	}
-	
 	g_bRoundEnd=false;
 	db_selectMapButtons();
 	OnPluginPauseChange(false);
 	return Plugin_Continue; 
+}
+
+
+public Hook_PostThink(client)
+{
+	SetEntPropEnt(client, Prop_Send, "m_bSpotted", 0);
 }
 
 public Action:Push_Touch(ent,client)
@@ -544,6 +537,8 @@ public Action:Push_Touch(ent,client)
 	return Plugin_Continue;
 }
 
+//Credits: Timer by zipcore
+//https://github.com/Zipcore/Timer/
 public Action:Touch_Wall(ent,client)
 {
 	if(IsValidClient(client))
@@ -561,6 +556,27 @@ public Action:Touch_Wall(ent,client)
 	}
 	return Plugin_Continue;
 }
+
+public Hook_OnTouch(client, other)
+{
+	if (IsValidClient(client) && IsPlayerAlive(client))
+	{		
+		decl String:classname[32];
+		if (IsValidEdict(other))
+			GetEntityClassname(other, classname, 32);		
+		if (StrEqual(classname,"func_movelinear"))
+		{
+			g_js_bFuncMoveLinear[client] = true;
+			return;
+		}
+		if (g_js_block_lj_valid[client])
+			return;
+		if (GetEntityMoveType(client) != MOVETYPE_LADDER && !(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
+		{
+			ResetJump(client);	
+		}
+	}
+}  
 
 
 // PlayerHurt 
@@ -617,7 +633,10 @@ public Action:OnLogAction(Handle:source, Identity:ident, client, target, const S
 		else
 			Format(logtag, sizeof(logtag), "OTHER");
 		if ((strcmp("playercommands.smx", logtag, false) == 0) || (strcmp("funcommands.smx", logtag, false) == 0) ||(strcmp("slap.smx", logtag, false) == 0))
+		{
+			ResetJump(target);
 			Client_Stop(target, 0);
+		}
 	}   
     return Plugin_Continue;
 }  
@@ -631,6 +650,7 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 
 	if(IsPlayerAlive(client))	
 	{	
+	
 		//replay bots
 		PlayReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
 		RecordReplay(client, buttons, subtype, seed, impulse, weapon, angles, vel);
@@ -647,6 +667,9 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			g_bOnGround[client]=true;
 		else
 			g_bOnGround[client]=false;
+
+		if (buttons & IN_JUMP)
+			g_fJumpButtonLastTimeUsed[client] = GetEngineTime();
 		
 		//perfect jumpoff?
 		if (g_bOnGround[client])
@@ -666,19 +689,23 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		}
 		
 		//left right script check 
-		if ((buttons & IN_LEFT) || (buttons & IN_RIGHT))
+		if (!IsFakeClient(client))
 		{
-			if ((GetEngineTime()-g_fSpawnTime[client]) > 3.0)
+			if ((buttons & IN_LEFT) || (buttons & IN_RIGHT))
 			{
-				PrintToChat(client, "[%cKZ AntiCheat%c]%c +Left/+Right detected.",DARKRED,WHITE,RED);
-				ForcePlayerSuicide(client);
-				ResetJump(client);
+				if ((GetEngineTime()-g_fSpawnTime[client]) > 3.0)
+				{
+					PrintToChat(client, "[%cKZ%c]%c You have been slayed for using a strafe/turn bind",RED,WHITE,GRAY);
+					ForcePlayerSuicide(client);
+					ResetJump(client);
+				}
 			}
 		}
 		
 		//ground frames counter
 		if (!g_js_bPlayerJumped[client] && g_bOnGround[client] && (((buttons & IN_MOVERIGHT) || (buttons & IN_MOVELEFT) || (buttons & IN_BACK) || (buttons & IN_FORWARD)) || IsFakeClient(client)))
 			g_js_GroundFrames[client]++;
+		
 		
 		//menu refreshing
 		MenuTitleRefreshing(client);
@@ -711,11 +738,32 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 		CalcJumpHeight(client);
 		CalcJumpSync(client, speed, ang[1], buttons);
 		CalcLastJumpHeight(client, buttons, origin);		
-		KZAntiCheat(client, buttons);
 		LjBlockCheck(client,origin);
 		HookCheck(client);
 		SetPlayerBeam(client, origin);
 	
+		//Bhop AntiCheat
+		static bool:bHoldingJump[MAXPLAYERS + 1];
+		static bLastOnGround[MAXPLAYERS + 1];
+		if(buttons & IN_JUMP)
+		{
+			if(!bHoldingJump[client])
+			{
+				bHoldingJump[client] = true;
+				g_aiJumps[client]++;
+				if (bLastOnGround[client] && (GetEntityFlags(client) & FL_ONGROUND))
+					g_fafAvgPerfJumps[client] = ( g_fafAvgPerfJumps[client] * 9.0 + 0 ) / 10.0;
+				else 
+					if (!bLastOnGround[client] && (GetEntityFlags(client) & FL_ONGROUND))
+						g_fafAvgPerfJumps[client] = ( g_fafAvgPerfJumps[client] * 9.0 + 1 ) / 10.0;
+			}
+		}
+		else 
+			if(bHoldingJump[client]) 
+				bHoldingJump[client] = false;
+		bLastOnGround[client] = GetEntityFlags(client) & FL_ONGROUND;
+
+ 	
 		if (g_bOnGround[client])
 		{
 			g_bBeam[client] = false;
@@ -746,16 +794,17 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	return Plugin_Continue;
 }
 
-public Action:Event_OnJump(Handle:Event, const String:Name[], bool:Broadcast)
+public Action:Event_OnJump(Handle:Event2, const String:Name[], bool:Broadcast)
 {	
 	decl client;
-	client = GetClientOfUserId(GetEventInt(Event, "userid"));	
+	client = GetClientOfUserId(GetEventInt(Event2, "userid"));
+	g_JumpCheck2[client]++;
 	g_bBeam[client]=true;	
 	decl bool:touchwall;
 	touchwall = WallCheck(client);	
 	if (g_bJumpStats && !touchwall)
 		Prethink(client, false);
-}	
+}
 			
 public Hook_PostThinkPost(entity)
 {
@@ -771,33 +820,11 @@ public Teleport_OnEndTouch(const String:output[], caller, client, Float:delay)
 	}	
 }  
 
-
-public Hook_OnTouch(client, other)
-{
-	if (IsValidClient(client) && IsPlayerAlive(client))
-	{		
-		decl String:classname[32];
-		if (IsValidEdict(other))
-			GetEntityClassname(other, classname, 32);		
-		if (StrEqual(classname,"func_movelinear"))
-		{
-			g_js_bFuncMoveLinear[client] = true;
-			return;
-		}
-		if (g_js_block_lj_valid[client])
-			return;
-		if (GetEntityMoveType(client) != MOVETYPE_LADDER && !(GetEntityFlags(client) & FL_ONGROUND) || other != 0)
-		{
-			ResetJump(client);	
-		}
-	}
-}  
-
 //https://forums.alliedmods.net/showthread.php?p=1678026 by Inami
-public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broadcast)
+public Action:Event_OnJumpMacroDox(Handle:Event3, const String:Name[], bool:Broadcast)
 {
 	decl client;
-	client = GetClientOfUserId(GetEventInt(Event, "userid"));	
+	client = GetClientOfUserId(GetEventInt(Event3, "userid"));	
 	if(IsValidClient(client) && !IsFakeClient(client) && !g_bAutoBhop)
 	{	
 		g_fafAvgJumps[client] = ( g_fafAvgJumps[client] * 9.0 + float(g_aiJumps[client]) ) / 10.0;	
@@ -846,7 +873,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		{
 			g_aiAutojumps[client] = 0;
 		}
-
+		
 		g_aiJumps[client] = 0;
 		decl Float:tempvec[3];
 		tempvec = g_favLastPos[client];
@@ -861,22 +888,7 @@ public Action:Event_OnJumpMacroDox(Handle:Event, const String:Name[], bool:Broad
 		
 		if (g_fafAvgPerfJumps[client] >= 0.9)
 		{
-			if (g_bAntiCheat && !g_bFlagged[client])
-			{
-				decl String:banstats[256];
-				GetClientStatsLog(client, banstats, sizeof(banstats));		
-				decl String:sPath[512];
-				BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
-				if (g_bAutoBan)
-				{
-					LogToFile(sPath, "%s, Reason: bhop hack detected. (autoban)", banstats);	
-				}
-				else
-					LogToFile(sPath, "%s, Reason: bhop hack detected.", banstats);	
-				g_bFlagged[client] = true;
-				if (g_bAutoBan)	
-					PerformBan(client,"a bhop hack");
-			}
+			MacroBan(client);
 		}
 	}
 }

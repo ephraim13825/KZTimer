@@ -1,3 +1,15 @@
+public DoValidTeleport(client, Float:origin[3],Float:angles[3],bool:VEL_NULLVECTOR)
+{
+	if (!IsValidClient(client))
+		return;
+	g_bValidTeleport[client]=true;
+	if (VEL_NULLVECTOR)
+		TeleportEntity(client, origin, angles, NULL_VECTOR);
+	else
+		TeleportEntity(client, origin, angles, Float:{0.0,0.0,-100.0});
+	CreateTimer(0.2, RemoveValidation, client,TIMER_FLAG_NO_MAPCHANGE);
+}
+
 public LadderCheck(client,Float:speed)
 {
 	decl Float:pos[3],Float:dist; 
@@ -30,8 +42,6 @@ public CheckSpawnPoints()
 {
 	if(StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"surf")  || StrEqual(g_szMapPrefix[0],"bhop"))
 	{
-		if (!g_bNoBlock)
-			return;
 		new ent, ct, t, spawnpoint;
 		ct = 0;
 		t= 0;	
@@ -290,7 +300,7 @@ public SetSkillGroups()
 	else
 		mapcount = g_pr_MapCount;	
 	g_pr_PointUnit = 1; 
-	new Float: MaxPoints = float(mapcount) * 1300.0 + 3000.0; //1300 = map max, 3000 = jumpstats max
+	new Float: MaxPoints = float(mapcount) * 1300.0 + 3500.0; //1300 = map max, 3500 = jumpstats max
 	new g_RankCount = 0;
 	
 	decl String:sPath[PLATFORM_MAX_PATH], String:sBuffer[32];
@@ -351,7 +361,6 @@ public PrintConsoleInfo(client)
 	secs = timeleft % 60;
 	Format(finalOutput, 1024, "%d:%02d", mins, secs);
 	new Float:fltickrate = 1.0 / GetTickInterval( );
-	
 
 	PrintToConsole(client, "-----------------------------------------------------------------------------------------------------------");
 	PrintToConsole(client, "This server is running KZTimer v%s - Author: 1NuTWunDeR - Server tickrate: %i", VERSION, RoundToNearest(fltickrate));
@@ -359,15 +368,14 @@ public PrintConsoleInfo(client)
 	if (timeleft > 0)
 		PrintToConsole(client, "Timeleft on %s: %s",g_szMapName, finalOutput);
 	PrintToConsole(client, "- Menu formatting is optimized for 1920x1080..");	
-	PrintToConsole(client, "- Max recording time for replays: 120min");		
+	PrintToConsole(client, "- Max recording time for replays: 120min");	
 	PrintToConsole(client, "- It's not possible to hide the spec minimap for replay bots through coding.");	
 	PrintToConsole(client, "But you can disable it by typing hideradar into your console!");	
 	PrintToConsole(client, " ");
-	PrintToConsole(client, " ");
 	PrintToConsole(client, "Client commands:");
-	PrintToConsole(client, "!help, !help2, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
-	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !avg,");
-	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp, !wr, !beam");
+	PrintToConsole(client, "!help, !menu, !options, !checkpoint, !gocheck, !prev, !next, !undo, !profile, !compare,");
+	PrintToConsole(client, "!bhopcheck, !maptop, top, !start, !stop, !pause, !challenge, !surrender, !goto, !spec, !wr, !avg,");
+	PrintToConsole(client, "!showsettings, !latest, !measure, !ljblock, !ranks, !flashlight, !language, !usp, !beam");
 	PrintToConsole(client, "(options menu contains: !adv, !info, !colorchat, !cpmessage, !menusound");
 	PrintToConsole(client, "!hide, !showtime, !disablegoto, !sync, !bhop, !hidechat, !hideweapon)");
 	PrintToConsole(client, " ");
@@ -427,6 +435,8 @@ public StringToUpper(String:input[])
 
 public GetServerInfo()
 {
+	GetConVarString(FindConVar("hostname"),g_szServerName,sizeof(g_szServerName));
+	
 	new pieces[4];
 	decl String:code2[3];
 	decl String:NetIP[256];
@@ -437,6 +447,11 @@ public GetServerInfo()
 	pieces[2] = (longip >> 8) & 0x000000FF;
 	pieces[3] = longip & 0x000000FF;
 	Format(NetIP, sizeof(NetIP), "%d.%d.%d.%d", pieces[0], pieces[1], pieces[2], pieces[3]);
+	
+	//kreedz europe 128 tick exception cccc debug
+	//Format(NetIP, sizeof(NetIP), "37.187.171.52");
+	
+	
 	GeoipCountry(NetIP, g_szServerCountry, 100);
 
 	if(!strcmp(g_szServerCountry, NULL_STRING))
@@ -460,7 +475,7 @@ public GetServerInfo()
 	else
 		Format(g_szServerCountryCode, 16, "??",code2);
 	Format(g_szServerIp, sizeof(g_szServerIp), "%s:%i",NetIP,port);
-	GetConVarString(FindConVar("hostname"),g_szServerName,sizeof(g_szServerName));
+	
 }
 
 public GetCountry(client)
@@ -518,33 +533,6 @@ stock StripAllWeapons(client)
 		GivePlayerItem(client, "weapon_knife");
 }
 
-public MovementCheck(client)
-{
-	if (StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"bhop"))
-	{		
-		SetEntPropFloat(client, Prop_Data, "m_flGravity", 1.0); 
-		new Float:LaggedMovementValue = GetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue");
-		if (LaggedMovementValue != 1.0)
-		{
-			PrintToConsole(client,"[KZ] Timer stopped. Reason: LaggedMovementValue modified.")
-			g_bTimeractivated[client] = false;
-			if (g_js_bPlayerJumped[client])	
-				ResetJump(client);
-		}
-	}
-	decl MoveType:mt;
-	mt = GetEntityMoveType(client); 
-	if (mt == MOVETYPE_FLYGRAVITY)
-	{
-		PrintToConsole(client,"[KZ] Timer stopped. Reason: MOVETYPE 'FLYGRAVITY' detected.")
-		g_bTimeractivated[client] = false;
-		if (g_js_bPlayerJumped[client])	
-			ResetJump(client);
-	}
-	if (g_bPause[client] && mt == MOVETYPE_WALK)
-		SetEntityMoveType(client, MOVETYPE_NONE);
-}
-
 public PlayButtonSound(client)
 {
 	if (!IsFakeClient(client))
@@ -572,6 +560,29 @@ public PlayButtonSound(client)
 		}
 	}	
 }
+
+public PlayUnstoppableSound(client)
+{
+	decl String:buffer[255];
+	Format(buffer, sizeof(buffer), "play %s", UNSTOPPABLE_RELATIVE_SOUND_PATH);  
+	if (IsValidClient(client) && !IsFakeClient(client) && g_EnableQuakeSounds[client] == 1)
+		ClientCommand(client, buffer); 	
+	//spec stop sound
+	for(new i = 1; i <= MaxClients; i++) 
+	{		
+		if (IsValidClient(i) && !IsPlayerAlive(i))
+		{			
+			new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
+			if (SpecMode == 4 || SpecMode == 5)
+			{		
+				new Target = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");	
+				if (Target == client && g_EnableQuakeSounds[i] == 1)
+					ClientCommand(i,buffer);
+			}					
+		}
+	}	
+}
+
 public DeleteButtons(client)
 {
 	decl String:classname[32];
@@ -615,10 +626,9 @@ public DeleteButtons(client)
 			}
 		}
 	}
-	g_global_SelfBuiltButtons=false;
 	g_bFirstEndButtonPush=true;
 	g_bFirstStartButtonPush=true;
-	//stop player times (global record fake)
+	//stop timer 
 	for (new i = 1; i <= MaxClients; i++)
 	if (IsValidClient(i) && !IsFakeClient(i) && client != 67)	
 	{
@@ -672,7 +682,6 @@ public CreateButton(client,String:targetname[])
 				PrintToChat(client,"%c[%cKZ%c] Stop button built!", WHITE,MOSSGREEN,WHITE);
 				g_bFirstEndButtonPush = false;
 			}
-			g_global_SelfBuiltButtons=true;
 			ang[1] -= 180.0;
 		}
 		new sprite = CreateEntityByName("env_sprite");
@@ -739,18 +748,17 @@ public SetClientDefaults(client)
 	g_fLastTimeBhopBlock[client] = GetEngineTime();
 	g_LastGroundEnt[client] = - 1;	
 	g_bFlagged[client] = false;
+	g_bSaving[client] = false;
 	g_bHyperscroll[client] = false;
-	g_bSaving[client]=false;
 	g_fLastOverlay[client] = GetEngineTime() - 5.0;	
+	g_bValidTeleport[client]=false;
 	g_bProfileSelected[client]=false;
 	g_bNewReplay[client] = false;
 	g_bFirstButtonTouch[client]=true;
-	g_pr_Calculating[client] = false;
 	g_bTimeractivated[client] = false;	
 	g_bKickStatus[client] = false;
 	g_bSpectate[client] = false;	
-	if (!g_bLateLoaded)
-		g_bFirstTeamJoin[client] = true;	
+	g_bFirstTeamJoin[client] = true;		
 	g_bFirstSpawn[client] = true;
 	g_bSayHook[client] = false;
 	g_bUndo[client] = false;
@@ -760,7 +768,6 @@ public SetClientDefaults(client)
 	g_bRecalcRankInProgess[client] = false;
 	g_bPrestrafeTooHigh[client] = false;
 	g_bPause[client] = false;
-	g_bSpecInfo[client]=true;
 	g_bPositionRestored[client] = false;
 	g_bPauseWasActivated[client]=false;
 	g_bTopMenuOpen[client] = false;
@@ -777,11 +784,12 @@ public SetClientDefaults(client)
 	g_js_bFuncMoveLinear[client] = false;
 	g_bChallenge_Request[client] = false;
 	g_bClientOwnReason[client] = false;
+	g_bSpecInfo[client]=true;
 	g_js_Last_Ground_Frames[client] = 11;
 	g_js_MultiBhop_Count[client] = 1;
 	g_AdminMenuLastPage[client] = 0;
-	g_OptionsMenuLastPage[client] = 0;	
 	g_Skillgroup[client] = 0;
+	g_OptionsMenuLastPage[client] = 0;	
 	g_MenuLevel[client] = -1;
 	g_CurrentCp[client] = -1;
 	g_AttackCounter[client] = 0;
@@ -802,18 +810,18 @@ public SetClientDefaults(client)
 	g_fLastTimeBhopBlock[client] = GetEngineTime();
 	g_fPlayerLastTime[client] = -1.0;
 	g_js_GroundFrames[client] = 0;
+	g_fStartPauseTime[client] = 0.0;
 	g_js_fJump_JumpOff_PosLastHeight[client] = -1.012345;
 	g_js_Good_Sync_Frames[client] = 0.0;
 	g_js_Sync_Frames[client] = 0.0;
 	g_js_GODLIKE_Count[client] = 0;
-	g_fStartPauseTime[client] = 0.0;
 	g_fPauseTime[client] = 0.0;
 	g_MapRankTp[client] = 99999;
 	g_MapRankPro[client] = 99999;
 	g_OldMapRankPro[client] = 99999;
-	g_OldMapRankTp[client] = 99999;
-	g_PlayerRank[client] = 99999;	
+	g_OldMapRankTp[client] = 99999;	
 	g_fProfileMenuLastQuery[client] = GetEngineTime();
+	g_PlayerRank[client] = 99999;
 	Format(g_szPlayerPanelText[client], 512, "");
 	Format(g_pr_rankname[client], 32, "");
 	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>0.0 units</font>");
@@ -835,7 +843,7 @@ public SetClientDefaults(client)
 	g_bInfoPanel[client]=false;
 	g_bHideChat[client]=false;
 	g_bClimbersMenuSounds[client]=true;
-	g_EnableQuakeSounds[client]=1;
+	g_EnableQuakeSounds[client]= 1;
 	g_bShowNames[client]=true; 
 	g_bStrafeSync[client]=false;
 	g_bGoToClient[client]=true; 
@@ -850,23 +858,6 @@ public SetClientDefaults(client)
 	g_bJumpBeam[client]=false;
 	g_bViewModel[client]=true;
 	g_bAdvInfoPanel[client]=false;
-}
-
-public SetPlayerBeam(client, Float:origin[3])
-{	
-	if(!g_bBeam[client] || g_bOnGround[client] || !g_js_bPlayerJumped[client])
-		return;
-	new Float:v1[3], Float:v2[3];
-	v1[0] = origin[0];
-	v1[1] = origin[1];
-	v1[2] = g_js_fJump_JumpOff_Pos[client][2];	
-	v2[0] = g_fLastPosition[client][0];
-	v2[1] = g_fLastPosition[client][1];
-	v2[2] = g_js_fJump_JumpOff_Pos[client][2];		
-	new color[4] = {255, 255, 255, 100};
-	TE_SetupBeamPoints(v1, v2, g_Beam[2], 0, 0, 0, 2.5, 3.0, 3.0, 10, 0.0, color, 0);
-	if (g_bJumpBeam[client])
-		TE_SendToClient(client);
 }
 
 // - Get Runtime -
@@ -964,6 +955,7 @@ public PlayLeetJumpSound(client)
 			}					
 	}
 }
+
 public SetCashState()
 {
 	ServerCommand("mp_startmoney 0; mp_playercashawards 0; mp_teamcashawards 0");
@@ -998,28 +990,6 @@ public PlayRecordSound(iRecordtype)
 			}
 }
 
-public PlayUnstoppableSound(client)
-{
-	decl String:buffer[255];
-	Format(buffer, sizeof(buffer), "play %s", UNSTOPPABLE_RELATIVE_SOUND_PATH);  
-	if (IsValidClient(client) && !IsFakeClient(client) && g_EnableQuakeSounds[client] == 1)
-		ClientCommand(client, buffer); 	
-	//spec stop sound
-	for(new i = 1; i <= MaxClients; i++) 
-	{		
-		if (IsValidClient(i) && !IsPlayerAlive(i))
-		{			
-			new SpecMode = GetEntProp(i, Prop_Send, "m_iObserverMode");
-			if (SpecMode == 4 || SpecMode == 5)
-			{		
-				new Target = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");	
-				if (Target == client && g_EnableQuakeSounds[i] == 1)
-					ClientCommand(i,buffer);
-			}					
-		}
-	}	
-}
-
 public InitPrecache()
 {
 	AddFileToDownloadsTable( UNSTOPPABLE_SOUND_PATH );
@@ -1037,7 +1007,7 @@ public InitPrecache()
 	AddFileToDownloadsTable( GODLIKE_RAMPAGE_FULL_SOUND_PATH );
 	FakePrecacheSound( GODLIKE_RAMPAGE_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable( PERFECT_FULL_SOUND_PATH );
-	FakePrecacheSound( PERFECT_RELATIVE_SOUND_PATH );	
+	FakePrecacheSound( PERFECT_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable( IMPRESSIVE_FULL_SOUND_PATH );
 	FakePrecacheSound( IMPRESSIVE_RELATIVE_SOUND_PATH );
 	AddFileToDownloadsTable("models/props/switch001.mdl");
@@ -1085,7 +1055,6 @@ public InitPrecache()
 	PrecacheModel(g_sPlayerModel,true);
 }
 
-
 // thx to V952 https://forums.alliedmods.net/showthread.php?t=212886
 stock TraceClientViewEntity(client)
 {
@@ -1116,6 +1085,12 @@ public bool:TRDontHitSelf(entity, mask, any:data)
 public PrintMapRecords(client)
 {
 	decl String:szTime[32];
+	new Float:mintime;
+	if (g_fRecordTime < g_fRecordTimePro)
+		mintime=g_fRecordTime;
+	else
+		mintime=g_fRecordTimePro;
+	mintime+=0.0002;
 	if (g_fRecordTimePro != 9999999.0)
 	{
 		FormatTimeFloat(client, g_fRecordTimePro, 3,szTime,sizeof(szTime));
@@ -1189,42 +1164,22 @@ public MapFinishedMsgs(client, type)
 									PrintToChat(i, "%t", "MapFinished5",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,DARKBLUE,GRAY,LIMEGREEN, g_szFinalTime[client],GRAY,RED, g_szTimeDifference[client],GRAY, WHITE, LIMEGREEN, rank, WHITE,count,LIMEGREEN,szTime,WHITE);  	
 									PrintToConsole(i, "%s finished with a PRO TIME of (%s). Missing their best time by (%s).  [rank #%i/%i | record %s]",szName,g_szFinalTime[client],g_szTimeDifference[client],rank,count,szTime); 
 								}
-				
-				if (g_FinishingType[client] == 5)				
+				if (g_FinishingType[client] == 2)				
 				{
-					PrintToChat(i, "%t", "NewGlobalRecord102",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-					PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (102)",szName); 		
-				}
+					PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,DARKBLUE);  
+					PrintToConsole(i, "[KZ] %s has beaten the PRO RECORD",szName); 	
+				}		
 				else
-					if (g_FinishingType[client] == 4)				
+					if (g_FinishingType[client] == 1)				
 					{
-						PrintToChat(i, "%t", "NewGlobalRecord128",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-						PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD (128)",szName); 		
-					}
-					else
-						if (g_FinishingType[client] == 3)				
-						{
-							PrintToChat(i, "%t", "NewGlobalRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,RED); 	
-							PrintToConsole(i, "[KZ] %s scored a new GLOBAL RECORD",szName); 		
-						}
-						else	
-							if (g_FinishingType[client] == 2)				
-							{
-								PrintToChat(i, "%t", "NewProRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,DARKBLUE);  
-								PrintToConsole(i, "[KZ] %s scored a new PRO RECORD",szName); 	
-							}		
-							else
-								if (g_FinishingType[client] == 1)				
-								{
-									PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
-									PrintToConsole(i, "[KZ] %s scored a new TP RECORD",szName); 	
-								}					
+						PrintToChat(i, "%t", "NewTpRecord",MOSSGREEN,WHITE,LIMEGREEN,szName,GRAY,YELLOW); 	
+						PrintToConsole(i, "[KZ] %s has beaten the TP RECORD",szName); 	
+					}					
 			}
 		
 		if (rank==99999 && IsValidClient(client))
 			PrintToChat(client, "[%cKZ%c] %cFailed to save your data correctly! Please contact an admin.",MOSSGREEN,WHITE,DARKRED,RED,DARKRED); 	
-		
-		
+			
 		//noclip MsgMsg
 		if (IsValidClient(client) && g_bMapFinished[client] == false && !StrEqual(g_pr_rankname[client],g_szSkillGroups[8]) && !(GetUserFlagBits(client) & ADMFLAG_RESERVATION) && !(GetUserFlagBits(client) & ADMFLAG_ROOT) && !(GetUserFlagBits(client) & ADMFLAG_GENERIC) && g_bNoClipS)
 			PrintToChat(client, "%t", "NoClipUnlocked",MOSSGREEN,WHITE,YELLOW);
@@ -1232,7 +1187,7 @@ public MapFinishedMsgs(client, type)
 		CreateTimer(0.0, UpdatePlayerProfile, client,TIMER_FLAG_NO_MAPCHANGE);
 		
 		if (g_Time_Type[client] == 0 || g_Time_Type[client] == 1 || g_Time_Type[client] == 2 || g_Time_Type[client] == 3)
-			CheckMapRanks(client, g_Tp_Final[client]);			
+			CheckMapRanks(client, g_Tp_Final[client]);
 	}
 	//recalc avg
 	db_CalcAvgRunTime();
@@ -1243,8 +1198,6 @@ public MapFinishedMsgs(client, type)
 	//sound Client
 	if (g_Sound_Type[client] == 5)
 		PlayUnstoppableSound(client);
-		
-	
 }
 
 public CheckMapRanks(client, tps)
@@ -1277,7 +1230,7 @@ public ReplaceChar(String:sSplitChar[], String:sReplace[], String:sString[64])
 			continue;
 		if (i != 0)
 		{
-			new String:sTmpStr[256];
+			decl String:sTmpStr[256];
 			Format(sTmpStr, sizeof(sTmpStr), "%s%s", sReplace, sBuffer[i]);
 			StrCat(sString, sizeof(sString), sTmpStr);
 		}
@@ -1443,11 +1396,34 @@ public FormatTimeFloat(client, Float:time, type, String:string[], length)
 		else
 			Format(string, length, "Time: %s:%s", szMinutes,szSeconds);	
 	}
+	if (type==5)
+	{
+		if (imilli < 10)
+			Format(szMilli, 16, "0%d", imilli);
+		else
+			Format(szMilli, 16, "%d", imilli);
+		if (iseconds < 10)
+			Format(szSeconds, 16, "0%d", iseconds);
+		else
+			Format(szSeconds, 16, "%d", iseconds);
+		if (iminutes < 10)
+			Format(szMinutes, 16, "0%d", iminutes);
+		else
+			Format(szMinutes, 16, "%d", iminutes);	
+		if (ihours>0)	
+		{
+			Format(szHours, 16, "%d", ihours);
+			Format(string, length, "Timeleft: %s:%s:%s", szHours, szMinutes,szSeconds);
+		}
+		else
+			Format(string, length, "Timeleft: %s:%s", szMinutes,szSeconds);	
+	}
 }
+
 
 public SetPlayerRank(client)
 {
-	if (IsFakeClient(client))
+	if (!IsValidClient(client) || IsFakeClient(client) || g_pr_Calculating[client])
 		return;
 	if (g_bPointSystem)
 	{
@@ -1537,7 +1513,14 @@ public SetPlayerRank(client)
 			return;
 		}
 	}
-		
+	
+	//DEV TAG
+	if (StrEqual(g_szSteamID[client],"STEAM_1:1:73507922"))
+	{
+		Format(g_pr_chat_coloredrank[client], 32, "%s %cDEV%c",g_pr_chat_coloredrank[client],LIMEGREEN,WHITE);
+		return;
+	}
+	
 	// MAPPER Clantag
 	for (new x = 0; x < 100; x++)
 	{
@@ -1594,6 +1577,11 @@ stock Action:PrintSpecMessageAll(client)
 	ReplaceString(szTextToAll,1024,"{pink}","",false);
 	ReplaceString(szTextToAll,1024,"{lightred}","",false);
 	
+	//text right to left?
+	decl String:sTextNew[1024];
+	if(RTLify(sTextNew, szTextToAll))
+		FormatEx(szTextToAll, 1024, sTextNew);
+	
 	decl String:szChatRank[64];
 	Format(szChatRank, 64, "%s",g_pr_chat_coloredrank[client]);
 				
@@ -1623,6 +1611,90 @@ stock Action:PrintSpecMessageAll(client)
 		}
 	return Plugin_Handled;
 }
+
+public HookCheck(client)
+{
+	if (g_bHookMod)
+	{
+		if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
+		{
+			PrintToConsole(client, "[KZ] Timer stopped. Reason: Hook command used.")
+			g_js_bPlayerJumped[client] = false;
+			g_bTimeractivated[client] = false;
+		}
+	}
+}
+
+public LjBlockCheck(client, Float:origin[3])
+{
+	if(g_bLJBlock[client])
+	{
+		TE_SendBlockPoint(client, g_fDestBlock[client][0], g_fDestBlock[client][1], g_Beam[0]);
+		TE_SendBlockPoint(client, g_fOriginBlock[client][0], g_fOriginBlock[client][1], g_Beam[0]);
+	}		
+	
+	if (g_bOnGround[client])
+	{		
+		//LJBlock Stuff
+		if (!g_js_bPlayerJumped[client])
+		{
+			decl Float:temp[3];
+			if(g_bLJBlock[client])
+			{
+				g_js_block_lj_valid[client]=true;
+				g_js_block_lj_jumpoff_pos[client]=false;
+				if(IsCoordInBlockPoint(origin,g_fDestBlock[client],false))
+				{
+					//block2
+					GetEdgeOrigin2(client, origin, temp);
+					g_fEdgeDistJumpOff[client] = GetVectorDistance(temp, origin);
+					g_js_block_lj_jumpoff_pos[client]=true;
+				}	
+				else
+					if (IsCoordInBlockPoint(origin,g_fOriginBlock[client],false))
+					{
+						//block1
+						GetEdgeOrigin1(client, origin, temp);
+						g_fEdgeDistJumpOff[client] = GetVectorDistance(temp, origin);
+						g_js_block_lj_jumpoff_pos[client]=false;
+					}
+					else
+						g_js_block_lj_valid[client] = false;
+			}
+			else
+				g_js_block_lj_valid[client] = false;
+		}
+	}
+}
+
+public AttackProtection(client, &buttons)
+{
+	if (g_bAttackSpamProtection && !IsFakeClient(client))
+	{
+		decl String:classnamex[64];
+		GetClientWeapon(client, classnamex, 64);
+		if(StrContains(classnamex,"knife",true) == -1 && g_AttackCounter[client] >= 40)
+		{
+			if(buttons & IN_ATTACK)
+			{
+				decl ent; 
+				ent = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
+				if (IsValidEntity(ent))
+					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
+			}
+		}
+	}	
+}
+
+public StrToLower(String:arg[])
+{
+	for (new i = 0; i < strlen(arg); i++)
+	{
+		arg[i] = CharToLower(arg[i]);
+	}
+}
+
+
 //http://pastebin.com/YdUWS93H
 public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:remove)
 {
@@ -1635,10 +1707,14 @@ public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:r
 			{
 				new flags = GetConVarFlags(hConVar);
 				SetConVarFlags(hConVar, flags &= ~FCVAR_CHEAT);
+				CloseHandle(hConVar);
 				return true;
 			} 
 			else 
-				return false;			
+			{
+				CloseHandle(hConVar);
+				return false;
+			}
 		} 
 		else 
 		{
@@ -1658,10 +1734,14 @@ public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:r
 			{
 				new flags = GetConVarFlags(hConVar);
 				SetConVarFlags(hConVar, flags & FCVAR_CHEAT);
+				CloseHandle(hConVar);
 				return true;
 			}
 			else 
+			{
+				CloseHandle(hConVar);
 				return false;
+			}
 			
 			
 		} else
@@ -1678,7 +1758,7 @@ public bool:CheatFlag(const String:voice_inputfromfile[], bool:isCommand, bool:r
 
 public PlayerPanel(client)
 {	
-	if (!IsValidClient(client) || g_bTopMenuOpen[client] || g_bMapMenuOpen[client] || IsFakeClient(client))
+	if (!IsValidClient(client) || g_bMapMenuOpen[client] || g_bTopMenuOpen[client] || IsFakeClient(client))
 		return;
 	
 	if (GetClientMenu(client) == MenuSource_None)
@@ -1790,6 +1870,7 @@ stock BooltoInt(bool:status)
 		return 0;
 }
 
+
 public PlayQuakeSound_Spec(client, String:buffer[255])
 {
 	new SpecMode;
@@ -1814,24 +1895,39 @@ public PlayQuakeSound_Spec(client, String:buffer[255])
 		}		
 	}
 }
-		
+
+public SetPlayerBeam(client, Float:origin[3])
+{	
+	if(!g_bBeam[client] || g_bOnGround[client] || !g_js_bPlayerJumped[client])
+		return;
+	new Float:v1[3], Float:v2[3];
+	v1[0] = origin[0];
+	v1[1] = origin[1];
+	v1[2] = g_js_fJump_JumpOff_Pos[client][2];	
+	v2[0] = g_fLastPosition[client][0];
+	v2[1] = g_fLastPosition[client][1];
+	v2[2] = g_js_fJump_JumpOff_Pos[client][2];		
+	new color[4] = {255, 255, 255, 100};
+	TE_SetupBeamPoints(v1, v2, g_Beam[2], 0, 0, 0, 2.5, 3.0, 3.0, 10, 0.0, color, 0);
+	if (g_bJumpBeam[client])
+		TE_SendToClient(client);
+}
+				
 public PerformBan(client, String:szbantype[16])
 {
 	if (IsValidClient(client))
 	{
 		decl String:szName[64];
 		GetClientName(client,szName,64);
-		new bantime= RoundToZero(g_fBanDuration*60);
-		decl String:banmsg[255];
-		Format(banmsg, sizeof(banmsg), "KZ-AntiCheat: You were banned for using %s (%.0fh)",szbantype,g_fBanDuration); 	
-		if(g_bCanUseSourcebans)
-			SBBanPlayer(0, client, bantime, banmsg);
+		new duration = RoundToZero(g_fBanDuration*60);
+		decl String:KickMsg[255];
+		Format(KickMsg, sizeof(KickMsg), "KZ-AntiCheat: You have been banned from the server. (reason: %s)",szbantype); 		
+		
+		if (SOURCEBANS_AVAILABLE())
+			SBBanPlayer(0, client, duration, "BhopHack");
 		else
-		{
-			new String:f_sClientIP[64];
-			GetClientIP(client, f_sClientIP, sizeof(f_sClientIP));
-			BanIdentity(f_sClientIP, bantime, BANFLAG_IP, banmsg);
-		}
+			BanClient(client, duration, BANFLAG_AUTO, "BhopHack", KickMsg, "KZTimer");
+		KickClient(client, KickMsg);
 		db_DeleteCheater(client,g_szSteamID[client]);
 	}
 }
@@ -1911,7 +2007,7 @@ public Prestrafe(client, Float: ang, &buttons)
 		
 		//no mouse movement?
 		if (!turning_right && !turning_left)
-		{
+		{	
 			decl Float: diff;
 			diff = GetEngineTime() - g_fVelocityModifierLastChange[client]
 			if (diff > 0.2)
@@ -1931,10 +2027,10 @@ public Prestrafe(client, Float: ang, &buttons)
 			//tickrate depending values
 			if (g_Server_Tickrate == 64)
 			{
-				MaxFrameCount = 45;
-				IncSpeed = 0.0015;
+				MaxFrameCount = 47;
+				IncSpeed = 0.0016;
 				if ((g_PrestrafeVelocity[client] > 1.08 && StrEqual(classname, "weapon_hkp2000")) || (g_PrestrafeVelocity[client] > 1.04 && !StrEqual(classname, "weapon_hkp2000")))
-					IncSpeed = 0.001;
+					IncSpeed = 0.00125;
 				DecSpeed = 0.005;
 			}
 			
@@ -2058,80 +2154,6 @@ stock Float:GetClientMovingDirection(client, bool:ladder)
 	return direction;
 }
 
-public HookCheck(client)
-{
-	if (g_bHookMod)
-	{
-		if (HGR_IsHooking(client) || HGR_IsGrabbing(client) || HGR_IsBeingGrabbed(client) || HGR_IsRoping(client) || HGR_IsPushing(client))
-		{
-			PrintToConsole(client, "[KZ] Timer stopped. Reason: Hook command used.")
-			g_js_bPlayerJumped[client] = false;
-			g_bTimeractivated[client] = false;
-		}
-	}
-}
-
-public LjBlockCheck(client, Float:origin[3])
-{
-	if(g_bLJBlock[client])
-	{
-		TE_SendBlockPoint(client, g_fDestBlock[client][0], g_fDestBlock[client][1], g_Beam[0]);
-		TE_SendBlockPoint(client, g_fOriginBlock[client][0], g_fOriginBlock[client][1], g_Beam[0]);
-	}		
-	
-	if (g_bOnGround[client])
-	{		
-		//LJBlock Stuff
-		if (!g_js_bPlayerJumped[client])
-		{
-			decl Float:temp[3];
-			if(g_bLJBlock[client])
-			{
-				g_js_block_lj_valid[client]=true;
-				g_js_block_lj_jumpoff_pos[client]=false;
-				if(IsCoordInBlockPoint(origin,g_fDestBlock[client],false))
-				{
-					//block2
-					GetEdgeOrigin2(client, origin, temp);
-					g_fEdgeDistJumpOff[client] = GetVectorDistance(temp, origin);
-					g_js_block_lj_jumpoff_pos[client]=true;
-				}	
-				else
-					if (IsCoordInBlockPoint(origin,g_fOriginBlock[client],false))
-					{
-						//block1
-						GetEdgeOrigin1(client, origin, temp);
-						g_fEdgeDistJumpOff[client] = GetVectorDistance(temp, origin);
-						g_js_block_lj_jumpoff_pos[client]=false;
-					}
-					else
-						g_js_block_lj_valid[client] = false;
-			}
-			else
-				g_js_block_lj_valid[client] = false;
-		}
-	}
-}
-
-public AttackProtection(client, &buttons)
-{
-	if (g_bAttackSpamProtection && !IsFakeClient(client))
-	{
-		decl String:classnamex[64];
-		GetClientWeapon(client, classnamex, 64);
-		if(StrContains(classnamex,"knife",true) == -1 && g_AttackCounter[client] >= 40)
-		{
-			if(buttons & IN_ATTACK)
-			{
-				decl ent; 
-				ent = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
-				if (IsValidEntity(ent))
-					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 2.0);
-			}
-		}
-	}	
-}
-
 public MenuTitleRefreshing(client)
 {
 	if (!IsValidClient(client) || IsFakeClient(client))
@@ -2196,6 +2218,34 @@ public WjJumpPreCheck(client, &buttons)
 		else
 			g_bLastButtonJump[client] = false;
 	}		
+}
+
+public MovementCheck(client)
+{
+	if (StrEqual(g_szMapPrefix[0],"kz") || StrEqual(g_szMapPrefix[0],"xc")  || StrEqual(g_szMapPrefix[0],"kzpro") || StrEqual(g_szMapPrefix[0],"bkz") || StrEqual(g_szMapPrefix[0],"bhop"))
+	{		
+		if (StrContains(g_szMapName,"kz_conrun_mq",false) == -1 && StrContains(g_szMapName,"kz_conrun_scrub",false) == -1)
+			SetEntPropFloat(client, Prop_Data, "m_flGravity", 1.0); 
+		new Float:LaggedMovementValue = GetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue");
+		if (LaggedMovementValue != 1.0)
+		{
+			PrintToConsole(client,"[KZ] Timer stopped. Reason: LaggedMovementValue modified.")
+			g_bTimeractivated[client] = false;
+			if (g_js_bPlayerJumped[client])	
+				ResetJump(client);
+		}
+	}
+	decl MoveType:mt;
+	mt = GetEntityMoveType(client); 
+	if (mt == MOVETYPE_FLYGRAVITY)
+	{
+		PrintToConsole(client,"[KZ] Timer stopped. Reason: MOVETYPE 'FLYGRAVITY' detected.")
+		g_bTimeractivated[client] = false;
+		if (g_js_bPlayerJumped[client])	
+			ResetJump(client);
+	}
+	if (g_bPause[client] && mt == MOVETYPE_WALK)
+		SetEntityMoveType(client, MOVETYPE_NONE);
 }
 
 public TeleportCheck(client, Float: origin[3])
@@ -2287,14 +2337,14 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 			decl Float:dist; 
 			dist=70.0;		
 			decl  Float:distance1; 
-			distance1 = GetVectorDistance(origin, g_fStartButtonPos); ///ccc
+			distance1 = GetVectorDistance(origin, g_fStartButtonPos); 
 			decl  Float: distance2;
 			distance2 = GetVectorDistance(origin, g_fEndButtonPos);
 			if (distance1 < dist && speed < 251.0 && !g_bFirstStartButtonPush)
 			{
 				new Handle:trace;
 				trace = TR_TraceRayFilterEx(origin, g_fStartButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-				if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
+				if (!TR_DidHit(trace))
 				{
 					CL_OnStartTimerPress(client);
 					g_fLastTimeButtonSound[client] = GetEngineTime();	
@@ -2306,7 +2356,7 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 				{
 					new Handle:trace;
 					trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-					if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
+					if (!TR_DidHit(trace))
 					{
 						CL_OnEndTimerPress(client);	
 						g_fLastTimeButtonSound[client] = GetEngineTime();
@@ -2324,7 +2374,7 @@ public ButtonPressCheck(client, &buttons, Float: origin[3], Float:speed)
 			{
 				new Handle:trace;
 				trace = TR_TraceRayFilterEx(origin, g_fEndButtonPos, MASK_SOLID,RayType_EndPoint,TraceFilterPlayers,client)
-				if (!TR_DidHit(trace) || g_global_SelfBuiltButtons)
+				if (!TR_DidHit(trace))
 				{
 					CL_OnEndTimerPress(client);	
 					g_fLastTimeButtonSound[client] = GetEngineTime();
@@ -2346,7 +2396,7 @@ public CalcJumpHeight(client)
 {
 	if (g_js_bPlayerJumped[client])
 	{	
-		decl Float:origin[3];
+		new Float:origin[3];
 		GetClientAbsOrigin(client, origin);
 		if (origin[2] > g_js_fMax_Height[client])
 			g_js_fMax_Height[client] = origin[2];	
@@ -2366,6 +2416,7 @@ public CalcLastJumpHeight(client, &buttons, Float: origin[3])
 	decl Float:distance;
 	distance = GetVectorDistance(g_fLastPosition[client], origin);
 	
+	//booster?
 	if(distance > 25.0)
 	{
 		if(g_js_bPlayerJumped[client])
@@ -2465,34 +2516,6 @@ public ServerSidedAutoBhop(client,&buttons)
 	}
 }
 	
-public KZAntiCheat(client,&buttons)
-{
-	if (IsFakeClient(client))
-		return;
-	//MACRODOX BHOP PROTECTION
-	//https://forums.alliedmods.net/showthread.php?p=1678026
-	static bool:bHoldingJump[MAXPLAYERS + 1];
-	static bLastOnGround[MAXPLAYERS + 1];
-	if(buttons & IN_JUMP)
-	{
-		if(!bHoldingJump[client])
-		{
-			bHoldingJump[client] = true;//started pressing +jump
-			g_aiJumps[client]++;
-			if (bLastOnGround[client] && (g_bOnGround[client]))
-				g_fafAvgPerfJumps[client] = ( g_fafAvgPerfJumps[client] * 9.0 + 0 ) / 10.0;
-			   
-			else 
-				if (!bLastOnGround[client] && (g_bOnGround[client]))
-				g_fafAvgPerfJumps[client] = ( g_fafAvgPerfJumps[client] * 9.0 + 1 ) / 10.0;
-		}
-	}
-	else 
-		if(bHoldingJump[client]) 
-			bHoldingJump[client] = false;//released (-jump)
-	bLastOnGround[client] = g_bOnGround[client];  
-}
-
 public BoosterCheck(client)
 {
 	decl Float:flbaseVelocity[3];
@@ -2503,7 +2526,6 @@ public BoosterCheck(client)
 		ResetJump(client);
 	}
 }
-
 
 public WaterCheck(client)
 {
@@ -2524,6 +2546,7 @@ public ResetJump(client)
 {
 	Format(g_js_szLastJumpDistance[client], 256, "<font color='#948d8d'>invalid</font>", g_js_fJump_Distance[client]);
 	g_js_GroundFrames[client] = 0;
+	g_bBeam[client] = false;
 	g_js_bPerfJumpOff[client] = false;
 	g_js_bPerfJumpOff2[client] = false;
 	g_js_bPlayerJumped[client] = false;	
@@ -2742,7 +2765,6 @@ public SpecListMenuDead(client)
 		g_SpecTarget[client] = -1;
 }
 
-
 public SpecListMenuAlive(client)
 {
 
@@ -2794,7 +2816,8 @@ public SpecListMenuAlive(client)
 	}
 	else
 		Format(g_szPlayerPanelText[client], 512, "");	
-}	
+}
+	
 //MACRODOX BHOP PROTECTION
 //https://forums.alliedmods.net/showthread.php?p=1678026
 public PerformStats(client, target)
@@ -2910,9 +2933,72 @@ public GetClientStatsLog(client, String:string[], length)
 	PERCENT);
 }
 
+public MacroBan(client)
+{
+	if (g_bAntiCheat && !g_bFlagged[client])
+	{
+		decl String:banstats[256];
+		decl String:reason[256];
+		Format(reason, 256, "bhop hack");
+		GetClientStatsLog(client, banstats, sizeof(banstats));			
+		decl String:sPath[512];
+		BuildPath(Path_SM, sPath, sizeof(sPath), "%s", ANTICHEAT_LOG_PATH);
+		if (g_bAutoBan)
+		{
+			LogToFile(sPath, "%s, Reason: bhop hack detected. (autoban)", banstats);	
+		}
+		else
+			LogToFile(sPath, "%s, Reason: bhop hack detected.", banstats);	
+		g_bFlagged[client] = true;
+		if (g_bAutoBan)	
+			PerformBan(client,"bhop hack");
+	}
+}
+
+//macrodox addon by 1nut
+public BhopPatternCheck(client)
+{
+	if (!IsValidClient(client) || !IsPlayerAlive(client) || IsFakeClient(client) || !g_bAntiCheat || g_bFlagged[client] || g_fafAvgPerfJumps[client] < 0.5 || g_fafAvgSpeed[client] < 290.0)
+		return;
+
+	//decl.
+	new pattern_array[50];
+	new pattern_sum;
+	new jumps;
+	
+	//analyse the last jumps 
+	for (new i = 0; i < 30; i++)
+	{
+		new value = g_aaiLastJumps[client][i];
+		if ( 1 < value < 50)
+		{
+			pattern_sum+=value;
+			jumps++;
+			pattern_array[value]++;
+		}
+	}	
+	
+	//pattern check #1	
+	new Float:avg_scroll_pattern = float(pattern_sum) / float(jumps);
+	if (avg_scroll_pattern > 20.0)
+	{
+		MacroBan(client);
+		return;
+	}
+	//pattern check #2
+	for (new j = 2; j < 50; j++)
+	{
+		if (pattern_array[j] >= 20)		
+		{
+			MacroBan(client);
+			return;
+		}
+	}	
+}
+
 //MultiPlayer Bunnyhop
 //https://forums.alliedmods.net/showthread.php?p=808724
-public Teleport(client, bhop)
+public Teleport(client, bhop,bool:mt)
 {
 	decl i;
 	new tele = -1, ent = bhop;
@@ -2967,14 +3053,15 @@ public Teleport(client, bhop)
 				new Float: ang[3];
 				GetEntPropVector(dest, Prop_Data, "m_angRotation", ang); 
 				GetEntPropVector(dest, Prop_Send, "m_vecOrigin", pos);
-				
+								
 				//synergy fix
 				if ((StrContains(g_szMapName,"kz_synergy_ez") != -1 || StrContains(g_szMapName,"kz_synergy_x") != -1) && StrEqual(targetName,"1-1"))
 				{	
 				}
 				else
-					TeleportEntity(client, pos,ang, Float:{0.0,0.0,-100.0});				
-				//benefits over an sdkcall: Correct player angle and no unwanted player movement (post-teleport)
+				{					
+					DoValidTeleport(client, pos,ang,false);
+				}
 			}
 		}
 	}
@@ -3076,7 +3163,7 @@ public Entity_Touch3(bhop,client)
 	if(IsValidClient(client)) 		
 		g_bOnBhopPlattform[client] = false;
 }
-
+	
 public Entity_Touch2(bhop,client) 
 {
 	if(IsValidClient(client)) 
@@ -3086,18 +3173,17 @@ public Entity_Touch2(bhop,client)
 		{
 			if (bhop == g_LastGroundEnt[client] && (GetEngineTime() - g_fLastTimeBhopBlock[client]) <= 0.9)
 			{
-				g_LastGroundEnt[client] = -1;
-				Teleport(client, bhop);
+				g_LastGroundEnt[client] = -1;		
+				Teleport(client, bhop,true);
 			}
 			else
 			{
 				g_fLastTimeBhopBlock[client] = GetEngineTime();
 				g_LastGroundEnt[client] = bhop;
-			}
+			}		
 		}
 	}
 }
-
 
 
 CustomTraceForTeleports2(const Float:pos[3]) 
@@ -3268,7 +3354,8 @@ public Entity_Touch(bhop,client)
 {
 	//bhop = entity
 	if(IsValidClient(client)) 
-	{		
+	{	
+	
 		g_bOnBhopPlattform[client]=true;
 
 		static Float:flPunishTime[MAXPLAYERS + 1], iLastBlock[MAXPLAYERS + 1] = { -1,... };		
@@ -3287,7 +3374,7 @@ public Entity_Touch(bhop,client)
 			{
 				if(time - g_fLastJump[client] > (0.05 + 0.1))
 				{
-					Teleport(client, iLastBlock[client]);
+					Teleport(client, iLastBlock[client],false);
 					iLastBlock[client] = -1;
 				}
 			}		
@@ -3637,14 +3724,14 @@ public SetInfoBotName(ent)
 	GetMapTimeLeft(timeleft);
 	new Float:ftime = float(timeleft);
 	decl String:szTime[32];
-	FormatTimeFloat(g_InfoBot,ftime,4,szTime,sizeof(szTime));
+	FormatTimeFloat(g_InfoBot,ftime,5,szTime,sizeof(szTime));
 	new Handle:hTmp;	
 	hTmp = FindConVar("mp_timelimit");
 	new iTimeLimit = GetConVarInt(hTmp);			
 	if (hTmp != INVALID_HANDLE)
 		CloseHandle(hTmp);	
 	if (g_bMapEnd && iTimeLimit > 0)
-		Format(szBuffer, sizeof(szBuffer), "%s (in %s)",sNextMap, szTime);
+		Format(szBuffer, sizeof(szBuffer), "%s (%s)",sNextMap, szTime);
 	else
 		Format(szBuffer, sizeof(szBuffer), "Pending Vote (no time limit)");
 	CS_SetClientName(g_InfoBot, szBuffer);
@@ -3690,7 +3777,7 @@ public CenterHudDead(client)
 				Format(sResult, sizeof(sResult), "%s - C", sResult);
 			else
 				Format(sResult, sizeof(sResult), "%s - _", sResult);			
-			if (Buttons & IN_JUMP)
+			if (Buttons & IN_JUMP || ((GetEngineTime() - g_fJumpButtonLastTimeUsed[ObservedUser]) < 0.05))
 				Format(sResult, sizeof(sResult), "%s J", sResult);
 			else
 				Format(sResult, sizeof(sResult), "%s _", sResult);	
@@ -3749,7 +3836,7 @@ public CenterHudAlive(client)
 			Format(sResult, sizeof(sResult), "%s - C", sResult);
 		else
 			Format(sResult, sizeof(sResult), "%s - _", sResult);			
-		if (Buttons & IN_JUMP)
+		if (Buttons & IN_JUMP || ((GetEngineTime() - g_fJumpButtonLastTimeUsed[client]) < 0.05))
 			Format(sResult, sizeof(sResult), "%s J", sResult);
 		else
 			Format(sResult, sizeof(sResult), "%s _", sResult);	
@@ -3803,4 +3890,87 @@ public PrintCenterPanelToClient(client,target, String:sKeys[32])
 	else
 		PrintHintText(client,"<font color='#948d8d'><b>Speed</b>: %.1f u/s\n<b>Velocity</b>: %.1f u/s\n%s</font>",g_fLastSpeed[target],GetVelocity(target),sKeys);			
 
+}
+
+// https://forums.alliedmods.net/showthread.php?t=178279
+//  [ANY] RTLer - Support for Right-to-Left Languages
+RTLify(String:dest[1024], String:original[1024])
+{
+	new rtledWords = 0;
+
+	new String:tokens[96][96]; 
+	new String:words[sizeof(tokens)][sizeof(tokens[])];
+
+	new n = ExplodeString(original, " ", tokens, sizeof(tokens), sizeof(tokens[]));
+	
+	for (new word = 0; word < n; word++)
+	{
+		if (WordAnalysis(tokens[word]) >= 0.1)
+		{
+			ReverseString(tokens[word], sizeof(tokens[]), words[n-1-word]);
+			rtledWords++;
+		}
+		else
+		{
+			new firstWord = word;
+			new lastWord = word;
+			
+			while (WordAnalysis(tokens[lastWord]) < 0.1)
+			{
+				lastWord++;
+			}
+			
+			for (new t = lastWord - 1; t >= firstWord; t--)
+			{
+				strcopy(words[n-1-word], sizeof(tokens[]), tokens[t]);
+				
+				if (t > firstWord)
+					word++;
+			}
+		}
+	}
+	
+	ImplodeStrings(words, n, " ", dest, sizeof(words[]));
+	return rtledWords;
+}
+
+// https://forums.alliedmods.net/showthread.php?t=178279
+//  [ANY] RTLer - Support for Right-to-Left Languages
+ReverseString(String:str[], maxlength, String:buffer[])
+{
+	for (new character = strlen(str); character >= 0; character--)
+	{
+		if (str[character] >= 0xD6 && str[character] <= 0xDE)
+			continue;
+		
+		if (character > 0 && str[character - 1] >= 0xD7 && str[character - 1] <= 0xD9)
+			Format(buffer, maxlength, "%s%c%c", buffer, str[character - 1], str[character]);
+		else
+			Format(buffer, maxlength, "%s%c", buffer, str[character]);
+	}
+}
+
+// https://forums.alliedmods.net/showthread.php?t=178279
+//  [ANY] RTLer - Support for Right-to-Left Languages
+Float:WordAnalysis(String:word[])
+{
+	new count = 0, length = strlen(word);
+	
+	for (new n = 0; n < length - 1; n++)
+	{
+		if (IsRTLCharacter(word, n))
+		{	
+			count++;
+			n++;
+		}
+	}
+
+	return float(count) * 2 / length;
+}
+
+// https://forums.alliedmods.net/showthread.php?t=178279
+//  [ANY] RTLer - Support for Right-to-Left Languages
+bool:IsRTLCharacter(String:str[], n)
+{
+	return (str[n] >= 0xD6 && str[n] <= 0xDE && str[n + 1] >= 0x80 && str[n + 1] <= 0xBF);
 }
